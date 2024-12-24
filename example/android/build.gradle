@@ -1,0 +1,70 @@
+//
+//buildscript {
+//    ext.kotlin_version = '1.9.0'
+//  //  ext.kotlin_version = '1.6.10'
+//
+//    repositories {
+//        google() // Kho lưu trữ Google
+//        mavenCentral() // Maven Central để quản lý các dependency
+//    }
+//
+//    dependencies {
+//        // Plugin Android Gradle mới nhất để đảm bảo hiệu suất và bảo mật
+//       classpath 'com.android.tools.build:gradle:7.1.0'
+//        // Plugin Kotlin Gradle với biến ext.kotlin_version
+//        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+//    }
+//}
+//
+//allprojects {
+//    repositories {
+//        google()
+//        mavenCentral()
+//    }
+//}
+//
+//// Tổ chức thư mục build hợp lý
+//rootProject.buildDir = '../build'
+//subprojects {
+//    project.buildDir = "${rootProject.buildDir}/${project.name}"
+//    project.evaluationDependsOn(':app') // Đảm bảo module app được đánh giá đầu tiên
+//}
+//
+//// Nhiệm vụ dọn dẹp thư mục build
+//// Giữ nguyên cho tất cả các sub-projects
+//tasks.register("clean", Delete) {
+//    delete rootProject.buildDir
+//}
+buildscript {
+//    ext.kotlin_version = '1.7.0'
+    ext.kotlin_version = '1.6.10'
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
