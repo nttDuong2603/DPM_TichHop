@@ -594,7 +594,7 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         'v1.0.0.5',
                         style: TextStyle(
-                          fontSize: screenWidth * 0.04,
+                          fontSize: screenWidth * 0.035,
                           color: Colors.grey,
                         ),
                       ),
