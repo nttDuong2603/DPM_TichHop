@@ -3,12 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../DevicesConfiguration/chainway_R5_RFID/uhfManager.dart';
 import '../Distribution_Module/database.dart';
 import '../Distribution_Module/model.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import '../utils/DataProcessing.dart';
 import '../utils/scan_count_modal.dart';
 import '../utils/key_event_channel.dart';
 import 'history_check_inventory.dart';
@@ -21,6 +23,8 @@ class CheckInventory extends StatefulWidget {
 }
 
 class _CheckInventoryState extends State<CheckInventory> {
+
+  //#region Variables
   final TextEditingController _searchController = TextEditingController();
   DateTime? selectedDate;
   final CalendarDatabaseHelper _databaseHelper = CalendarDatabaseHelper();
@@ -77,6 +81,11 @@ class _CheckInventoryState extends State<CheckInventory> {
   bool _isSnackBarDisplayed = false;
 
 
+  final UHFManager _uhfManager = UHFManager();
+  List<TagEpc> r5_resultTags = [];
+  //#endregion Variables
+
+
   @override
   void initState() {
     super.initState();
@@ -91,8 +100,22 @@ class _CheckInventoryState extends State<CheckInventory> {
     KeyEventChannel(
       onKeyReceived: _toggleScanning,
     ).initialize();
+    uhfbleRegister();
   }
 
+
+  void uhfbleRegister(){
+    _uhfManager.setMultiTagCallback((tagList) { // Listen data from R5
+      setState(() {
+        r5_resultTags =DataProcessing.ConvertToTagEpcList(tagList);
+        DataProcessing.ProcessData(r5_resultTags, _data); // Filter
+        print('Data from R5: ${r5_resultTags.length}');
+        updateStatusAndCountResult();
+      });
+    });
+  }
+
+//#region Data Handle
   Future<void> _initDatabase() async {
     await _databaseHelper.initDatabase();
     final DateTime now = DateTime.now();
@@ -183,6 +206,7 @@ class _CheckInventoryState extends State<CheckInventory> {
       await _loadEventsWithEpcData(picked); // Load events for the selected date with epcData
     }
   }
+//#endregion   Data Handle
 
   @override
   void dispose() {
@@ -196,13 +220,17 @@ class _CheckInventoryState extends State<CheckInventory> {
   closeAll() {
     RfidC72Plugin.close;
   }
+
+  /// Initialize the platform state for C Series Scanner
   Future<void> initPlatformState() async {
     String platformVersion;
-    print('StrDebug: initPlatformState');
+
     try {
       platformVersion = (await RfidC72Plugin.platformVersion)!;
+      print('MinhChauLog: initPlatformState success !');
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
+      print('MinhChauLog: initPlatformState Failed !');
     }
     RfidC72Plugin.connectedStatusStream
         .receiveBroadcastStream()
@@ -217,6 +245,7 @@ class _CheckInventoryState extends State<CheckInventory> {
       _isLoading = false;
     });
   }
+
   Future<void> _playScanSound() async {
     try {
       await _audioPlayer.setAsset('assets/sound/Bip.mp3');
@@ -225,16 +254,39 @@ class _CheckInventoryState extends State<CheckInventory> {
       print("$e");
     }
   }
+  // Get tag by button and add to list
+  void manualReadTags(bool isStart) async {
+     await _uhfManager.manualRead(isStart);
+  }
 
   void updateTags(dynamic result) async {
-    List<TagEpc> newData = TagEpc.parseTags(result);
+    List<TagEpc> newData = TagEpc.parseTags(result); //Convert to TagEpc list
+   // print(newData[0].epc.toString());
+   //  newData.forEach((tag) => print('EPC: ${tag.epc}'));
+   //  print('MINCHAULOG: epc count ${newData.length}');
+   //  print('MINCHAULOG: epc name ${newData.first.epc}');
+   //  if (newData.isEmpty) {
+   //    print('newData is empty!');
+   //  }
+    DataProcessing.ProcessData(newData, _data); // Filter
 
-    List<TagEpc> uniqueData = newData.where((newTag) =>
-        !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-    if (!uniqueData.isEmpty) {
-      _playScanSound();
-    }
-    _data.addAll(uniqueData);
+    // List<TagEpc> uniqueData = newData.where((newTag) =>
+    //     !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    //
+    // if (!uniqueData.isEmpty) {
+    //   _playScanSound();
+    // }
+    // _data.addAll(uniqueData);
+
+    updateStatusAndCountResult();
+
+    // setState(() {
+    //   isScanning = true;
+    //   successfullySaved = _data.length; // Cập nhật trạng thái
+    // });
+    // sendUpdateEvent(successfullySaved);
+  }
+  void updateStatusAndCountResult(){
     setState(() {
       isScanning = true;
       successfullySaved = _data.length; // Cập nhật trạng thái
@@ -299,11 +351,11 @@ class _CheckInventoryState extends State<CheckInventory> {
       builder: (BuildContext context) {
         return SingleChildScrollView(
           child: Container(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Thông tin chip',
                   style: TextStyle(
                     fontSize: 26,
@@ -323,14 +375,14 @@ class _CheckInventoryState extends State<CheckInventory> {
                       return ListTile(
                       title: Text(
                         '${index + 1}. $epcString', // Hiển thị EPC dưới dạng chuỗi
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Color(0xFF097746),
                         ),
                       ),
                     );
                   },
                 )
-                    : Center( // Hiển thị nếu không có dữ liệu
+                    : const Center( // Hiển thị nếu không có dữ liệu
                       child: Text(
                         'Không có dữ liệu',
                         style: TextStyle(
@@ -633,6 +685,8 @@ class _CheckInventoryState extends State<CheckInventory> {
     sendUpdateEvent(newData);
   }
 
+//#region ScanRFID
+
   Future<void> stopScanning() async {
     if (!_isSnackBarDisplayed) {
       await RfidC72Plugin.stop;
@@ -645,43 +699,30 @@ class _CheckInventoryState extends State<CheckInventory> {
       });
     }
   }
-
-  Future<void> stopScanning2() async {
-    if (!_isSnackBarDisplayed) {
-      await RfidC72Plugin.stop;
-      // _showSnackBar('Đã đạt đủ số lượng');
-      _isSnackBarDisplayed = true;
-      // Navigator.pop(context);
-    }
-  }
-
-  void updateIsConnected(dynamic isConnected) {
-    _isConnected = isConnected;
-    print(' successful');
-  }
-
   Future<void> _toggleScanning() async {
+    print("MinhChauLog: Start Toggle Scanning !");
     if (isProcessedEventsPageOpen) {
       return;
     }
+
     if (_isContinuousCall) {
-      // Dừng quét
-      await RfidC72Plugin.stop;
+      print("MinhChauLog: Stop scan !");
+      manualReadTags(false);
+    //  await RfidC72Plugin.stop;
       _isContinuousCall = false;
-      // Đóng dialog quét nếu nó đang hiển thị
       if (_isDialogShown) {
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        // Không cần đặt _isDialogShown = false ở đây vì nó sẽ được cập nhật sau khi dialog đóng
       }
-      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-    } else {
-      // Bắt đầu quét
-      await RfidC72Plugin.startContinuous;
+    }
+    else
+    {
+      print("MinhChauLog: Start scan !");
+    //  await RfidC72Plugin.startContinuous;
+      manualReadTags(true);
       _isContinuousCall = true;
-      // Hiển thị dialog quét nếu không có dialog nào đang hiển thị
-      if (!_isDialogShown) {
+      if (!_isDialogShown)
+      {
         _showScanningModal();
-        // Không cần đặt _isDialogShown = true ở đây vì nó sẽ được cập nhật trong _showScanningModal()
       }
     }
     setState(() {
@@ -689,6 +730,14 @@ class _CheckInventoryState extends State<CheckInventory> {
     });
   }
 
+//#endregion
+
+  void updateIsConnected(dynamic isConnected) {
+    _isConnected = isConnected;
+    print('successful');
+  }
+
+  /// Show counting tag by modal
   void _showScanningModal() {
     showDialog(
       context: context,
@@ -730,7 +779,7 @@ class _CheckInventoryState extends State<CheckInventory> {
           ),
         ),
         centerTitle: true,
-        title: Text(
+        title: const Text(
                     'Kiểm kho',
           style: TextStyle(
             fontSize: 22,
@@ -740,7 +789,7 @@ class _CheckInventoryState extends State<CheckInventory> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.history,color: Color(0xFF097746)),
+            icon: const Icon(Icons.history,color: Color(0xFF097746)),
             onPressed: () {
               // showProcessedEventsModal();
               showProcessedEventsPage();
@@ -757,7 +806,7 @@ class _CheckInventoryState extends State<CheckInventory> {
         Container(
         alignment: Alignment.topLeft,
           margin: EdgeInsets.only(left: 20),
-          child: Text('Chọn ngày phân phối',
+          child: const Text('Chọn ngày phân phối',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -766,17 +815,17 @@ class _CheckInventoryState extends State<CheckInventory> {
           ),
 
         ),
-        SizedBox(height:10),
+        const SizedBox(height:10),
         Container(
-          color: Color(0xFFFAFAFA),
-          padding: EdgeInsets.fromLTRB(30, 0, 30, 0),
+          color: const Color(0xFFFAFAFA),
+          padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
 
           child: TextField(
             readOnly: true,
             // controller: _searchController,
             decoration: InputDecoration(
               hintText: currentDateString,
-              hintStyle: TextStyle(color: Color(0xFFA2A4A8),
+              hintStyle: const TextStyle(color: Color(0xFFA2A4A8),
                 fontWeight: FontWeight.normal,
               ),
               isDense: true,
@@ -978,6 +1027,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                 fixedSize: Size(150.0, 50.0),
               ),
               onPressed: () async {
+
                 _toggleScanning();
               },
               child: (_isContinuousCall)

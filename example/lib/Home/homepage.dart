@@ -81,9 +81,9 @@ class _HomePageState extends State<HomePage> {
       AppConfig.connectedDeviceName = connectedDeviceName;
       AppConfig.connectedDeviceMac = connectedDeviceMac;
     });
-    print('tên BLE kết nối: ${AppConfig.connectedDeviceName}');
-    print('Mac BLE kết nối: ${AppConfig.connectedDeviceMac}');
-    print('tên TB kết nối: ${AppConfig.device}');
+    print('Saved bluetooth name: ${AppConfig.connectedDeviceName}');
+    print('Saved Bluetooth Mac: ${AppConfig.connectedDeviceMac}');
+    print('Device type: ${AppConfig.device}');
   }
 
   void navigateToOfflineDistribution(BuildContext context) {

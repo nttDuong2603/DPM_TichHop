@@ -204,10 +204,20 @@ class TagEpc {
   bool isSent;
   DateTime? saveDate;
 
+  // add new for R5
+  final String? count;
+  final String? user;
+  final String? rssi;
+  final String? tid;
+
   TagEpc({
     required this.epc,
     this.isSent = false,
     this.saveDate,
+    this.count,
+    this.user,
+    this.rssi,
+    this.tid,
   });
 
   factory TagEpc.fromMap(Map<String, dynamic> json) => TagEpc(

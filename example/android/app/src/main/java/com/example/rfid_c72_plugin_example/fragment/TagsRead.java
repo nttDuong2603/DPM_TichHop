@@ -2,7 +2,6 @@ package com.example.rfid_c72_plugin_example.fragment;
 
 
 import android.util.Log;
-import android.text.TextUtils;
 import android.os.SystemClock;
 import android.os.Message;
 import android.os.Handler;
@@ -73,14 +72,14 @@ public class TagsRead {
                     Log.i("MINHCHAULOG", "Key Down: " + keycode);
                     if (keycode == 3) {
                         isKeyDownUP = true;
-                        startThread();
+                        startInventoryScan();
                     } else {
                         if (!isKeyDownUP) {
                             if (keycode == 1) {
                                 if (isScanning) {
                                     stop();
                                 } else {
-                                    startThread();
+                                    startInventoryScan();
                                 }
                             }
                         }
@@ -104,6 +103,31 @@ public class TagsRead {
         });
     }
 
+    // Hàm xử lý khi nhấn nút
+    public void onButtonManualPress(boolean isStart) {
+        try {
+            if (uhfble.getConnectStatus() != ConnectionStatus.CONNECTED) return;
+            if(isStart){
+                Log.i("MINHCHAULOG", "Start inventory scan");
+                if (isScanning) {
+                    stop();
+                    startInventoryScan();
+                } else {
+                    startInventoryScan();
+                }
+            } else {
+                Log.i("MINHCHAULOG", "Stop inventory scan");
+                if (isScanning) {
+                    stop();
+                }
+            }
+
+        }
+        catch (Exception e) {
+            Log.e("MINHCHAULOG", "Error onButtonManualPress: " + e.getMessage());
+        }
+
+    }
     public void addListener(EventListener listener) {
         if (!listeners.contains(listener)) {
             listeners.add(listener);
@@ -131,7 +155,7 @@ public class TagsRead {
         return tagList;
     }
 
-    public void startThread() {
+    public void startInventoryScan() {
         //If scanning is already started, return
         if (isScanning) {
             return;

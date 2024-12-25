@@ -491,7 +491,7 @@ class _SendDataState extends State<SendData> {
       await dbHelper.deleteEvent(event);
       widget.onDeleteEvent(event);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Xóa lịch thành công!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -500,7 +500,7 @@ class _SendDataState extends State<SendData> {
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Đã xảy ra lỗi khi xóa lịch!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),

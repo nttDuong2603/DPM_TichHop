@@ -30,7 +30,8 @@ Description: C72 and RFID R5
 public class MainActivity extends FlutterActivity {
     private TagsRead tagsRead;
     private DeviceListActivity deviceListActivity;
-    private static final String CHANNEL = "rfid_c72_plugin";
+    private static final String CHANNEL = "rfid_r5_plugin";
+    private static final String CHANNEL_C_Series = "rfid_c72_plugin";
     public RFIDWithUHFBLE uhfble;
     private static final int ACCESS_FINE_LOCATION_PERMISSION_REQUEST = 100;
     private static final int PERMISSION_REQUEST_CODE = 101;
@@ -106,6 +107,23 @@ public class MainActivity extends FlutterActivity {
                     result.success(true);
                     break;
 
+                case "manualRead": // Manual scan
+                    android.util.Log.d("MINHCHAULOG", "Manual read command from flutter");
+                    boolean isStart = call.argument("isStart");
+                    if (tagsRead != null) {
+                        if(isStart){
+                            tagsRead.onButtonManualPress(true);
+                        } else {
+                            tagsRead.onButtonManualPress(false);
+                        }
+
+                       // ArrayList<HashMap<String, String>> dataList = tagsRead.getTagList();
+                        result.success("Manual Read Started !");
+                    } else {
+                        result.error("TAG_READ_ERROR", "TagsRead is not initialized", null);
+                    }
+                    break;
+
                 case "inventorySingleTag": // Read single tag list
                     android.util.Log.d("MINHCHAULOG", "inventorySingleTag processing...");
                     if (tagsRead != null) {
@@ -130,18 +148,20 @@ public class MainActivity extends FlutterActivity {
         Connections.handleLocationPermissionsResult(requestCode, permissions, grantResults);    // Xử lý kết quả yêu cầu quyền vị trí
     }
 
-    // Key code for C72
+    // Key Down for C72
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL)
+        new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL_C_Series)
                 .invokeMethod("onKeyDown", keyCode);
+        android.util.Log.d("MINHCHAULOG", "C72 key down: " + keyCode);
         return super.onKeyDown(keyCode, event);
     }
-    // Key code for C72
+    // Key Up for C72
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL)
+        new MethodChannel(getFlutterEngine().getDartExecutor().getBinaryMessenger(), CHANNEL_C_Series)
                 .invokeMethod("onKeyUp", keyCode);
+        android.util.Log.d("MINHCHAULOG", "C72 key up: " + keyCode);
         return super.onKeyUp(keyCode, event);
     }
 }

@@ -1,4 +1,5 @@
 configurations.maybeCreate("default")
 // Thêm artifact AAR vào cấu hình "default"
 //artifacts.add("default", file('DeviceAPI_ver20230301_release.aar')) //C72/C5
-artifacts.add("default", file('DeviceAPI_ver20231208_release.aar')) //R5 Bluetooth
+//artifacts.add("default", file('DeviceAPI_ver20231208_release.aar')) //R5 Bluetooth
+artifacts.add("default", file('DeviceAPI_ver20241125_release.aar'))

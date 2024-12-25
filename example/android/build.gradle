@@ -37,7 +37,8 @@
 //}
 buildscript {
 //    ext.kotlin_version = '1.7.0'
-    ext.kotlin_version = '1.6.10'
+  //  ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.9.0'
 
     repositories {
         google()
@@ -60,11 +61,13 @@ allprojects {
 rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.evaluationDependsOn(':app') //Make sure the app module is evaluated first
 }
 subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// Clean build directory
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

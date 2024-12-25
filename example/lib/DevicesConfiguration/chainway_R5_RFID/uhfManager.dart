@@ -8,7 +8,7 @@ Date: 12/2024
 Description: UHF manager for data process
 */
 class UHFManager {
-  static const MethodChannel _channel = MethodChannel('rfid_c72_plugin');
+  static const MethodChannel _channel = MethodChannel('rfid_r5_plugin');
   static final UHFManager _instance = UHFManager._internal();
 
   // All callback
@@ -72,6 +72,16 @@ class UHFManager {
       await _channel.invokeMethod('scanDevices', {'enable': enable});
     } catch (e) {
       print("Error starting scan: $e");
+    }
+  }
+  // Manual Scan
+  Future<void> manualRead(bool isStart) async {
+    try
+    {
+      await _channel.invokeMethod('manualRead',{ 'isStart':isStart});
+    } on PlatformException catch (e) {
+      print("Error fetching data: ${e.message}");
+      return ;
     }
   }
 
