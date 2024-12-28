@@ -70,10 +70,10 @@ class _EPCPackgaeListState extends State<EPCPackgaeList> {
                   child: ListView.builder(
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
-                      String epcString = CommonFunction().hexToString(snapshot.data![index].epc);
+                      String? epcString = CommonFunction().hexToString(snapshot.data![index].epc!);
                       return ListTile(
                         title: Text(
-                          '${index + 1}. $epcString',
+                          '${index + 1}. ${epcString ?? ''}',
                           style: TextStyle(
                             color: Color(0xFF097746),
                           ),

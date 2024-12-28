@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../utils/common_functions.dart';
 import '../Distribution_Module/model.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../utils/app_config.dart';

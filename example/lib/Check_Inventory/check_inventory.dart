@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../utils/common_functions.dart';
 import '../DevicesConfiguration/chainway_R5_RFID/uhfManager.dart';
 import '../Distribution_Module/database.dart';
 import '../Distribution_Module/model.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
+import '../Assign_Packing_Information/model_information_package.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'recall_replacement_database.dart';

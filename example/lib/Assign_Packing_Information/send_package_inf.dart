@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/utils/app_config.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../utils/app_config.dart';
+import '../utils/common_functions.dart';
 import 'dart:async';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
@@ -397,7 +397,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       return ListView.builder(
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
-                          String epcString = CommonFunction().hexToString(snapshot.data![index].epc);
+                          String epcString = CommonFunction().hexToString(snapshot.data![index].epc!);
                           DateTime? saveDateString = snapshot.data![index].scanDate;
                           String scanDate = saveDateString != null
                               ? DateFormat('dd/MM/yyyy hh:mm:ss').format(saveDateString)
@@ -485,7 +485,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     shrinkWrap: true,
                     itemCount: _data.length,
                     itemBuilder: (context, index) {
-                      String tagepc = CommonFunction().hexToString(_data[index].epc);
+                      String tagepc = CommonFunction().hexToString(_data[index].epc!);
                       return ListTile(
                         title:
                         Text(
@@ -1011,7 +1011,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       //Mã thực tế
       for (TagEpcLBD tag in allRFIDData) {
         if (networkErrorOccurred) break;
-        String epcString = CommonFunction().hexToString(tag.epc);
+        String epcString = CommonFunction().hexToString(tag.epc!);
         String scanDate = tag.scanDate?.toIso8601String() ?? '';
       if (!sentTagsSet.contains(epcString)) {
         bool shouldSend = await shouldSendTag(_selectedMsp.isNotEmpty ? _selectedMsp : event.maLDB, epcString);
@@ -1534,7 +1534,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     buffer.writeln("Mã EPC:");
     // Duyệt qua danh sách và thêm từng EPC vào chuỗi
     for (var tag in tagEpcList) {
-      String epcString = CommonFunction().hexToString(tag.epc);
+      String epcString = CommonFunction().hexToString(tag.epc!);
       String scanDateString = tag.scanDate != null
       ? DateFormat('dd/MM/yyyy HH:mm:ss').format(tag.scanDate!)
       : " ";

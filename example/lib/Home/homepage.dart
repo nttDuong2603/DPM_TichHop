@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rfid_c72_plugin_example/utils/app_color.dart';
+import '../utils/app_color.dart';
 import '../Configuration/device_configuration.dart';
 import '../Distribution_Module/offline_distribution.dart';
 import '../Check_Inventory/check_inventory.dart';

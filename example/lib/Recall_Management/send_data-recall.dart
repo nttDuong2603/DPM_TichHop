@@ -7,7 +7,8 @@ import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
+import '../utils/common_functions.dart';
 import 'dart:async';
 import '../Assign_Packing_Information/model_information_package.dart';
 import '../UserDatatypes/user_datatype.dart';
@@ -38,6 +39,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
   final StreamController<int> _updateStreamController = StreamController<int>.broadcast(); // Tạo StreamController
   late CalendarRecall event;
   final CalendarRecallDatabaseHelper databaseHelper = CalendarRecallDatabaseHelper();
+  BarcodeScannerInPhoneController _barcodeScannerInPhoneController = BarcodeScannerInPhoneController();
   String _platformVersion = 'Unknown';
   final bool _isHaveSavedData = false;
   final bool _isStarted = false;
@@ -105,6 +107,8 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
   List<TagEpcLBD> r5_resultTags = [];
   bool scanStatusR5 = false;
+  String getResult = '';
+  String? result;
 
 
   @override
@@ -210,6 +214,48 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
 
 //.....................................22.03.24.15:59..............................//
+  void scanQRCodeByCamera() async {
+    print('hàm quét qr đc gọi');
+    String? code = await _barcodeScannerInPhoneController.scanQRCode();
+    if (code != null) {
+      print("Mã QR code đã quét và trích xuất được: $code");
+      _updateUIWithQRCode(code);
+    } else {
+      print("Không quét được mã QR hợp lệ");
+    }
+  }
+
+// Cập nhật UI với mã QR đã quét
+  void _updateUIWithQRCode(String code) async{
+    if (!mounted) return; // Kiểm tra xem widget có còn tồn tại trong tree không
+
+    setState(() {
+      result = _extractCodeFromUrl(code); // Cập nhật mã QR đã quét
+      // getResult = 'TH000002'; // Cập nhật mã QR đã quét
+
+    });
+    print("QrCode result: --$code");
+    if (String != null) {
+      _playScanSound();
+      setState(() {
+        _data.add(TagEpcLBD(epc: result!));
+      });
+      await _showBarcodeConfirmationDialog();
+      // bool confirmed = await showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return QRCodeConfirmationDialog(
+      //       qrCode: getResult,  // Truyền mã QR vào
+      //     );
+      //   },
+      // );
+      // if (confirmed) {
+      //   Navigator.pop(context, getResult); // Trả về mã QR đã quét
+      // }
+
+    }
+  }
+
   void updateTags(dynamic result) async {
     List<TagEpcLBD> newData = TagEpcLBD.parseTags(result); //Convert to TagEpc list
     print("MinhChau: data get : ${newData.length}");
@@ -1070,7 +1116,10 @@ class _SendDataRecallState extends State<SendDataRecall> {
                       if (_selectedScanningMethod == "rfid") {
                         checkCurrentDevice(); //NMC 97
                       } else if (_selectedScanningMethod == "qr") {
-                        _toggleBarCodeScanning();
+                        // qu barcode bằng c5
+                        // _toggleBarCodeScanning();
+                      //   Quét Barcode bằng Camera
+                        scanQRCodeByCamera();
                       }
                     }
                   },

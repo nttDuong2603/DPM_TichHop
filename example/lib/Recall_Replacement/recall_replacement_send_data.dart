@@ -7,7 +7,8 @@ import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
+import '../utils/common_functions.dart';
 import 'dart:async';
 import '../Assign_Packing_Information/model_information_package.dart';
 import 'package:intl/intl.dart';
@@ -49,6 +50,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
   late Timer _timer;
   TextEditingController _agencyNameController = TextEditingController();
   TextEditingController _goodsNameController = TextEditingController();
+  BarcodeScannerInPhoneController _barcodeScannerInPhoneController = BarcodeScannerInPhoneController();
   bool confirm = false;
   List<TagEpcLBD> _data = [];
   final List<String> _EPC = [];
@@ -102,6 +104,8 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
   bool _isClickReplaceScanButton = false;
   bool _isClickConfirmScanMethod = false;
   String extractedCode = '';
+  String getResult = '';
+  String? result;
 
   // String IP = 'http://192.168.19.69:5088';
   // String IP = 'http://192.168.19.180:5088';
@@ -181,6 +185,49 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       print("$e");
     }
   }
+
+  void scanQRCodeByCamera() async {
+    print('hàm quét qr đc gọi');
+    String? code = await _barcodeScannerInPhoneController.scanQRCode();
+    if (code != null) {
+      print("Mã QR code đã quét và trích xuất được: $code");
+      _updateUIWithQRCode(code);
+    } else {
+      print("Không quét được mã QR hợp lệ");
+    }
+  }
+
+// Cập nhật UI với mã QR đã quét
+  void _updateUIWithQRCode(String code) async{
+    if (!mounted) return; // Kiểm tra xem widget có còn tồn tại trong tree không
+
+    setState(() {
+      result = _extractCodeFromUrl(code); // Cập nhật mã QR đã quét
+      // getResult = 'TH000002'; // Cập nhật mã QR đã quét
+
+    });
+    print("QrCode result: --$code");
+    if (String != null) {
+      _playScanSound();
+      setState(() {
+        _data.add(TagEpcLBD(epc: result!));
+      });
+      await _showBarcodeConfirmationDialog();
+      // bool confirmed = await showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return QRCodeConfirmationDialog(
+      //       qrCode: getResult,  // Truyền mã QR vào
+      //     );
+      //   },
+      // );
+      // if (confirmed) {
+      //   Navigator.pop(context, getResult); // Trả về mã QR đã quét
+      // }
+
+    }
+  }
+
 
   void updateTags(dynamic result) async {
     // Kiểm tra nếu kết quả là URL (barcode)
@@ -2090,7 +2137,10 @@ String epcRecall = '';
                             // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
                             if (_selectedScanningMethod == "qr") {
                               // RfidC72Plugin.close;
-                              _toggleBarCodeScanning();
+                              // Quét bằng C5
+                              // _toggleBarCodeScanning();
+                              //Queét bằng Camera
+                              scanQRCodeByCamera();
                               // _simulateKeyEvent(139);
                               // KeyEventChannel(
                               //   onKeyReceived: _toggleBarCodeScanning, // Barcode quét
@@ -2269,7 +2319,10 @@ String epcRecall = '';
                         _toggleScanning();
                       } else if (_selectedScanningMethod == "qr") {
                         // RfidC72Plugin.close;
-                        _toggleBarCodeScanning();
+                        //quét bằng C5
+                        // _toggleBarCodeScanning();
+                        //quét bằng Camera
+                        scanQRCodeByCamera();
                         // _simulateKeyEvent(139);
                       }
                     }

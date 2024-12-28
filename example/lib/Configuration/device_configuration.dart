@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/UserDatatypes/user_datatype.dart';
 import '../DevicesConfiguration/chainway_R5_RFID/chainwayR5Rfid.dart';
 import '../DevicesConfiguration/chainway_R5_RFID/uhfManager.dart';
+import '../UserDatatypes/user_datatype.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import '../main.dart';
 import '../utils/app_color.dart';
@@ -356,97 +356,99 @@ class _DeviceConfigurationPageState extends State<DeviceConfigurationPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Chọn thiết bị',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColor.mainText,
-            ),
-          ),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return SizedBox(
-                height: 150, // Chiều cao của dialog
-                child: ListView(
-                  children: [
-                    ...['Camera', 'C5', 'R5'].map((item) {
-                      return Column(
-                        children: [
-                          Theme(
-                            data: ThemeData(
-                              radioTheme: RadioThemeData(
-                                fillColor: MaterialStateProperty.resolveWith<Color>(
-                                      (states) {
-                                    if (states.contains(MaterialState.selected)) {
-                                      return AppColor.activeColorRadio; // Màu khi được chọn
-                                    }
-                                    return AppColor.mainText; // Màu khi chưa được chọn
-                                  },
-                                ),
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return AlertDialog(
+              backgroundColor: AppColor.backgroundAppColor,
+              title: Text(
+                'Chọn thiết bị',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColor.mainText,
+                ),
+              ),
+              content: SizedBox(
+                height: 150, // Giới hạn chiều cao của dialog
+                child: ListView.builder(
+                  itemCount: 3, // Số lượng thiết bị: Camera, C5, R5
+                  itemBuilder: (context, index) {
+                    final devices = ['Camera', 'C5', 'R5'];
+                    final device = devices[index];
+                    final isLastItem = index == devices.length - 1; // Kiểm tra mục cuối cùng
+
+                    return Column(
+                      children: [
+                        Container(
+                          width: double.infinity, // Chiều rộng full
+                          decoration: BoxDecoration(
+                            color: selectedDevice == device
+                                ? AppColor.mainText // Màu nền xám nếu được chọn
+                                : Colors.transparent, // Màu nền trong suốt nếu không được chọn
+                            // borderRadius: BorderRadius.circular(8), // Tùy chỉnh bo góc
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              device,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: selectedDevice == device
+                                    ? Colors.white // Màu chữ khi được chọn
+                                    : AppColor.borderInputColor, // Màu chữ mặc định
                               ),
                             ),
-                            child: RadioListTile<String>(
-                              value: item,
-                              groupValue: selectedDevice,
-                              onChanged: (String? value) {
-                                setState(() {
-                                  selectedDevice = value; // Cập nhật trong dialog
-                                });
-                              },
-                              title: Text(
-                                item,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: selectedDevice == item
-                                      ? AppColor.mainText // Màu chữ khi được chọn
-                                      : AppColor.borderInputColor, // Màu chữ khi chưa được chọn
-                                ),
-                              ),
-                              activeColor: AppColor.activeColorRadio,
+                            onTap: () {
+                              // Cập nhật thiết bị được chọn ngay lập tức
+                              setModalState(() {
+                                selectedDevice = device; // Cập nhật trong modal
+                              });
+                              setState(() {
+                                selectedDevice = device; // Cập nhật trong toàn bộ giao diện
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                        // Thêm Divider nếu không phải mục cuối cùng
+                        if (!isLastItem)
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.005), // Padding hai bên
+                            child: Divider(
+                              color: AppColor.mainText.withOpacity(0.5), // Màu của Divider
+                              thickness: 1, // Độ dày của Divider
+                              height: 1, // Chiều cao giữa các Divider
                             ),
                           ),
-                        ],
-                      );
-                    }).toList(),
-                  ],
+                      ],
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          actions: [
-
-            ElevatedButton(
-              style: TextButton.styleFrom(
-                backgroundColor: AppColor.mainText,
-                padding: EdgeInsets.symmetric(horizontal: 10 , vertical: 5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              ),
+              actions: [
+                // Nút "Đóng"
+                TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColor.mainText,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng dialog
+                  },
+                  child: const Text(
+                    'Đóng',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                // minimumSize: Size(screenWidth * 0., 0),
-              ),
-              onPressed: () {
-                setState(() {
-                  AppConfig.device = selectedDevice; // Lưu thiết bị được chọn
-                  if(selectedDevice == 'C5'){
-                    currentDevice = Device.C_Series;
-                  }
-                  else if(selectedDevice == 'R5'){
-                    currentDevice = Device.R_Series;
-
-                  }else if(selectedDevice == 'Camera'){
-                    currentDevice = Device.Camera_Barcodes;
-                  }
-                });
-                Navigator.of(context).pop(); // Đóng dialog
-              },
-              child: const Text(
-                'Chọn',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );

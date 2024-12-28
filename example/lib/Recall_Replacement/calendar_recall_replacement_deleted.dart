@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
-import 'package:rfid_c72_plugin_example/Recall_Replacement/recall_replacement_offline_list.dart';
+import '../Assign_Packing_Information/model_information_package.dart';
+import '../Recall_Replacement/recall_replacement_offline_list.dart';
 import 'dart:async';
 import 'recall_replacement_model.dart';
 import 'recall_replacement_database.dart';

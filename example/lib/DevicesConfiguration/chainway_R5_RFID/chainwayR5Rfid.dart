@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:rfid_c72_plugin_example/DevicesConfiguration/chainway_R5_RFID/uhfManager.dart';
+import 'uhfManager.dart';
 
 /*
 Creator: NMC97

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import '../utils/common_functions.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
