@@ -9,6 +9,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rfid_c72_plugin_example/utils/app_config.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import 'dart:async';
+import '../UserDatatypes/user_datatype.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../main.dart';
 import 'model_information_package.dart';
 import 'database_package_inf.dart';
 import 'dart:convert';
@@ -110,6 +114,8 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   // String IP = 'http://192.168.19.69:5088';
   // String IP = 'http://192.168.19.180:5088';
   // String IP = 'https://jvf-admin.rynansaas.com';
+  List<TagEpcLBD> r5_resultTags = [];
+  bool scanStatusR5 = false;
 
 
   @override
@@ -125,9 +131,35 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     _MSPLDB.text = _selectedMSPLDB;
     loadTagCount();
     KeyEventChannel(
-      onKeyReceived: _toggleScanning,
+      onKeyReceived: _toggleScanningForC5,
     ).initialize();
   }
+  //#region R_Series Register Tag Read
+  Future<void> checkCurrentDevice() async {
+    if (currentDevice == Device.C_Series) {
+      await _toggleScanningForC5();
+    } else if (currentDevice == Device.R_Series) {
+      await  _toggleScanningForR5();
+    } else if (currentDevice == Device.Camera_Barcodes) {
+      // Todo
+    }
+  }
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
+      setState(() {
+        if(currentDevice != Device.R_Series) return;
+        r5_resultTags = DataProcessing.ConvertToTagEpcLBDList(tagList);
+        DataProcessing.ProcessDataLBD(r5_resultTags, _data); // Filter
+        print('Data from R5: ${r5_resultTags.length}');
+        updateStatusAndCountResult();
+      });
+    });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) {
+      scanStatusR5 = scanStatus;
+      _toggleScanningForR5();
+    });
+  }
+//#endregion R_Series Register Tag Read
 
   Future<void> _initDatabase() async {
     await _databaseHelper.initDatabase();
@@ -176,19 +208,31 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
 //.....................................22.03.24.15:59..............................//
   void updateTags(dynamic result) async {
     List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
-    List<TagEpcLBD> currentTags = await loadData(event.idLDB);
-    List<TagEpcLBD> uniqueData = newData.where((newTag) =>
-    !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
-        !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    DataProcessing.ProcessDataLBD(newData, _data); // Filter
+    updateStatusAndCountResult();
 
-    uniqueData.forEach((tag) {
-      tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
-    });
-    if (!uniqueData.isEmpty) {
-      _playScanSound();
-    }
-    _data.addAll(uniqueData);
+    // List<TagEpcLBD> currentTags = await loadData(event.idLDB);
+    // List<TagEpcLBD> uniqueData = newData.where((newTag) =>
+    // !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
+    //     !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    //
+    // uniqueData.forEach((tag) {
+    //   tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
+    // });
+    // if (!uniqueData.isEmpty) {
+    //   _playScanSound();
+    // }
+    // _data.addAll(uniqueData);
 
+    // setState(() {
+    //   isScanning = true;
+    //   successfullySaved = _data.length; // Cập nhật trạng thái
+    // });
+    // sendUpdateEvent(successfullySaved);
+
+  }
+
+  void updateStatusAndCountResult() {
     setState(() {
       isScanning = true;
       successfullySaved = _data.length; // Cập nhật trạng thái
@@ -526,44 +570,61 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   void onAgencySelected(String selectedAgencyName) {
   }
 
-  Future<void> _toggleScanning() async {
-    if(_isShowSyncModal){
+  //#region ScanRFID
+  Future<void> _toggleScanningForC5() async {
+    print("MinhChauLog: Start Toggle Scanning for C5!");
+    if (_isShowSyncModal  || currentDevice != Device.C_Series) {
       return;
     }
     if (_isContinuousCall) {
-      // Dừng quét
-      await RfidC72Plugin.stop;
+      DataReadOptions.readTagsAsync(false, currentDevice);
       _isContinuousCall = false;
-      // Đóng dialog quét nếu nó đang hiển thị
       if (_isDialogShown) {
         Navigator.of(context, rootNavigator: true).pop('dialog');
-        // Không cần đặt _isDialogShown = false ở đây vì nó sẽ được cập nhật sau khi dialog đóng
       }
-      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-      if (!showConfirmationDialog) {
-        Future.delayed(Duration(milliseconds: 100), () {
-          _showConfirmationDialog();
-          showConfirmationDialog = true;
-        });
-      }
-    } else {
-
-      if(!showConfirmationDialog ){
-        await RfidC72Plugin.startContinuous;
-        _data.clear();
-        _isContinuousCall = true;
-        // Hiển thị dialog quét nếu không có dialog nào đang hiển thị
-        if (!_isDialogShown) {
-          _showScanningModal();
-          // Không cần đặt _isDialogShown = true ở đây vì nó sẽ được cập nhật trong _showScanningModal()
-        }
+    }
+    else {
+      DataReadOptions.readTagsAsync(true, currentDevice);
+      _isContinuousCall = true;
+      if (!_isDialogShown)
+      {
+        _showScanningModal();
       }
     }
     setState(() {
       _isShowModal = _isContinuousCall;
     });
   }
-
+  Future<void> _toggleScanningForR5() async {
+    print("MinhChauLog: Start Toggle Scanning for R5!");
+    if (_isShowSyncModal || currentDevice != Device.R_Series) {
+      return;
+    }
+    if (_isContinuousCall) {
+      if(!scanStatusR5){
+        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+      }
+      _isContinuousCall = false;
+      if (_isDialogShown) {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      }
+    }
+    else
+    {
+      if(!scanStatusR5){
+        DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+      }
+      _isContinuousCall = true;
+      if (!_isDialogShown)
+      {
+        _showScanningModal();
+      }
+    }
+    setState(() {
+      _isShowModal = _isContinuousCall;
+      scanStatusR5=false;
+    });
+  }
   void _showScanningModal() {
     showDialog(
       context: context,
@@ -586,6 +647,68 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
     _isDialogShown = true;
   }
+//#endregion
+
+  // Future<void> _toggleScanning_old() async {
+  //   if(_isShowSyncModal){
+  //     return;
+  //   }
+  //   if (_isContinuousCall) {
+  //     // Dừng quét
+  //     await RfidC72Plugin.stop;
+  //     _isContinuousCall = false;
+  //     // Đóng dialog quét nếu nó đang hiển thị
+  //     if (_isDialogShown) {
+  //       Navigator.of(context, rootNavigator: true).pop('dialog');
+  //       // Không cần đặt _isDialogShown = false ở đây vì nó sẽ được cập nhật sau khi dialog đóng
+  //     }
+  //     // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
+  //     if (!showConfirmationDialog) {
+  //       Future.delayed(Duration(milliseconds: 100), () {
+  //         _showConfirmationDialog();
+  //         showConfirmationDialog = true;
+  //       });
+  //     }
+  //   } else {
+  //
+  //     if(!showConfirmationDialog ){
+  //       await RfidC72Plugin.startContinuous;
+  //       _data.clear();
+  //       _isContinuousCall = true;
+  //       // Hiển thị dialog quét nếu không có dialog nào đang hiển thị
+  //       if (!_isDialogShown) {
+  //         _showScanningModal();
+  //         // Không cần đặt _isDialogShown = true ở đây vì nó sẽ được cập nhật trong _showScanningModal()
+  //       }
+  //     }
+  //   }
+  //   setState(() {
+  //     _isShowModal = _isContinuousCall;
+  //   });
+  // }
+
+  // void _showScanningModal_old() {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext context) {
+  //       // Trả về widget dialog
+  //       return Center(
+  //         child: Dialog(
+  //           elevation: 0,
+  //           backgroundColor: Colors.transparent,
+  //           child: Container(
+  //             // Nội dung dialog
+  //             child: SavedTagsModal(
+  //               updateStream: _updateStreamController.stream,
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
+  //   _isDialogShown = true;
+  // }
 
   void updateMSP(String? msp) {
     String combinedValue = "$msp ";
@@ -1985,7 +2108,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       fixedSize: Size(150.0, 50.0),
                     ),
                     onPressed: () async {
-                        await _toggleScanning();
+                      await checkCurrentDevice();
                     },
                     child: (_isContinuousCall)
                         ? Text('Dừng quét', style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.06))

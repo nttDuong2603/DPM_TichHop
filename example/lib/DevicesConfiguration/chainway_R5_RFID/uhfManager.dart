@@ -14,6 +14,7 @@ class UHFManager {
   // All callback
   Function(List<Map<String, String>>)? _onDeviceListReceived;
   Function(List<Map<String, String>>)? _onMultiTagReceived;
+  Function(bool)? _onScanStatusReceived;
 
   factory UHFManager() {
     return _instance;
@@ -22,7 +23,7 @@ class UHFManager {
     _channel.setMethodCallHandler(_handleMethodCall);
   }
 
-  // Register for callbacks
+  //#region Register for callbacks
   void setDeviceListCallback(Function(List<Map<String, String>>) callback) {
     _onDeviceListReceived = callback;
   }
@@ -31,11 +32,16 @@ class UHFManager {
     _onMultiTagReceived = callback;
   }
 
+  void setScanningStatusCallback(Function(bool) callback){
+    _onScanStatusReceived = callback;
+  }
+  //#endregion
+
   // Handles methods sent from Java
   // Callbacks should be called together and then divided into cases, but cannot be called in parallel, which will override the callback
   Future<void> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
-      case "onDeviceListReceived":
+      case "onDeviceListReceived": //Devices connection list
         if (_onDeviceListReceived != null) {
           final String devicesJson = call.arguments;
           final List<dynamic> devices = jsonDecode(devicesJson);
@@ -44,13 +50,19 @@ class UHFManager {
         }
         break;
 
-      case "inventoryMultiTag":
+      case "inventoryMultiTag": // Tags list
         if (_onMultiTagReceived != null) {
           final String tagsJson = call.arguments;
           final List<dynamic> tags = jsonDecode(tagsJson);
           final tagList = tags.map((tag) => Map<String, String>.from(tag)).toList();
           _onMultiTagReceived!(tagList);
         }
+        break;
+
+      case "onScanStatusReceived":// Get the scan status : true is scanning
+        bool status = call.arguments;
+
+        _onScanStatusReceived!(status);
         break;
 
       default:
@@ -66,7 +78,7 @@ class UHFManager {
     return result;
   }
 
-  // Bắt đầu quét
+  // Scan device for connection
   static Future<void> scanDevices(bool enable) async {
     try {
       await _channel.invokeMethod('scanDevices', {'enable': enable});
@@ -74,7 +86,8 @@ class UHFManager {
       print("Error starting scan: $e");
     }
   }
-  // Manual Scan
+
+  // Manual Scan R5
   Future<void> manualRead(bool isStart) async {
     try
     {

@@ -10,6 +10,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import 'dart:async';
 import '../Assign_Packing_Information/model_information_package.dart';
+import '../UserDatatypes/user_datatype.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../main.dart';
 import '../utils/app_config.dart';
 import 'database_recall.dart';
 import 'model_recall_manage.dart';
@@ -99,6 +103,9 @@ class _SendDataRecallState extends State<SendDataRecall> {
   // String IP = 'http://192.168.19.180:5088';
   // String IP = 'https://jvf-admin.rynansaas.com';
 
+  List<TagEpcLBD> r5_resultTags = [];
+  bool scanStatusR5 = false;
+
 
   @override
   void initState() {
@@ -113,9 +120,39 @@ class _SendDataRecallState extends State<SendDataRecall> {
     loadTagCount();
     loadRecallReplaceTagCount();
     KeyEventChannel(
-      onKeyReceived: _toggleScanning,
+      onKeyReceived: _toggleScanningForC5,
     ).initialize();
+    uhfBLERegister();
   }
+
+  //#region R_Series Register Tag Read
+  Future<void> checkCurrentDevice() async {
+    if (currentDevice == Device.C_Series) {
+      await _toggleScanningForC5();
+    }
+    else if (currentDevice == Device.R_Series) {
+      await  _toggleScanningForR5();
+    }
+    else if (currentDevice == Device.Camera_Barcodes) {
+      // Todo
+    }
+  }
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
+      setState(() {
+        if(currentDevice != Device.R_Series) return;
+        r5_resultTags = DataProcessing.ConvertToTagEpcLBDList(tagList);
+        DataProcessing.ProcessDataLBD(r5_resultTags, _data); // Filter
+        print('Data from R5: ${r5_resultTags.length}');
+        updateStatusAndCountResult();
+      });
+    });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) {
+      scanStatusR5 = scanStatus;
+      _toggleScanningForR5();
+    });
+  }
+//#endregion R_Series Register Tag Read
 
   Future<void> _initDatabase() async {
     await _databaseHelper.initDatabase();
@@ -174,27 +211,39 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
 //.....................................22.03.24.15:59..............................//
   void updateTags(dynamic result) async {
-    List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
-    List<TagEpcLBD> currentTags = await loadData(event.idLTH);
-    List<TagEpcLBD> uniqueData = newData.where((newTag) =>
-    !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
-        !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    List<TagEpcLBD> newData = TagEpcLBD.parseTags(result); //Convert to TagEpc list
+    print("MinhChau: data get : ${newData.length}");
+    DataProcessing.ProcessDataLBD(newData, _data); // Filter
+    updateStatusAndCountResult();
+    ///
+  //  List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
+  //  List<TagEpcLBD> currentTags = await loadData(event.idLTH);
+   // List<TagEpcLBD> uniqueData = newData.where((newTag) =>
+  //  !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
+     //   !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
 
-    uniqueData.forEach((tag) {
-      tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
-    });
+    // uniqueData.forEach((tag) {
+    //   tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
+    // });
 
-    if (!uniqueData.isEmpty) {
-      _playScanSound();
-    }
-    _data.addAll(uniqueData);
+    // if (!uniqueData.isEmpty) {
+    //   _playScanSound();
+    // }
+  //  _data.addAll(uniqueData);
+  //   setState(() {
+  //     isScanning = true;
+  //     successfullySaved = _data.length; // Cập nhật trạng thái
+  //   });
+  //   sendUpdateEvent(successfullySaved);
+  // }
+}
+  void updateStatusAndCountResult() {
     setState(() {
       isScanning = true;
       successfullySaved = _data.length; // Cập nhật trạng thái
     });
     sendUpdateEvent(successfullySaved);
-  // }
-}
+  }
 
   void updateBarcodeTags(dynamic result) async {
     if (result.toString().startsWith('http') || result.toString().contains('://')) {
@@ -883,7 +932,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return AlertDialog(
-              title: Text(
+              title: const Text(
                 "Vui lòng chọn hình thức quét!",
                 style: TextStyle(
                   color: Color(0xFF097746),
@@ -900,7 +949,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                           _selectedScanningMethod = "rfid";
                         });
                         KeyEventChannel(
-                          onKeyReceived: _toggleScanning,
+                          onKeyReceived: checkCurrentDevice, //NMC 97
                         ).initialize();
                       },
                       child: Container(
@@ -1019,7 +1068,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                     if (_selectedScanningMethod.isNotEmpty) {
                       // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
                       if (_selectedScanningMethod == "rfid") {
-                        _toggleScanning();
+                        checkCurrentDevice(); //NMC 97
                       } else if (_selectedScanningMethod == "qr") {
                         _toggleBarCodeScanning();
                       }
@@ -1638,15 +1687,14 @@ class _SendDataRecallState extends State<SendDataRecall> {
   void onAgencySelected(String selectedAgencyName) {
   }
 
-  Future<void> _toggleScanning() async {
-    if(_selectedScanningMethod == "qr"){
+  Future<void> _toggleScanningForC5() async {
+    if(_selectedScanningMethod == "qr" || currentDevice != Device.C_Series){
       return;
     }
-    RfidC72Plugin.closeScan;
+   // RfidC72Plugin.closeScan;
     if (_isContinuousCall) {
-      // Dừng quét
-      await RfidC72Plugin.stop;
-      _isContinuousCall = false;
+        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+
       // Đóng dialog quét nếu nó đang hiển thị
       if (_isDialogShown) {
         Navigator.of(context, rootNavigator: true).pop('dialog');
@@ -1660,7 +1708,48 @@ class _SendDataRecallState extends State<SendDataRecall> {
       }
     } else {
       if(!showConfirmationDialog){
-        await RfidC72Plugin.startContinuous;
+          DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+        _data.clear();
+        _isContinuousCall = true;
+        if (!_isDialogShown) {
+          _showScanningModal();
+        }
+      }
+    }
+    setState(() {
+      _isShowModal = _isContinuousCall;
+    });
+  }
+
+  Future<void> _toggleScanningForR5() async {
+    if(_selectedScanningMethod == "qr" || currentDevice != Device.R_Series){
+      return;
+    }
+   // RfidC72Plugin.closeScan;
+    if (_isContinuousCall) {
+      if(!scanStatusR5){
+        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+      }
+      // Đóng dialog quét nếu nó đang hiển thị
+      if (_isDialogShown) {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      }
+      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
+      if (!showConfirmationDialog) {
+        Future.delayed(Duration(milliseconds: 100), () {
+          _showConfirmationDialog();
+          showConfirmationDialog = true;
+        });
+      }
+    } else {
+      print("MinhChau: bat dau doc1");
+      if(!showConfirmationDialog){
+        print("MinhChau: bat dau doc2");
+        if(!scanStatusR5){
+          print("MinhChau: bat dau doc3");
+          print("Current Device ${currentDevice}");
+          DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+        }
         _data.clear();
         _isContinuousCall = true;
         if (!_isDialogShown) {

@@ -7,6 +7,7 @@ import android.os.Message;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import com.google.gson.Gson;
 
 import com.example.rfid_c72_plugin_example.Utils;
 import com.example.rfid_c72_plugin_example.tool.CheckUtils;
@@ -76,11 +77,13 @@ public class TagsRead {
                     } else {
                         if (!isKeyDownUP) {
                             if (keycode == 1) {
+                                sendScanStatusToFlutter(isScanning);
                                 if (isScanning) {
                                     stop();
                                 } else {
                                     startInventoryScan();
                                 }
+
                             }
                         }
                     }
@@ -103,7 +106,11 @@ public class TagsRead {
         });
     }
 
-    // Hàm xử lý khi nhấn nút
+    public void sendScanStatusToFlutter(boolean isScanning){
+        methodChannel.invokeMethod("onScanStatusReceived", isScanning);
+    }
+
+    // Function to handle when pressing a button on the software interface
     public void onButtonManualPress(boolean isStart) {
         try {
             if (uhfble.getConnectStatus() != ConnectionStatus.CONNECTED) return;
@@ -126,8 +133,8 @@ public class TagsRead {
         catch (Exception e) {
             Log.e("MINHCHAULOG", "Error onButtonManualPress: " + e.getMessage());
         }
-
     }
+
     public void addListener(EventListener listener) {
         if (!listeners.contains(listener)) {
             listeners.add(listener);

@@ -8,6 +8,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import '../Distribution_Module/model.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../utils/app_config.dart';
 import 'goods_Information_model.dart';
 import '../utils/key_event_channel.dart';
@@ -89,13 +90,20 @@ class _GoodsInformationState extends State<GoodsInformation> {
     scanSingleTagAndUpdateWebView();
   }
 
+  // void updateTags(dynamic result) {
+  //   setState(() {
+  //     _data = TagEpc.parseTags(result);
+  //     _totalEPC = _data.toSet().toList().length;
+  //     if (_data.isNotEmpty) {
+  //
+  //     }
+  //   });
+  // }
   void updateTags(dynamic result) {
     setState(() {
-      _data = TagEpc.parseTags(result);
+      List<TagEpc> newData = TagEpc.parseTags(result); //Convert to TagEpc list
+      DataProcessing.ProcessData(newData, _data); // Filter
       _totalEPC = _data.toSet().toList().length;
-      if (_data.isNotEmpty) {
-
-      }
     });
   }
 
@@ -113,8 +121,8 @@ class _GoodsInformationState extends State<GoodsInformation> {
           scannedCode = CommonFunction().hexToString(rawScannedCode);
 
           setState(() {
-            globalScannedCode = scannedCode;
-            // globalScannedCode = 'RJVD24000047GQML';
+            //globalScannedCode = scannedCode;
+             globalScannedCode = 'RJVD24000047GQML';
           });
           print('mã được quét: $globalScannedCode');
           // Hủy đăng ký sau khi xử lý kết quả đầu tiên
@@ -790,7 +798,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                 child: RichText(
                   text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "Địa chỉ: ",
                         style: TextStyle(fontSize: 16, color: Color(0xFF777777)), // Set color for label
                       ),

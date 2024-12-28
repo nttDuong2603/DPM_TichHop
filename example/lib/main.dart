@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'DevicesConfiguration/chainway_R5_RFID/uhfManager.dart';
 import 'Home/login_database.dart';
+import 'UserDatatypes/user_datatype.dart';
 // import 'barcode_test.dart';
 
+// Step 1: Define a global variable
+final UHFBlePlugin = UHFManager() ;
+Device currentDevice =  Device.R_Series;
 void main() {
-
   runApp(const MyApp());
 }
 

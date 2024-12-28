@@ -8,6 +8,8 @@ import '../Recall_Management/recall_manage.dart';
 import '../Check_Goods_Infor_Module/goods_information.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../Recall_Replacement/recall_replacement_offline_list.dart';
+import '../UserDatatypes/user_datatype.dart';
+import '../main.dart';
 import '../utils/app_config.dart';
 import 'package:marquee/marquee.dart';
 
@@ -76,6 +78,16 @@ class _HomePageState extends State<HomePage> {
       selectedDevice = savedDevice ?? 'C5'; // Nếu không có, mặc định là 'C5'
       connectedDeviceName = savedDeviceName;
       connectedDeviceMac = savedDeviceMac;
+
+      if(selectedDevice == 'C5'){
+        currentDevice = Device.C_Series;
+      }
+      else if(selectedDevice == 'R5'){
+        currentDevice = Device.R_Series;
+
+      }else if(selectedDevice == 'Camera'){
+        currentDevice = Device.Camera_Barcodes;
+      }
 
       AppConfig.device = selectedDevice;
       AppConfig.connectedDeviceName = connectedDeviceName;

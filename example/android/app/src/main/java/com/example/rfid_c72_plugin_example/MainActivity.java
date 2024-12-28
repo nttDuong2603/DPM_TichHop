@@ -67,21 +67,22 @@ public class MainActivity extends FlutterActivity {
             public void onEventOccurred(ArrayList<HashMap<String, String>> data) {
                 Gson gson = new Gson();
                 String jsonData = gson.toJson(data);
-                Log.d("MINHCHAULOG", "Event occurred with data: " + data.size());
+               // Log.d("MINHCHAULOG", "Event occurred with data: " + data.size());
+
                 //Send data through Flutter via MethodChannel
                 runOnUiThread(() -> {
                     channel.invokeMethod("inventoryMultiTag", jsonData, new MethodChannel.Result() {
                         @Override
                         public void success(Object result) {
-                            Log.d("MINHCHAULOG", "Data sent successfully to Flutter.");
+                            //Log.d("MINHCHAULOG", "Data sent successfully to Flutter.");
                         }
                         @Override
                         public void error(String errorCode, String errorMessage, Object errorDetails) {
-                            Log.e("MINHCHAULOG", "Error sending data to Flutter: " + errorMessage);
+                            //Log.e("MINHCHAULOG", "Error sending data to Flutter: " + errorMessage);
                         }
                         @Override
                         public void notImplemented() {
-                            Log.e("MINHCHAULOG", "Flutter method not implemented.");
+                            //Log.e("MINHCHAULOG", "Flutter method not implemented.");
                         }
                     });
                 });

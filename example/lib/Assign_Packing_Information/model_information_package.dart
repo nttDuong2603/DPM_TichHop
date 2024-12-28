@@ -94,11 +94,19 @@ class CalendarDistributionInf {
 class TagEpcLBD {
   final String epc;
   DateTime? scanDate;
+  // add new for R5
+  final String? count;
+  final String? user;
+  final String? rssi;
+  final String? tid;
 
   TagEpcLBD({
     required this.epc,
     this.scanDate,
-
+    this.count,
+    this.user,
+    this.rssi,
+    this.tid,
   });
 
   // Chuyển đổi JSON Map thành đối tượng TagEpcLBD

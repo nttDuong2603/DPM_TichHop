@@ -10,9 +10,12 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import '../utils/DataProcessing.dart';
-import '../utils/scan_count_modal.dart';
-import '../utils/key_event_channel.dart';
+import '../UserDatatypes/user_datatype.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../main.dart';
+import '../Utils/scan_count_modal.dart';
+import '../Utils/key_event_channel.dart';
 import 'history_check_inventory.dart';
 
 class CheckInventory extends StatefulWidget {
@@ -32,7 +35,8 @@ class _CheckInventoryState extends State<CheckInventory> {
   List<Calendar> _events = [];
   bool isSelected = false;
   bool isAllSelected = false;
-  final StreamController<int> _updateStreamController = StreamController<int>.broadcast(); // Tạo StreamController
+  final StreamController<int> _updateStreamController = StreamController<
+      int>.broadcast(); // Tạo StreamController
   final CalendarDatabaseHelper databaseHelper = CalendarDatabaseHelper();
   String _platformVersion = 'Unknown';
   final bool _isHaveSavedData = false;
@@ -40,7 +44,9 @@ class _CheckInventoryState extends State<CheckInventory> {
   final bool _isEmptyTags = false;
   bool _isConnected = false;
   bool _isLoading = true;
-  int _totalEPC = 0, _invalidEPC = 0, _scannedEPC = 0;
+  int _totalEPC = 0,
+      _invalidEPC = 0,
+      _scannedEPC = 0;
   int currentPage = 0;
   int itemsPerPage = 5;
   List<TagEpc> paginatedData = [];
@@ -54,7 +60,7 @@ class _CheckInventoryState extends State<CheckInventory> {
   final List<String> _EPC = [];
   List<TagEpc> _successfulTags = [];
   int totalTags = 0;
-  static int _value  = 0;
+  static int _value = 0;
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
@@ -77,14 +83,17 @@ class _CheckInventoryState extends State<CheckInventory> {
   bool isProcessedEventsPageOpen = false;
   bool _isDialogShown = false;
   bool isShowModal = false;
+
   Stream<int> get updateStream => _updateStreamController.stream;
   bool _isSnackBarDisplayed = false;
 
 
-  final UHFManager _uhfManager = UHFManager();
+  ///final UHFManager _uhfManager = UHFManager();
+  // NMC97
   List<TagEpc> r5_resultTags = [];
-  //#endregion Variables
+  bool scanStatusR5 = false;
 
+  //#endregion Variables
 
   @override
   void initState() {
@@ -98,33 +107,53 @@ class _CheckInventoryState extends State<CheckInventory> {
     });
     _focusNode = FocusNode();
     KeyEventChannel(
-      onKeyReceived: _toggleScanning,
+      onKeyReceived: _toggleScanningForC5, // Only for C Series NMC97
     ).initialize();
-    uhfbleRegister();
+    uhfBLERegister();
   }
 
+//#region R_Series Register Tag Read NMC97
+  Future<void> checkCurrentDevice() async {
+    if (currentDevice == Device.C_Series) {
+      await _toggleScanningForC5();
+    } else if (currentDevice == Device.R_Series) {
+      await _toggleScanningForR5();
+    } else if (currentDevice == Device.Camera_Barcodes) {
+      // Todo
+    }
+  }
 
-  void uhfbleRegister(){
-    _uhfManager.setMultiTagCallback((tagList) { // Listen data from R5
+  //NMC97
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
+      if(currentDevice != Device.R_Series) return;
       setState(() {
-        r5_resultTags =DataProcessing.ConvertToTagEpcList(tagList);
+        r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
         DataProcessing.ProcessData(r5_resultTags, _data); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
     });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
+      scanStatusR5 = scanStatus;
+      _toggleScanningForR5();
+    });
   }
+
+//#endregion R_Series Register Tag Read
 
 //#region Data Handle
   Future<void> _initDatabase() async {
     await _databaseHelper.initDatabase();
     final DateTime now = DateTime.now();
-    await _loadEventsWithEpcData(now); // Load events with non-empty epcData for today
+    await _loadEventsWithEpcData(
+        now); // Load events with non-empty epcData for today
   }
 
   Future<void> _loadEventsWithEpcData(DateTime selectedDate) async {
     print('loda');
-    final events = await _databaseHelper.getEventsByDateAndAccount(selectedDate, widget.taiKhoan, 0, 0);
+    final events = await _databaseHelper.getEventsByDateAndAccount(
+        selectedDate, widget.taiKhoan, 0, 0);
     print('aaa$events');
     print(widget.taiKhoan);
     final List<Calendar> eventsWithEpcData = [];
@@ -165,8 +194,10 @@ class _CheckInventoryState extends State<CheckInventory> {
       await _storage.delete(key: key);
       print("Tag successfully deleted for EPC: $epc in Event ID: $eventId");
     } catch (e) {
-      print("Error deleting tag for EPC: $epc in Event ID: $eventId, Error: $e");
-      throw Exception("Failed to delete tag for EPC: $epc in Event ID: $eventId");
+      print(
+          "Error deleting tag for EPC: $epc in Event ID: $eventId, Error: $e");
+      throw Exception(
+          "Failed to delete tag for EPC: $epc in Event ID: $eventId");
     }
   }
 
@@ -187,10 +218,15 @@ class _CheckInventoryState extends State<CheckInventory> {
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 backgroundColor: Color(0xFF097746),
-                foregroundColor: Color(0xFFFAFAFA),// Màu chữ của nút
-                  minimumSize: Size(100, 20), // Kích thước tối thiểu của nút
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20), // Khoảng cách giữa chữ và biên của nút
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)), // Đường viền của nút
+                foregroundColor: Color(0xFFFAFAFA),
+                // Màu chữ của nút
+                minimumSize: Size(100, 20),
+                // Kích thước tối thiểu của nút
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                // Khoảng cách giữa chữ và biên của nút
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        15)), // Đường viền của nút
               ),
             ),
           ),
@@ -203,9 +239,11 @@ class _CheckInventoryState extends State<CheckInventory> {
         selectedDate = picked;
         _searchController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
-      await _loadEventsWithEpcData(picked); // Load events for the selected date with epcData
+      await _loadEventsWithEpcData(
+          picked); // Load events for the selected date with epcData
     }
   }
+
 //#endregion   Data Handle
 
   @override
@@ -224,7 +262,6 @@ class _CheckInventoryState extends State<CheckInventory> {
   /// Initialize the platform state for C Series Scanner
   Future<void> initPlatformState() async {
     String platformVersion;
-
     try {
       platformVersion = (await RfidC72Plugin.platformVersion)!;
       print('MinhChauLog: initPlatformState success !');
@@ -245,7 +282,6 @@ class _CheckInventoryState extends State<CheckInventory> {
       _isLoading = false;
     });
   }
-
   Future<void> _playScanSound() async {
     try {
       await _audioPlayer.setAsset('assets/sound/Bip.mp3');
@@ -254,45 +290,23 @@ class _CheckInventoryState extends State<CheckInventory> {
       print("$e");
     }
   }
-  // Get tag by button and add to list
-  void manualReadTags(bool isStart) async {
-     await _uhfManager.manualRead(isStart);
-  }
 
+  //#region Update Tags C Series NMC97
   void updateTags(dynamic result) async {
     List<TagEpc> newData = TagEpc.parseTags(result); //Convert to TagEpc list
-   // print(newData[0].epc.toString());
-   //  newData.forEach((tag) => print('EPC: ${tag.epc}'));
-   //  print('MINCHAULOG: epc count ${newData.length}');
-   //  print('MINCHAULOG: epc name ${newData.first.epc}');
-   //  if (newData.isEmpty) {
-   //    print('newData is empty!');
-   //  }
     DataProcessing.ProcessData(newData, _data); // Filter
-
-    // List<TagEpc> uniqueData = newData.where((newTag) =>
-    //     !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-    //
-    // if (!uniqueData.isEmpty) {
-    //   _playScanSound();
-    // }
-    // _data.addAll(uniqueData);
-
     updateStatusAndCountResult();
-
-    // setState(() {
-    //   isScanning = true;
-    //   successfullySaved = _data.length; // Cập nhật trạng thái
-    // });
-    // sendUpdateEvent(successfullySaved);
   }
-  void updateStatusAndCountResult(){
+
+  void updateStatusAndCountResult() {
     setState(() {
       isScanning = true;
       successfullySaved = _data.length; // Cập nhật trạng thái
     });
     sendUpdateEvent(successfullySaved);
   }
+
+  //#endregion
 
   void _onEventSelected(Calendar event) {
     setState(() {
@@ -311,32 +325,36 @@ class _CheckInventoryState extends State<CheckInventory> {
             fontWeight: FontWeight.bold,
             color: Color(0xFF097746),
           ),
-        ),
-          content: Text("$numberOfTagsRemoved Chip trùng lặp đã được xóa thành công.",
-            style: TextStyle(
-            fontSize: 18,
-            // fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
           ),
-        ),
+          content: Text(
+            "$numberOfTagsRemoved Chip trùng lặp đã được xóa thành công.",
+            style: TextStyle(
+              fontSize: 18,
+              // fontWeight: FontWeight.bold,
+              color: Color(0xFF097746),
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(
+                    Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                    borderRadius: BorderRadius.circular(
+                        10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
                 fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
               ),
               child: Text("OK",
                 style: TextStyle(
-                color: Colors.white
+                    color: Colors.white
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Đóng dialog khi người dùng bấm OK
+                Navigator.of(context)
+                    .pop(); // Đóng dialog khi người dùng bấm OK
               },
             ),
           ],
@@ -366,15 +384,17 @@ class _CheckInventoryState extends State<CheckInventory> {
                 // Kiểm tra nếu có dữ liệu
                 _data.isNotEmpty
                     ? ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn
-                    itemCount: _data.length,
-                    itemBuilder: (context, index) {
-                      String epcString = CommonFunction().hexToString(_data[index].epc);
-                      // print(epcString);// Chuyển đổi EPC từ hex sang chuỗi
-                      return ListTile(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn
+                  itemCount: _data.length,
+                  itemBuilder: (context, index) {
+                    String epcString = CommonFunction().hexToString(
+                        _data[index].epc);
+                    // print(epcString);// Chuyển đổi EPC từ hex sang chuỗi
+                    return ListTile(
                       title: Text(
-                        '${index + 1}. $epcString', // Hiển thị EPC dưới dạng chuỗi
+                        '${index + 1}. $epcString',
+                        // Hiển thị EPC dưới dạng chuỗi
                         style: const TextStyle(
                           color: Color(0xFF097746),
                         ),
@@ -383,12 +403,12 @@ class _CheckInventoryState extends State<CheckInventory> {
                   },
                 )
                     : const Center( // Hiển thị nếu không có dữ liệu
-                      child: Text(
-                        'Không có dữ liệu',
-                        style: TextStyle(
-                          color: Color(0xFF097746),
-                        ),
-                      ),
+                  child: Text(
+                    'Không có dữ liệu',
+                    style: TextStyle(
+                      color: Color(0xFF097746),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -409,9 +429,14 @@ class _CheckInventoryState extends State<CheckInventory> {
     return nextId;
   }
 
-  Future<void> updateDeletionInfoForEvent(String eventId, int deletedTagsCount, DateTime deletionDate, List<String> deletedTagList) async {
-    int deletedId = await getNextDeletionId();  // Lấy ID tiếp theo cho lần xóa mới
-    String lenhPhanPhoi = _events.firstWhere((event) => event.id == eventId).lenhPhanPhoi;  // Lấy lệnh phân phối từ sự kiện
+  Future<void> updateDeletionInfoForEvent(String eventId,
+      int deletedTagsCount,
+      DateTime deletionDate,
+      List<String> deletedTagList) async {
+    int deletedId = await getNextDeletionId(); // Lấy ID tiếp theo cho lần xóa mới
+    String lenhPhanPhoi = _events
+        .firstWhere((event) => event.id == eventId)
+        .lenhPhanPhoi; // Lấy lệnh phân phối từ sự kiện
     // Thêm bản ghi mới vào danh sách phẳng của các bản ghi thu hồi
     deletionHistory.add(DeletionInfo(
       deletedId: deletedId,
@@ -426,7 +451,9 @@ class _CheckInventoryState extends State<CheckInventory> {
   }
 
   Future<void> handleSave() async {
-    List<String> selectedEventIds = _events.where((event) => event.isSelected).map((event) => event.id).toList();
+    List<String> selectedEventIds = _events.where((event) => event.isSelected)
+        .map((event) => event.id)
+        .toList();
     int totalRemovedTags = 0;
     if (selectedEventIds.isEmpty) {
       // Display a message if no events are selected
@@ -440,24 +467,26 @@ class _CheckInventoryState extends State<CheckInventory> {
             ),
             ),
             content: Text("Vui lòng chọn lịch", style: TextStyle(
-              color: Color(0xFF097746),
-              fontSize: 18
+                color: Color(0xFF097746),
+                fontSize: 18
             ),),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                      borderRadius: BorderRadius.circular(
+                          10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
                   fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
                 ),
-                child: Text("OK",style:TextStyle(
-                        color: Colors.white,
-                      )
-                  ),
+                child: Text("OK", style: TextStyle(
+                  color: Colors.white,
+                )
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -505,12 +534,15 @@ class _CheckInventoryState extends State<CheckInventory> {
         for (var epc in epcToRemove) {
           await deleteData(epc.epc, eventId);
         }
-        List<TagEpc> remainingTags = currentEpcData.where((tag) => !epcToRemove.contains(tag)).toList();
+        List<TagEpc> remainingTags = currentEpcData.where((tag) =>
+        !epcToRemove.contains(tag)).toList();
         await saveData(eventId, remainingTags); // Lưu lại các tag còn lại
         // Trước khi gọi updateDeletionInfoForEvent, tạo một danh sách các EPC từ epcToRemove
-        List<String> deletedTagList = epcToRemove.map((tag) => tag.epc).toList();
+        List<String> deletedTagList = epcToRemove.map((tag) => tag.epc)
+            .toList();
         // Gọi updateDeletionInfoForEvent với tất cả các tham số
-        updateDeletionInfoForEvent(eventId, epcToRemove.length, deletionDate, deletedTagList);
+        updateDeletionInfoForEvent(
+            eventId, epcToRemove.length, deletionDate, deletedTagList);
         if (!_scannedEvents.contains(eventId)) {
           _scannedEvents.add(eventId);
         }
@@ -518,13 +550,15 @@ class _CheckInventoryState extends State<CheckInventory> {
       }
       await _saveProcessedEventsToStorage();
       List<TagEpc> updatedEpcData = await loadData(eventId);
-      _events.firstWhere((event) => event.id == eventId).epcData = updatedEpcData;
+      _events
+          .firstWhere((event) => event.id == eventId)
+          .epcData = updatedEpcData;
     }
-      // Tắt cửa sổ loading
-      Navigator.of(context).pop();
+    // Tắt cửa sổ loading
+    Navigator.of(context).pop();
     // Đặt thông báo tương ứng
     if (processedCount > 0 && totalRemovedTags > 0) {
-      _data.clear();  // Xóa dữ liệu đã quét
+      _data.clear(); // Xóa dữ liệu đã quét
       _events.forEach((event) => event.isSelected = false);
       successfullySaved = 0;
       showSuccessDialogForMultipleEvents(selectedEventIds.length);
@@ -537,27 +571,30 @@ class _CheckInventoryState extends State<CheckInventory> {
             title: Text("Thông báo", style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
-              ),
             ),
-            content: Text("Không tìm thấy sản phẩm trong lịch đã chọn.", style: TextStyle(
-              color: Color(0xFF097746),
-              fontSize: 18
-              ),
+            ),
+            content: Text(
+              "Không tìm thấy sản phẩm trong lịch đã chọn.", style: TextStyle(
+                color: Color(0xFF097746),
+                fontSize: 18
+            ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                      borderRadius: BorderRadius.circular(
+                          10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
                   fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
                 ),
-                child: Text("OK",style:TextStyle(
+                child: Text("OK", style: TextStyle(
                   color: Colors.white,
-                  )
+                )
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
@@ -598,7 +635,8 @@ class _CheckInventoryState extends State<CheckInventory> {
 
   Future<void> saveDeletionInfo() async {
     try {
-      var encodedData = jsonEncode(deletionHistory.map((info) => info.toJson()).toList());
+      var encodedData = jsonEncode(
+          deletionHistory.map((info) => info.toJson()).toList());
       await _storage.write(key: 'deletionInfo', value: encodedData);
     } catch (e) {
       print('Error saving deletion info: $e');
@@ -610,7 +648,8 @@ class _CheckInventoryState extends State<CheckInventory> {
       String? encodedData = await _storage.read(key: 'deletionInfo');
       if (encodedData != null) {
         Iterable jsonData = jsonDecode(encodedData);
-        deletionHistory = jsonData.map((item) => DeletionInfo.fromJson(Map<String, dynamic>.from(item))).toList();
+        deletionHistory = jsonData.map((item) =>
+            DeletionInfo.fromJson(Map<String, dynamic>.from(item))).toList();
       }
     } catch (e) {
       print('Error loading deletion info: $e');
@@ -623,13 +662,16 @@ class _CheckInventoryState extends State<CheckInventory> {
     });
     await loadDeletionInfoFromStorage();
     _scannedEvents = await _loadProcessedEventsFromStorage();
-    List<Calendar?> events = await Future.wait(_scannedEvents.map((id) => _databaseHelper.getEventById(id)).toList());
+    List<Calendar?> events = await Future.wait(
+        _scannedEvents.map((id) => _databaseHelper.getEventById(id)).toList());
     // Lọc ra các sự kiện null
     List<Calendar> nonNullEvents = events.whereType<Calendar>().toList();
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProcessedEventsPage(events: nonNullEvents, deletionHistory: deletionHistory),
+        builder: (context) =>
+            ProcessedEventsPage(
+                events: nonNullEvents, deletionHistory: deletionHistory),
       ),
     ).then((_) {
       // This callback runs when ProcessedEventsPage is popped
@@ -649,25 +691,29 @@ class _CheckInventoryState extends State<CheckInventory> {
             fontWeight: FontWeight.bold,
           ),
           ),
-          content: Text("$numberOfEventsProcessed lịch đã được xử lý và cập nhật.", style: TextStyle(
-            color: Color(0xFF097746),
-            fontSize: 18
-          ),
+          content: Text(
+            "$numberOfEventsProcessed lịch đã được xử lý và cập nhật.",
+            style: TextStyle(
+                color: Color(0xFF097746),
+                fontSize: 18
+            ),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(
+                    Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                    borderRadius: BorderRadius.circular(
+                        10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
                 fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
               ),
-              child: Text("OK",style:TextStyle(
+              child: Text("OK", style: TextStyle(
                 color: Colors.white,
-                )
+              )
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -685,40 +731,21 @@ class _CheckInventoryState extends State<CheckInventory> {
     sendUpdateEvent(newData);
   }
 
-//#region ScanRFID
-
-  Future<void> stopScanning() async {
-    if (!_isSnackBarDisplayed) {
-      await RfidC72Plugin.stop;
-      // _showSnackBar('Đã đạt đủ số lượng');
-      _isSnackBarDisplayed = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-      });
-    }
-  }
-  Future<void> _toggleScanning() async {
-    print("MinhChauLog: Start Toggle Scanning !");
-    if (isProcessedEventsPageOpen) {
+//#region ScanRFID NMC97
+  Future<void> _toggleScanningForC5() async {
+    print("MinhChauLog: Start Toggle Scanning for C5!");
+    if (isProcessedEventsPageOpen || currentDevice != Device.C_Series) {
       return;
     }
-
     if (_isContinuousCall) {
-      print("MinhChauLog: Stop scan !");
-      manualReadTags(false);
-    //  await RfidC72Plugin.stop;
+      DataReadOptions.readTagsAsync(false, currentDevice);
       _isContinuousCall = false;
       if (_isDialogShown) {
         Navigator.of(context, rootNavigator: true).pop('dialog');
       }
     }
-    else
-    {
-      print("MinhChauLog: Start scan !");
-    //  await RfidC72Plugin.startContinuous;
-      manualReadTags(true);
+    else {
+      DataReadOptions.readTagsAsync(true, currentDevice);
       _isContinuousCall = true;
       if (!_isDialogShown)
       {
@@ -729,15 +756,36 @@ class _CheckInventoryState extends State<CheckInventory> {
       _isShowModal = _isContinuousCall;
     });
   }
-
-//#endregion
-
-  void updateIsConnected(dynamic isConnected) {
-    _isConnected = isConnected;
-    print('successful');
+  Future<void> _toggleScanningForR5() async {
+    print("MinhChauLog: Start Toggle Scanning for R5!");
+    if (isProcessedEventsPageOpen || currentDevice != Device.R_Series) {
+      return;
+    }
+    if (_isContinuousCall) {
+      if(!scanStatusR5){
+        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+      }
+      _isContinuousCall = false;
+      if (_isDialogShown) {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      }
+    }
+    else
+    {
+      if(!scanStatusR5){
+        DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+      }
+      _isContinuousCall = true;
+      if (!_isDialogShown)
+      {
+        _showScanningModal();
+      }
+    }
+    setState(() {
+      _isShowModal = _isContinuousCall;
+      scanStatusR5=false;
+    });
   }
-
-  /// Show counting tag by modal
   void _showScanningModal() {
     showDialog(
       context: context,
@@ -759,6 +807,12 @@ class _CheckInventoryState extends State<CheckInventory> {
       },
     ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
     _isDialogShown = true;
+  }
+//#endregion
+
+  void updateIsConnected(dynamic isConnected) {
+    _isConnected = isConnected;
+    print('successful');
   }
 
   @override
@@ -805,7 +859,7 @@ class _CheckInventoryState extends State<CheckInventory> {
           children: [
         Container(
         alignment: Alignment.topLeft,
-          margin: EdgeInsets.only(left: 20),
+          margin: const EdgeInsets.only(left: 20),
           child: const Text('Chọn ngày phân phối',
               style: TextStyle(
                 fontSize: 20,
@@ -878,7 +932,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                         text: TextSpan(
                           style: TextStyle(fontSize: 24, color: Color(0xFF097746)),
                           children: [
-                            TextSpan(
+                            const TextSpan(
                               text: 'Số lượng quét\n ',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                             ),
@@ -1020,15 +1074,14 @@ class _CheckInventoryState extends State<CheckInventory> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: (_isContinuousCall) ? Colors.red : Color(0xFF097746),
-                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ),
-                fixedSize: Size(150.0, 50.0),
+                fixedSize: const Size(150.0, 50.0),
               ),
               onPressed: () async {
-
-                _toggleScanning();
+               await checkCurrentDevice(); //NMC97
               },
               child: (_isContinuousCall)
                   ? Text('Dừng quét', style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.06))
@@ -1036,17 +1089,17 @@ class _CheckInventoryState extends State<CheckInventory> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFd5a529),
-                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                backgroundColor: const Color(0xFFd5a529),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ),
-                fixedSize: Size(150.0, 50.0),
+                fixedSize: const Size(150.0, 50.0),
               ),
               onPressed: () {
                 handleSave();
               },
-              child: Text('Thu hồi',
+              child: const Text('Thu hồi',
                 style: TextStyle(fontSize: 22, color: Colors.white),
               ),
             ),
