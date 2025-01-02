@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
 class BarcodeScannerInPhoneController {
 
   Future<String?> scanQRCode() async {
