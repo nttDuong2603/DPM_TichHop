@@ -10,9 +10,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import 'dart:async';
 import '../Assign_Packing_Information/model_information_package.dart';
+import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
 import '../main.dart';
 import '../utils/app_config.dart';
 import 'database_recall.dart';
@@ -23,6 +25,9 @@ import 'package:external_path/external_path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/scan_count_modal.dart';
 import '../utils/key_event_channel.dart';
+
+
+/* QUAN LY THU HOI */
 
 class SendDataRecall extends StatefulWidget {
 
@@ -38,7 +43,6 @@ class _SendDataRecallState extends State<SendDataRecall> {
   final StreamController<int> _updateStreamController = StreamController<int>.broadcast(); // Tạo StreamController
   late CalendarRecall event;
   final CalendarRecallDatabaseHelper databaseHelper = CalendarRecallDatabaseHelper();
-  String _platformVersion = 'Unknown';
   final bool _isHaveSavedData = false;
   final bool _isStarted = false;
   final bool _isEmptyTags = false;
@@ -48,63 +52,68 @@ class _SendDataRecallState extends State<SendDataRecall> {
   int currentPage = 0;
   int itemsPerPage = 5;
   late CalendarRecallDatabaseHelper _databaseHelper;
-  List<TagEpcLBD> paginatedData = [];
+  List<TagEpcLDB> paginatedData = [];
   int targetTotalEPC = 100;
   late Timer _timer;
-  TextEditingController _agencyNameController = TextEditingController();
-  TextEditingController _goodsNameController = TextEditingController();
+  final TextEditingController _agencyNameController = TextEditingController();
+  final TextEditingController _goodsNameController = TextEditingController();
   bool confirm = false;
-  List<TagEpcLBD> _data = [];
+  final List<TagEpcLDB> _data = [];
   final List<String> _EPC = [];
-  List<TagEpcLBD> _successfulTags = [];
+  List<TagEpcLDB> _successfulTags = [];
   int totalTags = 0;
   static int _value  = 0;
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
-  Queue<List<TagEpcLBD>> p = Queue<List<TagEpcLBD>>();
+  Queue<List<TagEpcLDB>> p = Queue<List<TagEpcLDB>>();
   bool _isNotified = false;
   bool _isShowModal = false;
-  List<TagEpcLBD> newData = [];
+  List<TagEpcLDB> newData = [];
   int saveCount = 0;
   int a = 0;
   int TotalScan = 0;
   bool _is2dscanCall = false;
   int scannedTagsCount = 0;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   String _selectedAgencyName = '';
   String _selectedGoodsName = '';
   int tagCount = 0;
   List<String> tagsList = [];
   bool _isContinuousCall = false;
-  AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   bool dadongbao = false;
   Stream<int> get updateStream => _updateStreamController.stream;
   bool _isSnackBarDisplayed = false;
   int successCountRecall = 0;
   int failCountRecall = 0;
   int _saveCounter = 0; // Biến toàn cục để theo dõi số lần lưu
-  final secureRecallStorage = FlutterSecureStorage();
-  final secureStorage = FlutterSecureStorage();
-  final _storageAcountCode = FlutterSecureStorage();
-  final secureLTHStorage = FlutterSecureStorage();
+  final secureRecallStorage = const FlutterSecureStorage();
+  final secureStorage = const FlutterSecureStorage();
+  final _storageAcountCode = const FlutterSecureStorage();
+  final secureLTHStorage = const FlutterSecureStorage();
   bool dadongbo = false;
   bool _isDialogShown = false;
+  bool _isDialogBarcodeShown = false;
   bool showConfirmationDialog = false;
   String _selectedScanningMethod = 'rfid';
   bool isRecallScan = false; // Mặc định là quét mã thu hồi
-  final _storageRecallReplace = FlutterSecureStorage();
+  final _storageRecallReplace = const FlutterSecureStorage();
   int tagRecallReplaceCount = 0;
   List<String> tagRecallReplaceList = [];
   String extractedCode = '';
   bool _isClickRFIDMenthod = false;
   bool _isClickConfirmScanMethod = false;
+  bool isShowDuplicateTagDialog =false;
   // String IP = 'http://192.168.19.69:5088';
   // String IP = 'http://192.168.19.180:5088';
   // String IP = 'https://jvf-admin.rynansaas.com';
 
-  List<TagEpcLBD> r5_resultTags = [];
+  final BarcodeScannerInPhoneController _barcodeScannerInPhoneController = BarcodeScannerInPhoneController();
+  List<TagEpcLDB> r5_resultTags = [];
   bool scanStatusR5 = false;
+  String getResult = '';
+  String? result;
 
 
   @override
@@ -120,29 +129,44 @@ class _SendDataRecallState extends State<SendDataRecall> {
     loadTagCount();
     loadRecallReplaceTagCount();
     KeyEventChannel(
-      onKeyReceived: _toggleScanningForC5,
+      onKeyReceived: checkCurrentDevice,
     ).initialize();
     uhfBLERegister();
   }
 
   //#region R_Series Register Tag Read
+  // Future<void> checkCurrentDevice() async {
+  //   if (currentDevice == Device.cSeries) {
+  //     await _toggleScanningForC5();
+  //   }
+  //   else if (currentDevice == Device.rSeries) {
+  //     await  _toggleScanningForR5();
+  //   }
+  //   else if (currentDevice == Device.cameraBarcodes) {
+  //     await _toggleScanningForC5();
+  //   }
+  // }
+
   Future<void> checkCurrentDevice() async {
-    if (currentDevice == Device.C_Series) {
+    if (currentDevice == Device.cSeries) {
+      await _toggleBarCodeScanning();
       await _toggleScanningForC5();
     }
-    else if (currentDevice == Device.R_Series) {
+    else if (currentDevice == Device.rSeries) {
       await  _toggleScanningForR5();
     }
-    else if (currentDevice == Device.Camera_Barcodes) {
-      // Todo
+    else if (currentDevice == Device.cameraBarcodes) {
+      await  _toggleScanningForR5();
+      await _toggleScanningForC5();
     }
   }
+
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
       setState(() {
-        if(currentDevice != Device.R_Series) return;
-        r5_resultTags = DataProcessing.ConvertToTagEpcLBDList(tagList);
-        DataProcessing.ProcessDataLBD(r5_resultTags, _data); // Filter
+        if(currentDevice != Device.rSeries) return;
+        r5_resultTags = DataProcessing.ConvertToTagEpcLDBList(tagList);
+        DataProcessing.ProcessDataLDB(r5_resultTags, _data); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
@@ -195,7 +219,6 @@ class _SendDataRecallState extends State<SendDataRecall> {
     await _initDatabase();
     if (!mounted) return;
     setState(() {
-      _platformVersion = platformVersion;
       print('Connection successful');
       _isLoading = false;
     });
@@ -210,32 +233,80 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
 
 //.....................................22.03.24.15:59..............................//
+
+  void scanQRCodeByCamera() async {
+    try{
+      //Disconnect Scanner before
+      if(await RfidC72Plugin.isConnected == true){
+        await RfidC72Plugin.stop;
+        await RfidC72Plugin.closeScan;
+      }
+      String? code = await _barcodeScannerInPhoneController.scanQRCode();
+      if (code != null) {
+        _updateUIWithQRCode(code);
+      } else {
+      }
+    }catch(e){
+      print('Error: $e');
+    }
+
+  }
+
+  // Cập nhật UI với mã QR đã quét
+  void _updateUIWithQRCode(String code) async{
+    if (!mounted) return; // Kiểm tra xem widget có còn tồn tại trong tree không
+    setState(() {
+      result = _extractCodeFromUrl(code); // Cập nhật mã QR đã quét
+      // getResult = 'TH000002'; // Cập nhật mã QR đã quét
+    });
+    print("QrCode result: --$code");
+    if (String != null) {
+      _playScanSound();
+      setState(() {
+        _data.add(TagEpcLDB(epc: result!));
+      });
+      await _showBarcodeConfirmationDialog();
+      // bool confirmed = await showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return QRCodeConfirmationDialog(
+      //       qrCode: getResult,  // Truyền mã QR vào
+      //     );
+      //   },
+      // );
+      // if (confirmed) {
+      //   Navigator.pop(context, getResult); // Trả về mã QR đã quét
+      // }
+    }
+  }
+
   void updateTags(dynamic result) async {
-    List<TagEpcLBD> newData = TagEpcLBD.parseTags(result); //Convert to TagEpc list
+
+    List<TagEpcLDB> newData = TagEpcLDB.parseTags(result); //Convert to TagEpc list
     print("MinhChau: data get : ${newData.length}");
-    DataProcessing.ProcessDataLBD(newData, _data); // Filter
+    DataProcessing.ProcessDataLDB(newData, _data); // Filter
     updateStatusAndCountResult();
-    ///
+
   //  List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
+  // // print("MinhChau: data get : ${_data.first.epc}");
   //  List<TagEpcLBD> currentTags = await loadData(event.idLTH);
-   // List<TagEpcLBD> uniqueData = newData.where((newTag) =>
+  //  List<TagEpcLBD> uniqueData = newData.where((newTag) =>
   //  !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
-     //   !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-
-    // uniqueData.forEach((tag) {
-    //   tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
-    // });
-
-    // if (!uniqueData.isEmpty) {
-    //   _playScanSound();
-    // }
+  //      !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+  //   uniqueData.forEach((tag) {
+  //     tag.scanDate = DateTime.now();  // Gán thời gian quét cho thẻ
+  //   });
+  //
+  //   if (!uniqueData.isEmpty) {
+  //     _playScanSound();
+  //   }
   //  _data.addAll(uniqueData);
   //   setState(() {
   //     isScanning = true;
   //     successfullySaved = _data.length; // Cập nhật trạng thái
   //   });
-  //   sendUpdateEvent(successfullySaved);
-  // }
+  //    sendUpdateEvent(successfullySaved);
+
 }
   void updateStatusAndCountResult() {
     setState(() {
@@ -246,13 +317,16 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
 
   void updateBarcodeTags(dynamic result) async {
+    if( isShowDuplicateTagDialog == true){
+      return;
+    }
     if (result.toString().startsWith('http') || result.toString().contains('://')) {
       // Đây là mã barcode, xử lý mã barcode
       String? extractedCode = _extractCodeFromUrl(result);
 
       if (extractedCode != null) {
         // Tải danh sách các mã hiện tại đã lưu
-        List<TagEpcLBD> currentTags = await loadData(event.idLTH);
+        List<TagEpcLDB> currentTags = await loadData(event.idLTH);
 
         // Kiểm tra xem mã vừa quét có tồn tại trong danh sách đã lưu không
         bool isDuplicate = currentTags.any((savedTag) =>
@@ -260,10 +334,11 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
         if (isDuplicate) {
           // Hiển thị thông báo mã đã được quét
+          isShowDuplicateTagDialog = true;
           _showDuplicateTagDialog();
         } else {
           // Thêm mã QR vào danh sách EPC và phát âm thanh
-          _data.add(TagEpcLBD(epc: extractedCode));
+          _data.add(TagEpcLDB(epc: extractedCode));
           _playScanSound();
 
           if (mounted) {
@@ -282,6 +357,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
             _isContinuousCall = false;
           });
 
+          Navigator.of(context, rootNavigator: true).pop();
           // Hiển thị hộp thoại xác nhận
           await _showBarcodeConfirmationDialog();
 
@@ -293,25 +369,26 @@ class _SendDataRecallState extends State<SendDataRecall> {
       }
     }
   }
+
   void _showDuplicateTagDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Mã quét đã tồn tại.',
+          title: const Text('Mã quét đã tồn tại.',
             style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold
             ),
           ),
-          content: Text('Mã đã tồn tại trong danh sách. Vui lòng quét quét mã khác!',
+          content: const Text('Mã đã tồn tại trong danh sách. Vui lòng quét quét mã khác!',
             style: TextStyle(
                 color: Color(0xFF097746),
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('OK', style: TextStyle(color: Color(0xFF097746))),
+              child: const Text('OK', style: TextStyle(color: Color(0xFF097746))),
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
@@ -320,11 +397,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
           ],
         );
       },
-    );
+    ).then((_){
+     // isShowDuplicateTagDialog = true;
+
+    });
+    isShowDuplicateTagDialog = false;
   }
 
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
-    final secureStorage = FlutterSecureStorage();
+    final secureStorage = const FlutterSecureStorage();
     await secureStorage.write(key: '${eventId}_length', value: value.toString());
   }
 
@@ -350,17 +431,17 @@ class _SendDataRecallState extends State<SendDataRecall> {
     _timer.cancel(); // Hủy timer
   }
 
-  Future<void> saveData(String key, List<TagEpcLBD> data) async {
+  Future<void> saveData(String key, List<TagEpcLDB> data) async {
     // Chuyển đổi danh sách tags thành chuỗi JSON sử dụng phương thức toMap()
-    String dataString = TagEpcLBD.tagsToJson(data);
+    String dataString = TagEpcLDB.tagsToJson(data);
     await _storage.write(key: key, value: dataString);
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -395,7 +476,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
       await dbHelper.deleteEvent(event);
       widget.onDeleteEvent(event);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Xóa lịch thành công!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -405,7 +486,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     } catch (e) {
       print('Lỗi khi xóa lichj: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Đã xảy ra lỗi khi xóa lịch!'),
           duration: Duration(seconds: 2),
         ),
@@ -424,11 +505,11 @@ class _SendDataRecallState extends State<SendDataRecall> {
       builder: (BuildContext context) {
         return SingleChildScrollView(
           child: Container(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Thông tin chip',
                   style: TextStyle(
                     fontSize: 26,
@@ -436,11 +517,11 @@ class _SendDataRecallState extends State<SendDataRecall> {
                     color: Color(0xFF097746),
                   ),
                 ),
-                FutureBuilder<List<TagEpcLBD>>(
+                FutureBuilder<List<TagEpcLDB>>(
                   future: loadData(event.idLTH), // Sử dụng loadData với event.id
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
+                      return const Center(
                         child: CircularProgressIndicator(),
                       );
                     } else if (snapshot.hasError) {
@@ -450,7 +531,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                     } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           var tag = snapshot.data![index];
@@ -463,7 +544,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                           return ListTile(
                             title: Text(
                               '${index + 1}. $displayString', // Hiển thị mã đã xử lý
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF097746),
                               ),
                             ),
@@ -471,7 +552,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                         },
                       );
                     } else {
-                      return Center(
+                      return const Center(
                         child: Text(
                           'Không có dữ liệu',
                           style: TextStyle(
@@ -492,45 +573,40 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
   void loadTagCount() async {
     if (widget.event.idLTH!= null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
-      List<TagEpcLBD> tags = await loadData(event.idLTH);
+      List<TagEpcLDB> tags = await loadData(event.idLTH);
       setState(() {
         tagCount = tags.length; // Cập nhật số lượng tags vào biến trạng thái
         tagsList = tags.map((tag) => tag.epc).toList();
       });
     }
   }
-  Future<void> saveRecallReplaceData(String key, List<TagEpcLBD> data) async {
+  Future<void> saveRecallReplaceData(String key, List<TagEpcLDB> data) async {
     // Chuyển đổi danh sách tags mới thành chuỗi JSON
-    String dataString = TagEpcLBD.tagsToJson(data);
+    String dataString = TagEpcLDB.tagsToJson(data);
 
     // Lưu chuỗi JSON vào bộ nhớ bảo mật
     await _storageRecallReplace.write(key: key, value: dataString);
   }
 
-  Future<List<TagEpcLBD>> loadRecallReplaceData(String key) async {
+  Future<List<TagEpcLDB>> loadRecallReplaceData(String key) async {
     String? dataString = await _storageRecallReplace.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
   void loadRecallReplaceTagCount() async {
     if (widget.event.idLTH!= null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
-      List<TagEpcLBD> tag = await loadRecallReplaceData('replace_${event.idLTH}');
+      List<TagEpcLDB> tag = await loadRecallReplaceData('replace_${event.idLTH}');
       setState(() {
         tagRecallReplaceCount = tag.length; // Cập nhật số lượng tags vào biến trạng thái
         tagRecallReplaceList = tag.map((tag) => tag.epc).toList();
       });
     }
   }
-  void _simulateKeyEvent(int keyCode) {
-    // Gửi sự kiện keyCode
-    if (keyCode == 139) {
-      // Gọi quá trình quét mã QR tương tự như khi nhận được keyCode từ nút vật lý
-      _toggleBarCodeScanning();
-    }
-  }
+
+
   Future<void> _showBarcodeConfirmationDialog() async {
     print('được gọi');
     return showDialog<void>(
@@ -538,7 +614,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Lưu mã chip?',
+          title: const Text('Lưu mã chip?',
             style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold
@@ -548,8 +624,8 @@ class _SendDataRecallState extends State<SendDataRecall> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SizedBox(height: 20),
-                Container(
+                const SizedBox(height: 20),
+                SizedBox(
                   height: 200,
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -561,7 +637,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                       return ListTile(
                         title: Text(
                           '1. $latestTagEpc', // Chỉ hiển thị 1 mã chip mới nhất
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF097746),
                           ),
                         ),
@@ -575,15 +651,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Hủy Bỏ',
+              child: const Text('Hủy Bỏ',
                   style:TextStyle(
                     color: Colors.white,
                   )
@@ -598,27 +674,27 @@ class _SendDataRecallState extends State<SendDataRecall> {
                 });
               },
             ),
-            SizedBox(width: 8,),
+            const SizedBox(width: 8,),
             TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text('Xác Nhận',
+                child: const Text('Xác Nhận',
                     style:TextStyle(
                       color: Colors.white,
                     )
                 ),
               onPressed: () async {
                 // Đầu tiên, tải danh sách tag hiện tại từ lưu trữ
-                List<TagEpcLBD> currentTags = await loadData(event.idLTH);
+                List<TagEpcLDB> currentTags = await loadData(event.idLTH);
                 // Lọc ra những tag mới chưa có trong currentTags
-                List<TagEpcLBD> newUniqueTags = _data.where((newTag) =>
+                List<TagEpcLDB> newUniqueTags = _data.where((newTag) =>
                 !currentTags.any((savedTag) => savedTag.epc == newTag.epc)).toList();
                 // Thêm các tag mới vào danh sách hiện tại và loại bỏ các tag trùng lặp
                 currentTags.addAll(newUniqueTags);
@@ -645,44 +721,65 @@ class _SendDataRecallState extends State<SendDataRecall> {
   void _showBarcodeScanningModal() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Không cho phép đóng khi nhấn ngoài
+      barrierDismissible: true, // Không cho phép đóng khi nhấn ngoài
       builder: (BuildContext context) {
-        return Center(
+        return const Center(
           child: Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: Color.fromARGB(255, 43, 78, 128),
             elevation: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1C88FF)),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  "Đang quét mã QR...",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ],
+            child: SizedBox(
+              height: 200, // Chiều cao cố định
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 50),
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1C88FF)),
+                  ),
+                  SizedBox(height: 50),
+                  Text(
+                    "Đang quét mã QR...",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
+    ).then((_) async {
+    _isDialogBarcodeShown = false;
+    _is2dscanCall = false;
+    await RfidC72Plugin.stopScan;
+    }
     );
+    _isDialogBarcodeShown = false;
+
+    // Future.delayed(const Duration(seconds: 5), () async {
+    //   if (mounted ) {  // dùng mounted để kiểm tra context còn tồn tại
+    //     Navigator.of(context).pop();
+    //     _is2dscanCall = false;
+    //   }
+    // });
+
   }
+
+
+
   void _showTimeoutMessage() {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             "Không thể quét",
             style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: Text(
+          content: const Text(
             "Không thể quét QR Code. Vui lòng sử dụng Strigger để quét!",
             style: TextStyle(
               fontSize: 18,
@@ -692,15 +789,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 "OK",
                 style: TextStyle(color: Colors.white),
               ),
@@ -727,7 +824,13 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
   Future<void> _toggleBarCodeScanning() async {
     // print("được gọi");
-    if (_selectedScanningMethod == 'rfid'){
+    // if (_selectedScanningMethod == 'rfid' || _isDialogBarcodeShown){
+    //   return;
+    // }
+    if(currentDevice ==  Device.cameraBarcodes ||
+        _isDialogBarcodeShown || isShowDuplicateTagDialog ||
+        currentDevice ==  Device.rSeries ||
+        _selectedScanningMethod != "qr" ) {
       return;
     }
     RfidC72Plugin.barcodeStatusStream.receiveBroadcastStream().listen(updateBarcodeTags);
@@ -739,7 +842,9 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
     if (_is2dscanCall) {
       // Hiển thị dialog "Đang quét"
+      _isDialogBarcodeShown = true;
       _showBarcodeScanningModal();
+
 
       await RfidC72Plugin.connectBarcode; // Kết nối Barcode scanner
       await RfidC72Plugin.scanBarcode; // Bắt đầu quét mã QR
@@ -748,7 +853,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
         // _scanTimeoutTimer?.cancel();
         setState(() {
           _data.clear();
-          _data.add(TagEpcLBD(epc: extractedCode)); // Thêm mã QR vào danh sách EPC
+          _data.add(TagEpcLDB(epc: extractedCode)); // Thêm mã QR vào danh sách EPC
           _totalEPC = _data.length; // Cập nhật số lượng EPC quét được
           _is2dscanCall = false; // Dừng quét
         });
@@ -765,7 +870,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
           _barcodeSubscription = null;
         }
 
-        // Đóng dialog "Đang quét"
+       //  Đóng dialog "Đang quét"
         Navigator.of(context, rootNavigator: true).pop();
 
         // Hiển thị modal lưu mã chip (nếu cần)
@@ -783,7 +888,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     }
   }
 
-  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLBD> tags) async {
+  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLDB> tags) async {
     // Serialize danh sách tag thành chuỗi JSON
     List<Map<String, dynamic>> jsonTags = tags.map((tag) => tag.toJson()).toList();
     String jsonString = jsonEncode(jsonTags);
@@ -791,14 +896,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
     await _storage.write(key: 'saved_tags_$calendarId', value: jsonString);
   }
 
-  Future<List<TagEpcLBD>> loadTagsFromSecureStorage(String calendarId) async {
+  Future<List<TagEpcLDB>> loadTagsFromSecureStorage(String calendarId) async {
     String? jsonString = await _storage.read(key: 'saved_tags_$calendarId');
     if (jsonString == null) return [];
     List<dynamic> jsonTags = jsonDecode(jsonString);
-    List<TagEpcLBD> tags = jsonTags.map((jsonTag) => TagEpcLBD.fromJson(jsonTag)).toList();
+    List<TagEpcLDB> tags = jsonTags.map((jsonTag) => TagEpcLDB.fromJson(jsonTag)).toList();
     return tags;
   }
 
+  // Show bảng xác nhận lưu mã quét bằng GUN
   Future<void> _showConfirmationDialog() async {
     setState(() {
       _isContinuousCall = false;
@@ -808,7 +914,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Lưu mã chip?',
+          title: const Text('Lưu mã chip?',
             style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold
@@ -819,8 +925,8 @@ class _SendDataRecallState extends State<SendDataRecall> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 // Text('Bạn có chắc chắn muốn lưu kết quả quét không?'),
-                SizedBox(height: 20),
-                Container(
+                const SizedBox(height: 20),
+                SizedBox(
                   // Giới hạn chiều cao của Container chứa ListView.builder
                   height: 200, // Hoặc một giá trị phù hợp với nhu cầu của bạn
                   child: ListView.builder(
@@ -832,7 +938,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                         title:
                         Text(
                             '${index+1}.$tagepc',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF097746)
                           ),
                         ) ,
@@ -846,15 +952,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Hủy Bỏ',
+              child: const Text('Hủy Bỏ',
                   style:TextStyle(
                     color: Colors.white,
               )
@@ -869,27 +975,27 @@ class _SendDataRecallState extends State<SendDataRecall> {
                 });
               },
             ),
-            SizedBox(width: 8,),
+            const SizedBox(width: 8,),
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Xác Nhận',
+              child: const Text('Xác Nhận',
                   style:TextStyle(
                     color: Colors.white,
                   )
               ),
               onPressed: () async {
                 // Đầu tiên, tải danh sách tag hiện tại từ lưu trữ
-                List<TagEpcLBD> currentTags = await loadData(event.idLTH);
+                List<TagEpcLDB> currentTags = await loadData(event.idLTH);
                 // Lọc ra những tag mới chưa có trong currentTags
-                List<TagEpcLBD> newUniqueTags = _data.where((newTag) =>
+                List<TagEpcLDB> newUniqueTags = _data.where((newTag) =>
                 !currentTags.any((savedTag) => savedTag.epc == newTag.epc)).toList();
                 // Thêm các tag mới vào danh sách hiện tại và loại bỏ các tag trùng lặp
                 currentTags.addAll(newUniqueTags);
@@ -918,8 +1024,8 @@ class _SendDataRecallState extends State<SendDataRecall> {
     return 'sent_tags_$eventId';
   }
 
-  Future<void> saveTagState(TagEpcLBD tag) async {
-    final secureLTHStorage = FlutterSecureStorage();
+  Future<void> saveTagState(TagEpcLDB tag) async {
+    final secureLTHStorage = const FlutterSecureStorage();
     String key = 'tag_${tag.epc}';
     String json = jsonEncode(tag.toJson());
     await secureLTHStorage.write(key: key, value: json);
@@ -939,105 +1045,103 @@ class _SendDataRecallState extends State<SendDataRecall> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "rfid";
-                        });
-                        KeyEventChannel(
-                          onKeyReceived: checkCurrentDevice, //NMC 97
-                        ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "rfid",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "rfid"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "rfid";
+                      });
+                      KeyEventChannel(
+                        onKeyReceived: checkCurrentDevice, //NMC 97
+                      ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "rfid",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "rfid"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét mã RFID",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét mã RFID",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "qr";
-                        });
-                        KeyEventChannel(
-                          onKeyReceived: _toggleBarCodeScanning,
-                        ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "qr",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "qr"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+                  ),
+                  GestureDetector( // Nếu là lựa chọn quét QR
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "qr";
+                      });
+                      KeyEventChannel(
+                        onKeyReceived: checkCurrentDevice,
+                      ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "qr",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "qr"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét QR code",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét QR code",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "Hủy",
                     style: TextStyle(color: Colors.white),
                   ),
@@ -1047,30 +1151,32 @@ class _SendDataRecallState extends State<SendDataRecall> {
                 ),
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "OK",
                     style: TextStyle(color: Colors.white),
                   ),
-                  onPressed: () {
+                  onPressed: () { // Khi lựa chọn xong thì nhấn OK, lúc này sẽ bắt đầu thực thi
                     setState(() {
                       _isClickConfirmScanMethod = true;
                     });
                     Navigator.of(context).pop(true);
-                    // Sau khi người dùng nhấn OK, bắt đầu quá trình quét dựa trên lựa chọn
                     if (_selectedScanningMethod.isNotEmpty) {
-                      // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
-                      if (_selectedScanningMethod == "rfid") {
-                        checkCurrentDevice(); //NMC 97
-                      } else if (_selectedScanningMethod == "qr") {
-                        _toggleBarCodeScanning();
+                      if (_selectedScanningMethod == "rfid") { // RFID có hiệu lực R5 và C5
+                        checkCurrentDevice();
+                      } else if (_selectedScanningMethod == "qr") { // nếu chọn QR
+                        if(currentDevice == Device.cameraBarcodes || currentDevice == Device.rSeries){
+                          scanQRCodeByCamera(); // Camera có hiệu lực cho cả R5 và C5
+                        }else if(currentDevice == Device.cSeries ){
+                          _toggleBarCodeScanning();
+                        }
                       }
                     }
                   },
@@ -1089,9 +1195,9 @@ class _SendDataRecallState extends State<SendDataRecall> {
       context: context,
       barrierDismissible: false, // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1114,7 +1220,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     int successCount = 0;
     int failCount = 0;
     String? maTK = await _getMaTKFromSecureStorage();
-    List<TagEpcLBD> allRFIDData = await loadData(event.idLTH); // Tải tất cả dữ liệu RFID
+    List<TagEpcLDB> allRFIDData = await loadData(event.idLTH); // Tải tất cả dữ liệu RFID
     DateTime ngayPost = DateTime.now(); // Định dạng ngày gửi
     String postDate = ngayPost.toIso8601String();
     String currentDate = DateFormat('dd/MM/yyyy').format(ngayPost);
@@ -1127,7 +1233,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     int milli = now.millisecondsSinceEpoch;
     String milliString = milli.toString();
     String formattedTimestamp = milliString.padLeft(18, '0');
-    for (TagEpcLBD tag in allRFIDData) {
+    for (TagEpcLDB tag in allRFIDData) {
       String epcString = CommonFunction().hexToString(tag.epc);
     // List<String>allTag=[
     //   "RJVI24000022ANML",
@@ -1195,15 +1301,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-                child: Text("OK", style: TextStyle(color: Colors.white),),
+                child: const Text("OK", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -1217,22 +1323,22 @@ class _SendDataRecallState extends State<SendDataRecall> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Đồng bộ thành công",style: TextStyle(
+            title: const Text("Đồng bộ thành công",style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-                child: Text("OK", style: TextStyle(color: Colors.white),),
+                child: const Text("OK", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                   // Navigator.of(context).pop(); // Đóng cửa sổ dialog
@@ -1261,9 +1367,9 @@ class _SendDataRecallState extends State<SendDataRecall> {
       context: context,
       barrierDismissible: false, // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1288,7 +1394,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     int failCount = 0;
     String LDTH = widget.event.ghiChuLTH; // Lấy ghi chú của sự kiện
     String? maTK = await _getMaTKFromSecureStorage();
-    List<TagEpcLBD> allRFIDData = await loadData(event.idLTH); // Tải tất cả dữ liệu RFID
+    List<TagEpcLDB> allRFIDData = await loadData(event.idLTH); // Tải tất cả dữ liệu RFID
     DateTime ngayPost = DateTime.now(); // Định dạng ngày gửi
     String currentDate = DateFormat('dd/MM/yyyy').format(ngayPost);
     String postDate = ngayPost.toIso8601String();
@@ -1303,7 +1409,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     List<String> sentTags = sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     String baseUrl = '${AppConfig.IP}/api/40A0EE04219B4262B692F1F2DDB367DF';
     //
-    for (TagEpcLBD tag in allRFIDData) {
+    for (TagEpcLDB tag in allRFIDData) {
       String epcString = CommonFunction().hexToString(tag.epc);
     // List<String>allTag=[
     //   "RJVD2400006NKVML",
@@ -1404,13 +1510,13 @@ class _SendDataRecallState extends State<SendDataRecall> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Mất kết nối!",
+            title: const Text("Mất kết nối!",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text("Vui lòng kiểm tra kết nối mạng.",
+            content: const Text("Vui lòng kiểm tra kết nối mạng.",
                 style: TextStyle(
                   fontSize: 18,
                   color: Color(0xFF097746),
@@ -1419,15 +1525,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -1441,7 +1547,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Đồng bộ thành công",
+            title: const Text("Đồng bộ thành công",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
@@ -1450,15 +1556,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                   Navigator.pop(context, true); // Trả về giá trị true khi đóng màn hình
@@ -1558,14 +1664,14 @@ class _SendDataRecallState extends State<SendDataRecall> {
         return AlertDialog(
           title: Text(
             dialogTitle,
-            style: TextStyle(
+            style: const TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
           ),
           content: Text(
             "Bạn có chắc chắn muốn thực hiện thu hồi với lý do: ${widget.event.ghiChuLTH}?",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               color: Color(0xFF097746),
             ),
@@ -1573,15 +1679,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 "Hủy",
                 style: TextStyle(color: Colors.white),
               ),
@@ -1591,15 +1697,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
             ),
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 "OK",
                 style: TextStyle(color: Colors.white),
               ),
@@ -1688,104 +1794,144 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
 
   Future<void> _toggleScanningForC5() async {
-    if(_selectedScanningMethod == "qr" || currentDevice != Device.C_Series){
-      return;
-    }
-   // RfidC72Plugin.closeScan;
-    if (_isContinuousCall) {
-        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
 
-      // Đóng dialog quét nếu nó đang hiển thị
-      if (_isDialogShown) {
-        Navigator.of(context, rootNavigator: true).pop('dialog');
+    try{
+      if((currentDevice != Device.cSeries && currentDevice != Device.cameraBarcodes)
+          || _selectedScanningMethod != "rfid") {
+        return;
       }
-      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-      if (!showConfirmationDialog) {
-        Future.delayed(Duration(milliseconds: 100), () {
-          _showConfirmationDialog();
-          showConfirmationDialog = true;
-        });
-      }
-    } else {
-      if(!showConfirmationDialog){
-          DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
-        _data.clear();
-        _isContinuousCall = true;
-        if (!_isDialogShown) {
-          _showScanningModal();
+      RfidC72Plugin.closeScan;
+      if (_isContinuousCall) {
+
+        // Đóng dialog quét nếu nó đang hiển thị
+        if (_isDialogShown) {
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        }
+        // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
+        if (!showConfirmationDialog) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            //  _showConfirmationDialog();
+            showConfirmationDialog = true;
+          });
+        }
+      } else {
+        if(!showConfirmationDialog){
+          DataReadOptions.readTagsAsync(true, currentDevice);  //Start by internal device key or software button
+          _data.clear();
+          _isContinuousCall = true;
+          if (!_isDialogShown) {
+            _showScanningModal();
+          }
         }
       }
+      setState(() {
+        _isShowModal = _isContinuousCall;
+      });
+    }catch(e){
+      print('Error: $e');
     }
-    setState(() {
-      _isShowModal = _isContinuousCall;
-    });
+
+
   }
 
   Future<void> _toggleScanningForR5() async {
-    if(_selectedScanningMethod == "qr" || currentDevice != Device.R_Series){
-      return;
-    }
-   // RfidC72Plugin.closeScan;
-    if (_isContinuousCall) {
-      if(!scanStatusR5){
-        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+    try{
+      if(currentDevice != Device.rSeries || _selectedScanningMethod != "rfid"|| _isDialogShown ) return;
+      await RfidC72Plugin.stopScan;
+      await RfidC72Plugin.closeScan;
+      // Check connection
+      var isConnected = await UHFBlePlugin.getConnectionStatus();
+      if (! isConnected && mounted) {
+        ConnectionNotificationRSeries.showConnectionStatus(context, false);
+        return;
       }
-      // Đóng dialog quét nếu nó đang hiển thị
-      if (_isDialogShown) {
-        Navigator.of(context, rootNavigator: true).pop('dialog');
-      }
-      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-      if (!showConfirmationDialog) {
-        Future.delayed(Duration(milliseconds: 100), () {
-          _showConfirmationDialog();
-          showConfirmationDialog = true;
-        });
-      }
-    } else {
-      print("MinhChau: bat dau doc1");
-      if(!showConfirmationDialog){
-        print("MinhChau: bat dau doc2");
+
+
+      if (_isContinuousCall) {
         if(!scanStatusR5){
-          print("MinhChau: bat dau doc3");
-          print("Current Device ${currentDevice}");
-          DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+          DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
         }
-        _data.clear();
-        _isContinuousCall = true;
-        if (!_isDialogShown) {
-          _showScanningModal();
+        if (_isDialogShown) {
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        }
+        if (!showConfirmationDialog) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            //  _showConfirmationDialog();
+            showConfirmationDialog = true;
+          });
+        }
+      } else {
+        if(!showConfirmationDialog){
+          print("MinhChau: bat dau doc2");
+          if(!scanStatusR5){
+            print("MinhChau: bat dau doc3");
+            print("Current Device ${currentDevice}");
+            DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+          }
+          _data.clear();
+          _isContinuousCall = true;
+          if (!_isDialogShown) {
+            _showScanningModal();
+          }
         }
       }
+      setState(() {
+        _isShowModal = _isContinuousCall;
+      });
+    }catch(e){
+      print('Error: $e');
     }
-    setState(() {
-      _isShowModal = _isContinuousCall;
-    });
+
   }
 
+  /// Show dialog scanning indicator
   void _showScanningModal() {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
-        // Trả về widget dialog
-        return Center(
+        return (_isShowModal)
+            ? Center(
           child: Dialog(
             elevation: 0,
-            backgroundColor: Colors.transparent,
-            child: Container(
-              // Nội dung dialog
+            backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+            child: SizedBox(
+              height :300,
               child: SavedTagsModal(
                 updateStream: _updateStreamController.stream,
               ),
             ),
           ),
-        );
-      },
-    ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
+        ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
+      }
+      ,
+    ).then((_) {
+      _isDialogShown = false;
+      DataReadOptions.readTagsAsync(false, currentDevice); // stop scan
+      if (!showConfirmationDialog) { //Show confirm to save tag
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _showConfirmationDialog();
+          showConfirmationDialog = true;
+        });
+      }
+    });
     _isDialogShown = true;
   }
 
-  Future<List<TagEpcLBD>> getTagEpcList(String key) async {
+  // builder: (BuildContext context) {
+  // // Trả về widget dialog
+  // return Center(
+  // child: Dialog(
+  // elevation: 0,
+  // backgroundColor: Colors.transparent,
+  // child: SavedTagsModal(
+  // updateStream: _updateStreamController.stream,
+  // ),
+  // ),
+  // );
+  // }
+
+  Future<List<TagEpcLDB>> getTagEpcList(String key) async {
     return await loadData(event.idLTH);
   }
 
@@ -1796,7 +1942,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
     buffer.writeln("Số lượng quét: $tagCount");
     buffer.writeln("Ngày tạo lịch: ${event.ngayTaoLTH}");
     // Lấy danh sách TagEpcLBD từ loadData
-    List<TagEpcLBD> tagEpcList = await getTagEpcList(event.idLTH);
+    List<TagEpcLDB> tagEpcList = await getTagEpcList(event.idLTH);
     buffer.writeln("Mã EPC:");
     // Duyệt qua danh sách và thêm từng EPC vào chuỗi
     for (var tag in tagEpcList) {
@@ -1829,13 +1975,13 @@ class _SendDataRecallState extends State<SendDataRecall> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Tệp đã được lưu vào mục Download: $fileName'),
-          backgroundColor: Color(0xFF4EB47D),
-          duration: Duration(seconds: 3), // Thời gian hiển thị SnackBar
+          backgroundColor: const Color(0xFF4EB47D),
+          duration: const Duration(seconds: 3), // Thời gian hiển thị SnackBar
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
@@ -1882,7 +2028,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                 style: TextStyle(
                   fontSize: screenWidth * 0.07, // Kích thước chữ
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF097746),
+                  color: const Color(0xFF097746),
                 ),
               ),
               actions: [
@@ -1908,12 +2054,12 @@ class _SendDataRecallState extends State<SendDataRecall> {
                             barrierDismissible: false,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text('Xác nhận xóa',
+                                title: const Text('Xác nhận xóa',
                                   style: TextStyle(color: Color(0xFF097746),
                                   fontWeight: FontWeight.bold
                                   ),
                                 ),
-                                content: Text("Bạn có chắc chắn muốn xóa lịch này không?",
+                                content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
                                     style: TextStyle(
                                       fontSize: 18,
                                       color: Color(0xFF097746),
@@ -1922,15 +2068,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                 actions: <Widget>[
                                   TextButton(
                                     style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                         ),
                                       ),
-                                      fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                     ),
-                                    child: Text('Hủy',
+                                    child: const Text('Hủy',
                                         style:TextStyle(
                                           color: Colors.white,
                                         )
@@ -1941,18 +2087,18 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                       });
                                     },
                                   ),
-                                  SizedBox(width: 8,),
+                                  const SizedBox(width: 8,),
                                   TextButton(
                                     style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                         ),
                                       ),
-                                      fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                     ),
-                                    child: Text('Xác Nhận',
+                                    child: const Text('Xác Nhận',
                                         style:TextStyle(
                                           color: Colors.white,
                                         )
@@ -1984,7 +2130,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                       width: double.infinity,
                       padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                       decoration: BoxDecoration(
-                        color: Color(0xFFFAFAFA),
+                        color: const Color(0xFFFAFAFA),
                         border: Border(
                           bottom: BorderSide(
                             color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -1998,7 +2144,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                           style: TextStyle(
                             // fontSize: 24,
                             fontSize: screenWidth * 0.065,
-                            color: Color(0xFF097746),
+                            color: const Color(0xFF097746),
                           ),
                           children: [
                             TextSpan(
@@ -2024,7 +2170,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                       // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                       padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                       decoration: BoxDecoration(
-                        color: Color(0xFFFAFAFA),
+                        color: const Color(0xFFFAFAFA),
                         border: Border(
                           bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
                         ),
@@ -2035,7 +2181,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
+                                style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
                                 children: [
                                   TextSpan(
                                     text: 'Số lượng quét\n ',
@@ -2049,7 +2195,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                               ),
                             ),
                           ),
-                          Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                          const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                         ],
                       ),
                     ),
@@ -2058,7 +2204,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                       width: double.infinity,
                       padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                       decoration: BoxDecoration(
-                        color: Color(0xFFFAFAFA),
+                        color: const Color(0xFFFAFAFA),
                         border: Border(
                           bottom: BorderSide(
                             color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -2071,7 +2217,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                         text: TextSpan(
                           style: TextStyle(
                             fontSize: screenWidth * 0.065,
-                            color: Color(0xFF097746),
+                            color: const Color(0xFF097746),
                           ),
                           children: [
                             TextSpan(
@@ -2100,12 +2246,12 @@ class _SendDataRecallState extends State<SendDataRecall> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
-                        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        backgroundColor: const Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        fixedSize: Size(170.0, 50.0), // Kích thước cố định
+                        fixedSize: const Size(170.0, 50.0), // Kích thước cố định
                       ),
                       onPressed: () async {
                         await _showScanMethodDialog();
@@ -2118,12 +2264,12 @@ class _SendDataRecallState extends State<SendDataRecall> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFd5a529),
-                        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        backgroundColor: const Color(0xFFd5a529),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        fixedSize: Size(150.0, 50.0),
+                        fixedSize: const Size(150.0, 50.0),
                       ),
                       onPressed: () {
                         if (tagCount == 0) {
@@ -2131,14 +2277,14 @@ class _SendDataRecallState extends State<SendDataRecall> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text(
+                                title: const Text(
                                   "Không thể đồng bộ",
                                   style: TextStyle(
                                     color: Color(0xFF097746),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                content: Text(
+                                content: const Text(
                                   "Vui lòng kiểm tra lại số lượng quét.",
                                   style: TextStyle(
                                     fontSize: 18,
@@ -2148,15 +2294,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                 actions: <Widget>[
                                   TextButton(
                                     style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                         ),
                                       ),
-                                      fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                     ),
-                                    child: Text(
+                                    child: const Text(
                                       "Đóng",
                                       style: TextStyle(color: Colors.white),
                                     ),
@@ -2176,7 +2322,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                               return StatefulBuilder(
                                 builder: (context, setState) {
                                   return AlertDialog(
-                                    title: Text(
+                                    title: const Text(
                                       "Hình thức thu hồi?",
                                       style: TextStyle(
                                         color: Color(0xFF097746),
@@ -2194,7 +2340,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                               });
                                             },
                                             child: Container(
-                                              padding: EdgeInsets.symmetric(vertical: 8.0), // Khoảng cách bên trong
+                                              padding: const EdgeInsets.symmetric(vertical: 8.0), // Khoảng cách bên trong
                                               child: Row(
                                                 children: <Widget>[
                                                   Radio<String>(
@@ -2205,15 +2351,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                                         _selectedRecallOption = value!;
                                                       });
                                                     },
-                                                    activeColor: Color(0xFFd5a529), // Màu khi được chọn
+                                                    activeColor: const Color(0xFFd5a529), // Màu khi được chọn
                                                     fillColor: MaterialStateProperty.all<Color>(
                                                       _selectedRecallOption == "huy_bo"
-                                                          ? Color(0xFFd5a529) // Màu khi được chọn
-                                                          : Color(0xFF097746), // Màu mặc định
+                                                          ? const Color(0xFFd5a529) // Màu khi được chọn
+                                                          : const Color(0xFF097746), // Màu mặc định
                                                     ),
                                                   ),
-                                                  SizedBox(width: 10.0), // Khoảng cách giữa Radio và Text
-                                                  Text(
+                                                  const SizedBox(width: 10.0), // Khoảng cách giữa Radio và Text
+                                                  const Text(
                                                     "Thu hồi hủy bỏ",
                                                     style: TextStyle(
                                                       color: Color(0xFF097746),
@@ -2231,7 +2377,7 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                               });
                                             },
                                             child: Container(
-                                              padding: EdgeInsets.symmetric(vertical: 8.0), // Khoảng cách bên trong
+                                              padding: const EdgeInsets.symmetric(vertical: 8.0), // Khoảng cách bên trong
                                               child: Row(
                                                 children: <Widget>[
                                                   Radio<String>(
@@ -2242,15 +2388,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                                         _selectedRecallOption = value!;
                                                       });
                                                     },
-                                                    activeColor: Color(0xFFd5a529), // Màu khi được chọn
+                                                    activeColor: const Color(0xFFd5a529), // Màu khi được chọn
                                                     fillColor: MaterialStateProperty.all<Color>(
                                                       _selectedRecallOption == "nhap_kho"
-                                                          ? Color(0xFFd5a529) // Màu khi được chọn
-                                                          : Color(0xFF097746), // Màu mặc định
+                                                          ? const Color(0xFFd5a529) // Màu khi được chọn
+                                                          : const Color(0xFF097746), // Màu mặc định
                                                     ),
                                                   ),
-                                                  SizedBox(width: 10.0), // Khoảng cách giữa Radio và Text
-                                                  Expanded( // Đảm bảo rằng văn bản có thể giãn ra toàn bộ chiều ngang còn lại
+                                                  const SizedBox(width: 10.0), // Khoảng cách giữa Radio và Text
+                                                  const Expanded( // Đảm bảo rằng văn bản có thể giãn ra toàn bộ chiều ngang còn lại
                                                     child: Text(
                                                       "Thu hồi nhiễu (Xuất dư)",
                                                       style: TextStyle(
@@ -2269,15 +2415,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                     actions: <Widget>[
                                       TextButton(
                                         style: ButtonStyle(
-                                          backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                             RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                             ),
                                           ),
-                                          fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                          fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           "Hủy",
                                           style: TextStyle(color: Colors.white),
                                         ),
@@ -2287,15 +2433,15 @@ class _SendDataRecallState extends State<SendDataRecall> {
                                       ),
                                       TextButton(
                                         style: ButtonStyle(
-                                          backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                          backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                             RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                             ),
                                           ),
-                                          fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                          fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           "OK",
                                           style: TextStyle(color: Colors.white),
                                         ),

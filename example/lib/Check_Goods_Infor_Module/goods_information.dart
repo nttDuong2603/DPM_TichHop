@@ -8,11 +8,15 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import '../Distribution_Module/model.dart';
+import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
+import '../main.dart';
 import '../utils/app_config.dart';
 import 'goods_Information_model.dart';
 import '../utils/key_event_channel.dart';
-
+/*CHECK PRODUCT*/
 class GoodsInformation extends StatefulWidget {
   @override
   _GoodsInformationState createState() => new _GoodsInformationState();
@@ -44,6 +48,9 @@ class _GoodsInformationState extends State<GoodsInformation> {
   // String IP = 'http://192.168.19.180:5057';
   // String IP = 'https://jvf-admin.rynansaas.com';
 
+  List<TagEpc> r5_resultTags = [];
+  bool scanStatusR5 = false;
+
 
   @override
   void initState() {
@@ -52,6 +59,51 @@ class _GoodsInformationState extends State<GoodsInformation> {
     KeyEventChannel(
       onKeyReceived: scanSingleTagAndUpdateWebView,
     ).initialize();
+    uhfBLERegister();
+  }
+bool isShowingInfo = false;
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
+
+      try {
+        if(currentDevice != Device.rSeries || tagList.isEmpty || isShowingInfo) {
+          print("Not is R5");
+          DataReadOptions.readTagsAsync(false, Device.rSeries);
+          return;
+        }
+        isShowingInfo = true;
+        r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
+        String rawScannedCode = r5_resultTags.first.epc;
+        scannedCode = CommonFunction().hexToString(rawScannedCode);
+        print('Data from R5: $scannedCode');
+        if(scannedCode.isNotEmpty){
+          DataReadOptions.readTagsAsync(false, currentDevice); //stop scan
+          globalScannedCode = scannedCode;
+          //  globalScannedCode = 'RJVD24000047GQML'; // Simulate a valid tag;
+          print('globalScannedCode: $scannedCode');
+          setState(() {
+            isScan = true;
+            _scanAttempted = true; // Mark that a scan has been attempted
+          });
+        }
+      }
+      catch (e) {
+        print('Error when scanning RFID: $e');
+      }
+
+    });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
+      scanStatusR5 = scanStatus;
+      //_toggleScanningForR5();
+    });
+  }
+
+
+  Future<void> _toggleScanningForR5()async{
+    if(currentDevice != Device.rSeries) {
+      return;
+    }
+    DataReadOptions.readTagsAsync(true, currentDevice); //stop scan
   }
 
 
@@ -76,6 +128,8 @@ class _GoodsInformationState extends State<GoodsInformation> {
     });
   }
 
+
+
   void updateIsConnected(dynamic isConnected) {
     _isConnected = isConnected;
   }
@@ -87,7 +141,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
   @override
   void dispose() {
     super.dispose();
-    scanSingleTagAndUpdateWebView();
+    //scanSingleTagAndUpdateWebView();
   }
 
   // void updateTags(dynamic result) {
@@ -107,40 +161,52 @@ class _GoodsInformationState extends State<GoodsInformation> {
     });
   }
 
+
   void scanSingleTagAndUpdateWebView() async {
-    StreamSubscription<dynamic>? subscription;
-    try {
-      // Tạo một biến để lắng nghe kết quả quét
-      StreamSubscription<dynamic>? subscription = RfidC72Plugin.tagsStatusStream.receiveBroadcastStream().listen(null);
+    if (currentDevice == Device.rSeries) {
+      await _toggleScanningForR5();
+    }else if(currentDevice == Device.cameraBarcodes){
+      ConnectionNotificationRSeries.showDeviceWaring(context, false);
+      return;
+    }
+    else {
+      StreamSubscription<dynamic>? subscription;
+      try {
+        // Tạo một biến để lắng nghe kết quả quét
+        StreamSubscription<dynamic>? subscription = RfidC72Plugin
+            .tagsStatusStream
+            .receiveBroadcastStream()
+            .listen(null);
 
-      // Đăng ký nghe kết quả từ luồng
-      subscription.onData((result) async {
-        if (result.isNotEmpty) {
-          // Lấy dữ liệu từ thẻ đầu tiên được quét
-          String rawScannedCode = TagEpc.parseTags(result).first.epc;
-          scannedCode = CommonFunction().hexToString(rawScannedCode);
-
-          setState(() {
-            //globalScannedCode = scannedCode;
-             globalScannedCode = 'RJVD24000047GQML';
-          });
-          print('mã được quét: $globalScannedCode');
-          // Hủy đăng ký sau khi xử lý kết quả đầu tiên
-          subscription.cancel();
-        }
-      });
-      setState(() {
-        isScan = true;
-        _scanAttempted = true; // Mark that a scan has been attempted
-
-      });
-      // Bắt đầu quét một thẻ RFID
-      await RfidC72Plugin.startSingle;
-
-    } catch (e) {
-      print("Error when scanning RFID: $e");
+        // Đăng ký nghe kết quả từ luồng
+        subscription.onData((result) async {
+          if (result.isNotEmpty) {
+            // Lấy dữ liệu từ thẻ đầu tiên được quét
+            String rawScannedCode = TagEpc.parseTags(result).first.epc;
+            scannedCode = CommonFunction().hexToString(rawScannedCode);
+            setState(() {
+              globalScannedCode = scannedCode;
+              print("Debug: Scanned code infomation: $globalScannedCode");
+              // globalScannedCode = 'RJVD24000047GQML';
+            });
+            //  print('mã được quét: $globalScannedCode');
+            // Hủy đăng ký sau khi xử lý kết quả đầu tiên
+            subscription.cancel();
+          }
+        });
+        setState(() {
+          isScan = true;
+          _scanAttempted = true; // Mark that a scan has been attempted
+        });
+        // Bắt đầu quét một thẻ RFID
+        await RfidC72Plugin.startSingle;
+      } catch (e) {
+        print("Error when scanning RFID: $e");
+      }
     }
   }
+
+
 
   Future<void> loadInformationFromScannedCode(String scannedCode) async {
     try {
@@ -286,7 +352,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
       var distributionDetails = await distributionFuture;
       var warehouseDetails = await warehouseFuture;
       var rfidDetails = await rfidFuture;
-
+      isShowingInfo = false;
       return CombinedProductDetails(
         packageDetails: packageDetails,
         distributionDetails: distributionDetails,
@@ -312,7 +378,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
       // Khởi tạo timer để tự động chuyển trang
       void _startAutoSlide() {
         if (imageUrls.length > 1) {
-          _timer = Timer.periodic(Duration(seconds: 4), (Timer timer) {
+          _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
             if (_pageController.hasClients) {
               int nextPage = _pageController.page!.toInt() + 1;
               if (nextPage >= imageUrls.length) {
@@ -320,7 +386,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
               }
               _pageController.animateToPage(
                 nextPage,
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
               );
             }
@@ -339,18 +405,18 @@ class _GoodsInformationState extends State<GoodsInformation> {
       }
 
       return Container(
-        padding: EdgeInsets.all(10),
-        margin: EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.only(bottom: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(10),
-              margin: EdgeInsets.fromLTRB(5, 5, 5, 0),
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.fromLTRB(5, 5, 5, 0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(
-                  color: Color(0xFFEEEEEE),
+                  color: const Color(0xFFEEEEEE),
                   width: 1.0,
                 ),
                 boxShadow: [
@@ -358,7 +424,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 1,
                     blurRadius: 10,
-                    offset: Offset(0, 5),
+                    offset: const Offset(0, 5),
                   ),
                 ],
                 borderRadius: BorderRadius.circular(5),
@@ -366,7 +432,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: imageUrls.isEmpty
-                    ? Center(
+                    ? const Center(
                   heightFactor: 10,
                   child: Text(
                     'Không có hình ảnh',
@@ -393,12 +459,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
                                   value: loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                                       : null,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
                                 ),
                               );
                             },
                             errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                              return Center(
+                              return const Center(
                                 child: Text(
                                   'Hình ảnh xảy ra lỗi',
                                   style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -415,12 +481,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
                         top: 130,
                         bottom: 130,
                         child: IconButton(
-                          icon: Icon(Icons.arrow_back_ios, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_back_ios, color: Colors.grey),
                           onPressed: () {
                             _stopAutoSlide();
                             if (_pageController.hasClients) {
                               _pageController.previousPage(
-                                duration: Duration(milliseconds: 400),
+                                duration: const Duration(milliseconds: 400),
                                 curve: Curves.easeInOut,
                               );
                             }
@@ -433,12 +499,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
                         top: 130,
                         bottom: 130,
                         child: IconButton(
-                          icon: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
                           onPressed: () {
                             _stopAutoSlide();
                             if (_pageController.hasClients) {
                               _pageController.nextPage(
-                                duration: Duration(milliseconds: 400),
+                                duration: const Duration(milliseconds: 400),
                                 curve: Curves.easeInOut,
                               );
                             }
@@ -457,12 +523,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
     }));
 
       widgets.add(Container(
-      padding: EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
-      margin: EdgeInsets.fromLTRB(15, 0, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
+      padding: const EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
+      margin: const EdgeInsets.fromLTRB(15, 0, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
       decoration: BoxDecoration(
         color: Colors.white, // Màu nền của container, nên thiết lập để đổ bóng hiển thị rõ ràng
         border: Border.all(
-          color: Color(0xFFEEEEEE), // Màu viền
+          color: const Color(0xFFEEEEEE), // Màu viền
           width: 1.0, // Độ dày của viền
         ),
         boxShadow: [
@@ -470,7 +536,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             color: Colors.grey.withOpacity(0.5), // Màu đổ bóng
             spreadRadius: 1, // Phạm vi mà đổ bóng sẽ lan rộng
             blurRadius: 10, // Độ mờ của đổ bóng
-            offset: Offset(0, 5), // Vị trí đổ bóng, x và y
+            offset: const Offset(0, 5), // Vị trí đổ bóng, x và y
           ),
         ],
         borderRadius: BorderRadius.circular(5), // Bo góc của container
@@ -484,7 +550,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
               children: [
                 Text(
                     "${item.tenSP ?? ' ' } (${item.maSP ?? ' '})",
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF379BD1)
@@ -492,7 +558,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                 ),
                 Text(
                     "(Mã EPC: $globalScannedCode)",
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 18,
                         // fontWeight: FontWeight.bold,
                         color: Colors.grey
@@ -508,18 +574,18 @@ class _GoodsInformationState extends State<GoodsInformation> {
 
                   Row(
                     children: [
-                      Text("Ngày sản xuất: ", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-                      SizedBox(width: 10),
+                      const Text("Ngày sản xuất: ", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                             item.ngaySX != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item.ngaySX!)) : '',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
                         ),
                       ),
                     ],
                   ),
 
-                  Row(
+                  const Row(
                     children: [
                       Text("Ngày hết hạn:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
                       SizedBox(width: 10),
@@ -528,14 +594,14 @@ class _GoodsInformationState extends State<GoodsInformation> {
                   ),
                   Row(
                     children: [
-                      Text("Số lô:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-                      SizedBox(width: 10),
+                      const Text("Số lô:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+                      const SizedBox(width: 10),
                       Expanded(
-                          child: Text(item.soLOT ?? ' ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                          child: Text(item.soLOT ?? ' ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
                       ),
                     ],
                   ),
-                  Row(
+                  const Row(
                     children: [
                       Text("Xuất Xứ:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
                       SizedBox(width: 10),
@@ -545,7 +611,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                 ],
               )),
             if (data.packageDetails.isEmpty )
-              ...data.packageDetails.map((item) => Column(
+              ...data.packageDetails.map((item) => const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -583,12 +649,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
     ));
 
     widgets.addAll(data.distributionDetails.map((item) => Container(
-      padding: EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
-      margin: EdgeInsets.fromLTRB(15, 5, 15,0),// Khoảng cách bên ngoài giữa container và các widget xung quanh
+      padding: const EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
+      margin: const EdgeInsets.fromLTRB(15, 5, 15,0),// Khoảng cách bên ngoài giữa container và các widget xung quanh
       decoration: BoxDecoration(
         color: Colors.white, // Màu nền của container, nên thiết lập để đổ bóng hiển thị rõ ràng
         border: Border.all(
-          color: Color(0xFFEEEEEE), // Màu viền
+          color: const Color(0xFFEEEEEE), // Màu viền
           width: 1.0, // Độ dày của viền
         ),
         boxShadow: [
@@ -596,7 +662,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             color: Colors.grey.withOpacity(0.5), // Màu đổ bóng
             spreadRadius: 1, // Phạm vi mà đổ bóng sẽ lan rộng
             blurRadius: 10, // Độ mờ của đổ bóng
-            offset: Offset(0, 5), // Vị trí đổ bóng, x và y
+            offset: const Offset(0, 5), // Vị trí đổ bóng, x và y
           ),
         ],
         borderRadius: BorderRadius.circular(5), // Bo góc của container
@@ -604,40 +670,40 @@ class _GoodsInformationState extends State<GoodsInformation> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("PHÂN PHỐI", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
+          const Text("PHÂN PHỐI", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
           Text(
             "Ngày phân phối: " + (item.ngayPP != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item.ngayPP!)) : ' '),
-            style: TextStyle(fontSize: 16, color: Color(0xFF777777)),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF777777)),
           ),
           Row(
             children: [
-              Text("Lệnh giao hàng:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(" ${item.lenhXH}", style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Lệnh giao hàng:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(" ${item.lenhXH}", style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
           Row(
             children: [
-              Text("Phân phối bởi:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.phanPhoiBoi ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Phân phối bởi:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.phanPhoiBoi ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
           Row(
             children: [
-              Text("Phân phối đến:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.phanPhoiDen ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Phân phối đến:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.phanPhoiDen ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
           Row(
             children: [
-              Text("Khu vực:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.khuVuc ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Khu vực:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.khuVuc ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
@@ -647,12 +713,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
     )));
     //
     widgets.addAll(data.warehouseDetails.map((item) => Container(
-      padding: EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
-      margin: EdgeInsets.fromLTRB(15, 5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
+      padding: const EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
+      margin: const EdgeInsets.fromLTRB(15, 5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
       decoration: BoxDecoration(
         color: Colors.white, // Màu nền của container, nên thiết lập để đổ bóng hiển thị rõ ràng
         border: Border.all(
-          color: Color(0xFFEEEEEE), // Màu viền
+          color: const Color(0xFFEEEEEE), // Màu viền
           width: 1.0, // Độ dày của viền
         ),
         boxShadow: [
@@ -660,7 +726,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             color: Colors.grey.withOpacity(0.5), // Màu đổ bóng
             spreadRadius: 1, // Phạm vi mà đổ bóng sẽ lan rộng
             blurRadius: 10, // Độ mờ của đổ bóng
-            offset: Offset(0, 5), // Vị trí đổ bóng, x và y
+            offset: const Offset(0, 5), // Vị trí đổ bóng, x và y
           ),
         ],
         borderRadius: BorderRadius.circular(5), // Bo góc của container
@@ -669,48 +735,48 @@ class _GoodsInformationState extends State<GoodsInformation> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          Text("PHÂN PHỐI KHO THUÊ", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
+          const Text("PHÂN PHỐI KHO THUÊ", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
           Row(
             children: [
-              Text("Ngày phân phối:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
+              const Text("Ngày phân phối:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
               Expanded(child: Text(
                  (item.KTngayPP != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item.KTngayPP!)) : ''),
-                style: TextStyle(fontSize: 16, color: Color(0xFF777777)),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF777777)),
               ),
               ),
             ],
           ),
           Row(
             children: [
-              Text("Lệnh giao hàng:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.KTlenhXH ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Lệnh giao hàng:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.KTlenhXH ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
           Row(
             children: [
-              Text("Phân phối bởi :", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.KTphanPhoiBoi ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Phân phối bởi :", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.KTphanPhoiBoi ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
 
               )
             ],
           ),
           Row(
             children: [
-              Text("Phân phối đến:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.KTphanPhoiDen ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Phân phối đến:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.KTphanPhoiDen ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
           Row(
             children: [
-              Text("Khu vực:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
-              SizedBox(width: 10),
-              Expanded(child: Text(item.KTkhuVuc ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
+              const Text("Khu vực:", style: TextStyle(fontSize: 16, color: Color(0xFF777777))),
+              const SizedBox(width: 10),
+              Expanded(child: Text(item.KTkhuVuc ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF337ab7))),
               )
             ],
           ),
@@ -734,12 +800,12 @@ class _GoodsInformationState extends State<GoodsInformation> {
     }
 
     widgets.addAll(data.rfidDetails.map((item) => Container(
-      padding: EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
-      margin: EdgeInsets.fromLTRB(15, 5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
+      padding: const EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
+      margin: const EdgeInsets.fromLTRB(15, 5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
       decoration: BoxDecoration(
         color: Colors.white, // Màu nền của container, nên thiết lập để đổ bóng hiển thị rõ ràng
         border: Border.all(
-          color: Color(0xFFEEEEEE), // Màu viền
+          color: const Color(0xFFEEEEEE), // Màu viền
           width: 1.0, // Độ dày của viền
         ),
         boxShadow: [
@@ -747,7 +813,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             color: Colors.grey.withOpacity(0.5), // Màu đổ bóng
             spreadRadius: 1, // Phạm vi mà đổ bóng sẽ lan rộng
             blurRadius: 10, // Độ mờ của đổ bóng
-            offset: Offset(0, 5), // Vị trí đổ bóng, x và y
+            offset: const Offset(0, 5), // Vị trí đổ bóng, x và y
           ),
         ],
         borderRadius: BorderRadius.circular(5), // Bo góc của container
@@ -756,19 +822,19 @@ class _GoodsInformationState extends State<GoodsInformation> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("THÔNG TIN SẢN PHẨM", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
+          const Text("THÔNG TIN SẢN PHẨM", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
           htmlContent(item.thongTinSP ?? ''), // Đây là widget Html, không phải widget Text
         ],
       ),
     )));
 
     widgets.addAll(data.rfidDetails.map((item) => Container(
-      padding: EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
-      margin: EdgeInsets.fromLTRB(15,5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
+      padding: const EdgeInsets.all(10), // Khoảng cách bên trong giữa viền và hình ảnh
+      margin: const EdgeInsets.fromLTRB(15,5, 15,0), // Khoảng cách bên ngoài giữa container và các widget xung quanh
       decoration: BoxDecoration(
         color: Colors.white, // Màu nền của container, nên thiết lập để đổ bóng hiển thị rõ ràng
         border: Border.all(
-          color: Color(0xFFEEEEEE), // Màu viền
+          color: const Color(0xFFEEEEEE), // Màu viền
           width: 1.0, // Độ dày của viền
         ),
         boxShadow: [
@@ -776,7 +842,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             color: Colors.grey.withOpacity(0.5), // Màu đổ bóng
             spreadRadius: 1, // Phạm vi mà đổ bóng sẽ lan rộng
             blurRadius: 10, // Độ mờ của đổ bóng
-            offset: Offset(0, 5), // Vị trí đổ bóng, x và y
+            offset: const Offset(0, 5), // Vị trí đổ bóng, x và y
           ),
         ],
         borderRadius: BorderRadius.circular(5), // Bo góc của container
@@ -784,16 +850,16 @@ class _GoodsInformationState extends State<GoodsInformation> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("CÔNG TY SẢN XUẤT", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
-          SizedBox(height: 10,),
+          const Text("CÔNG TY SẢN XUẤT", style: TextStyle(fontSize: 20, color: Color(0xFF379BD1))),
+          const SizedBox(height: 10,),
 
-          Text(item.nhaSanXuat ?? '', style: TextStyle(fontSize: 16, color: Color(0xFF379BD1), fontWeight: FontWeight.bold)),
-          SizedBox(height: 10,),
+          Text(item.nhaSanXuat ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF379BD1), fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10,),
 
           Row(
             children: [
-              Icon(Icons.location_on_outlined, color: Color(0xFF379BD1)),
-              SizedBox(width: 10),
+              const Icon(Icons.location_on_outlined, color: Color(0xFF379BD1)),
+              const SizedBox(width: 10),
               Expanded(
                 child: RichText(
                   text: TextSpan(
@@ -804,7 +870,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                       ),
                       TextSpan(
                         text: item.diaChi ?? '',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF1f2b3d)), // Set a different color for email
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF1f2b3d)), // Set a different color for email
                       ),
                     ],
                   ),
@@ -812,23 +878,23 @@ class _GoodsInformationState extends State<GoodsInformation> {
               ),
             ],
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
 
           Row(
             children: [
-              Icon(Icons.phone_outlined, color: Color(0xFF379BD1)),
-              SizedBox(width: 10),
+              const Icon(Icons.phone_outlined, color: Color(0xFF379BD1)),
+              const SizedBox(width: 10),
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "Số điện thoại: ",
                         style: TextStyle(fontSize: 16, color: Color(0xFF777777)), // Set color for label
                       ),
                       TextSpan(
                         text: item.SDT ?? '',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
                       ),
                     ],
                   ),
@@ -836,23 +902,23 @@ class _GoodsInformationState extends State<GoodsInformation> {
               ),
             ],
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           Row(
             children: [
-              Icon(Icons.email_outlined,color: Color(0xFF379BD1)),
-              SizedBox(width: 10),
+              const Icon(Icons.email_outlined,color: Color(0xFF379BD1)),
+              const SizedBox(width: 10),
               // Expanded(child: Text("Email: ${item.email}", style: TextStyle(fontSize: 16))),
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "Email: ",
                         style: TextStyle(fontSize: 16, color: Color(0xFF777777)), // Set color for label
                       ),
                       TextSpan(
                         text: item.email ?? '',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
                       ),
                     ],
                   ),
@@ -860,23 +926,23 @@ class _GoodsInformationState extends State<GoodsInformation> {
               ),
             ],
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
 
           Row(
             children: [
-              Icon(Icons.web, color: Color(0xFF379BD1)),
-              SizedBox(width: 10),
+              const Icon(Icons.web, color: Color(0xFF379BD1)),
+              const SizedBox(width: 10),
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     children: [
-                      TextSpan(
+                      const TextSpan(
                         text: "Website: ",
                         style: TextStyle(fontSize: 16, color: Color(0xFF777777)), // Set color for label
                       ),
                       TextSpan(
                         text: item.website ?? '',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF379BD1)), // Set a different color for email
                       ),
                     ],
                   ),
@@ -901,7 +967,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
         title: Text(
           "Thông tin sản phẩm",
           style: TextStyle(
-            color: Color(0xFF097746),
+            color: const Color(0xFF097746),
             fontWeight: FontWeight.bold,
             fontSize: screenWidth * 0.07,
           ),
@@ -915,7 +981,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
               });
               scanSingleTagAndUpdateWebView();
 
-              Future.delayed(Duration(seconds: 1), () {
+              Future.delayed(const Duration(seconds: 1), () {
                 setState(() {
                   _isLoading = false;
                 });
@@ -929,21 +995,21 @@ class _GoodsInformationState extends State<GoodsInformation> {
           if(isScan)
             Container(
               height: screenHeight * 0.1,
-              color: Color(0xFF274452),
+              color: const Color(0xFF274452),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 10),
+                    padding: const EdgeInsets.only(left: 10),
                     child: Image.asset('assets/image/logoJVF_RFID.png',
                       width: screenWidth * 0.14, // 50% của chiều rộng màn hình
                       height: screenHeight * 0.8,
                     ),
                   ),
-                  SizedBox(width: 10,),
+                  const SizedBox(width: 10,),
                   Expanded(
                     child: RichText(
-                      text: TextSpan(
+                      text: const TextSpan(
                         children: [
                           TextSpan(
                             text: 'CÔNG TY PHÂN BÓN\n',
@@ -954,7 +1020,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
                           ),
                           WidgetSpan(
                             child: Padding(
-                              padding: const EdgeInsets.only(left: 10.0),
+                              padding: EdgeInsets.only(left: 10.0),
                             ),
                           ),
                           TextSpan(
@@ -978,7 +1044,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
             builder: (context, snapshot) {
 
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator(
+                return const Center(child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
                 ));
               }
@@ -987,8 +1053,8 @@ class _GoodsInformationState extends State<GoodsInformation> {
                 if (snapshot.error.toString().contains("SocketException")) {
                   // errorMessage = "Không có kết nối Internet. Vui lòng kiểm tra lại kết nối của bạn.";
                   return Container(
-                    margin: EdgeInsets.only(top: 50), // Adjust top margin as needed
-                    child: Center(
+                    margin: const EdgeInsets.only(top: 50), // Adjust top margin as needed
+                    child: const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min, // Makes the column's height fit its children
                         children: <Widget>[
@@ -1006,8 +1072,8 @@ class _GoodsInformationState extends State<GoodsInformation> {
                   );
                 }
                 return Container(
-                  margin: EdgeInsets.only(top: 50),  // Adjust the top margin as needed
-                  child: Center(
+                  margin: const EdgeInsets.only(top: 50),  // Adjust the top margin as needed
+                  child: const Center(
                     child: Text("KHÔNG TÌM THẤY THÔNG TIN", style: TextStyle(fontSize: 18, color: Colors.grey)),
                   ),
                 );
@@ -1020,15 +1086,15 @@ class _GoodsInformationState extends State<GoodsInformation> {
                 bool hasValidReplaceStatus = snapshot.data!.rfidDetails.any((item) => item.trangThai == "TT017");
                 if (hasValidRecallStatus){
                   return Container(
-                    margin: EdgeInsets.only(top: 50),  // Adjust the top margin as needed
-                    child: Center(
+                    margin: const EdgeInsets.only(top: 50),  // Adjust the top margin as needed
+                    child: const Center(
                       child: Text("Mã vạch đã thu hồi", style: TextStyle(fontSize: 18, color: Colors.grey)),
                     ),
                   );
                 }else if (hasValidReplaceStatus){
                   return Container(
-                    margin: EdgeInsets.only(top: 50),  // Adjust the top margin as needed
-                    child: Center(
+                    margin: const EdgeInsets.only(top: 50),  // Adjust the top margin as needed
+                    child: const Center(
                       child: Text("Mã vạch đã thu hồi thay thế", style: TextStyle(fontSize: 18, color: Colors.grey)),
                     ),
                   );
@@ -1039,13 +1105,14 @@ class _GoodsInformationState extends State<GoodsInformation> {
                   );
                 } else if (_scanAttempted && !hasValidMaSP) {
                   return Container(
-                    margin: EdgeInsets.only(top: 50),  // Adjust the top margin as needed
-                    child: Center(
+                    margin: const EdgeInsets.only(top: 50),  // Adjust the top margin as needed
+                    child: const Center(
                       child: Text("KHÔNG TÌM THẤY THÔNG TIN", style: TextStyle(fontSize: 18, color: Colors.grey)),
                     ),
                   );
                 }
               }
+
               return Container();
             },
           )
@@ -1055,3 +1122,4 @@ class _GoodsInformationState extends State<GoodsInformation> {
     );
   }
 }
+

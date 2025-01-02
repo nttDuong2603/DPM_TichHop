@@ -8,7 +8,7 @@ class CalendarDistributionInf {
   final String ghiChuLDB;
   final String ngayTaoLDB;
   final String taiKhoanID;
-  List<TagEpcLBD> spcLDB;
+  List<TagEpcLDB> spcLDB;
   int soLuongQuet;
   int isSync;
   int maDaDongBao;
@@ -55,7 +55,7 @@ class CalendarDistributionInf {
     required String taiKhoanID,
   }) {
     return CalendarDistributionInf(
-      idLDB: Uuid().v4(),
+      idLDB: const Uuid().v4(),
       maLDB: maLDB,
       sanPhamLDB: sanPhamLDB,
       ghiChuLDB: ghiChuLDB,
@@ -73,7 +73,7 @@ class CalendarDistributionInf {
       ngayTaoLDB: map['ngayTaoLDB'],
       taiKhoanID: map['taiKhoanID'],
       spcLDB: (map['spcLDB'] as List<dynamic>?)
-          ?.map((e) => TagEpcLBD.fromMap(e as Map<String, dynamic>))
+          ?.map((e) => TagEpcLDB.fromMap(e as Map<String, dynamic>))
           .toList() ?? [],
       soLuongQuet: map['soLuongQuet'] ?? 0,
     );
@@ -91,7 +91,7 @@ class CalendarDistributionInf {
   }
 }
 
-class TagEpcLBD {
+class TagEpcLDB {
   final String epc;
   DateTime? scanDate;
   // add new for R5
@@ -100,7 +100,7 @@ class TagEpcLBD {
   final String? rssi;
   final String? tid;
 
-  TagEpcLBD({
+  TagEpcLDB({
     required this.epc,
     this.scanDate,
     this.count,
@@ -110,7 +110,7 @@ class TagEpcLBD {
   });
 
   // Chuyển đổi JSON Map thành đối tượng TagEpcLBD
-  factory TagEpcLBD.fromMap(Map<String, dynamic> json) => TagEpcLBD(
+  factory TagEpcLDB.fromMap(Map<String, dynamic> json) => TagEpcLDB(
     epc: json["KEY_EPC"],
     scanDate: json['scanDate'] != null ? DateTime.parse(json['scanDate']) : null,
   );
@@ -126,17 +126,17 @@ class TagEpcLBD {
     "scanDate": scanDate?.toIso8601String(),
   };
 
-  factory TagEpcLBD.fromJson(Map<String, dynamic> json) => TagEpcLBD(
+  factory TagEpcLDB.fromJson(Map<String, dynamic> json) => TagEpcLDB(
     epc: json['epc'],
     scanDate: json['scanDate'] != null ? DateTime.parse(json['scanDate']) : null,
   );
 
   // Phân tích chuỗi JSON thành danh sách các TagEpcLBD
-  static List<TagEpcLBD> parseTags(String str) =>
-      List<TagEpcLBD>.from(json.decode(str).map((x) => TagEpcLBD.fromMap(x)));
+  static List<TagEpcLDB> parseTags(String str) =>
+      List<TagEpcLDB>.from(json.decode(str).map((x) => TagEpcLDB.fromMap(x)));
 
   // Chuyển danh sách các TagEpcLBD thành chuỗi JSON
-  static String tagsToJson(List<TagEpcLBD> data) =>
+  static String tagsToJson(List<TagEpcLDB> data) =>
       json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 }
 

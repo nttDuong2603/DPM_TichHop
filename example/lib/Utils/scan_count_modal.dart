@@ -42,7 +42,7 @@ class _SavedTagsModalState extends State<SavedTagsModal> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) { // Đổi thành đếm mỗi giây
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) { // Đổi thành đếm mỗi giây
       setState(() {
         _isBlue = !_isBlue;
         _elapsedTime++; // Tăng thời gian đã trôi qua
@@ -66,19 +66,19 @@ class _SavedTagsModalState extends State<SavedTagsModal> {
                 fontSize: 24,
               ),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
               '$savedTagsCount',
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF1C88FF),
                 fontSize: 104,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20), // Tạo khoảng cách giữa các widget
+            const SizedBox(height: 20), // Tạo khoảng cách giữa các widget
             Text(
               'Thời gian: $_elapsedTime giây', // Hiển thị thời gian
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
               ),

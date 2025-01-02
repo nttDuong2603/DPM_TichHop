@@ -16,7 +16,7 @@ class ConfigurationPage extends StatefulWidget {
 
 class _ConfigurationPageState extends State<ConfigurationPage> {
   final TextEditingController _ipController = TextEditingController();
-  FlutterSecureStorage storage = FlutterSecureStorage();
+  FlutterSecureStorage storage = const FlutterSecureStorage();
   String? selectedDevice = 'C5'; // Giá trị mặc định
   final UHFManager _uhfManager = UHFManager();
   List<Map<String, String>> bluetoothDevices = [];
@@ -33,7 +33,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
 
   // Đọc IP từ Secure Storage
   Future<void> _loadIPFromStorage() async {
-    FlutterSecureStorage storage = FlutterSecureStorage();
+    FlutterSecureStorage storage = const FlutterSecureStorage();
     String? savedIP = await storage.read(key: 'app_ip');
     if (savedIP != null && savedIP.isNotEmpty) {
       setState(() {
@@ -53,7 +53,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
       AppConfig.IP = newIP;  // Cập nhật IP trong AppConfig
       await storage.write(key: 'app_ip', value: newIP);  // Lưu vào Secure Storage
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("IP đã được cập nhật"),
           backgroundColor: Colors.green,  // Màu xanh lá cây (hoặc bạn có thể dùng màu khác tùy thích)
         ),
@@ -96,7 +96,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         shadowColor: Colors.blue.withOpacity(0.5),
         leading: Padding(
           padding: EdgeInsets.only(left: screenWidth * 0.03), // Khoảng cách từ mép trái
-          child: Container(
+          child: SizedBox(
             width: screenWidth * 0.2, // Chiều rộng logo
             height: screenHeight * 0.15, // Chiều cao logo
             child: Image.asset(
@@ -120,35 +120,35 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Nhập địa chỉ IP',
+            const Text('Nhập địa chỉ IP',
               style: TextStyle(
                   fontSize: 26,
                   color: AppColor.mainText,
                   fontWeight: FontWeight.bold
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
                 controller: _ipController,
                 decoration: InputDecoration(
                   labelText: 'Nhập địa chỉ IP',
-                  labelStyle: TextStyle(
+                  labelStyle: const TextStyle(
                       color: Color(0xFFA2A4A8),
                       fontWeight: FontWeight.normal,
                       fontSize: 22
                   ),
                   filled: true,
-                  fillColor: Color(0xFFEBEDEC),
+                  fillColor: const Color(0xFFEBEDEC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                    borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                    borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                    borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                 )

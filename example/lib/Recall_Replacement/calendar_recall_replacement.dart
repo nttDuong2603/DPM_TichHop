@@ -42,7 +42,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
 
   void _showSuccessMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Thêm lịch thu hồi thành công!'),
         backgroundColor: Color(0xFF4EB47D),
         duration: Duration(seconds: 2),
@@ -61,7 +61,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE9EBF1),
+        backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
         leading: Padding(
@@ -78,7 +78,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
             ),
           ),
         ),
-        title: Text(
+        title: const Text(
           'Tạo lịch',
           style: TextStyle(
             fontSize: 22,
@@ -89,48 +89,48 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
         actions: [],
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(30, 15, 30, 0),
-        constraints: BoxConstraints.expand(),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(30, 15, 30, 0),
+        constraints: const BoxConstraints.expand(),
+        color: const Color(0xFFFAFAFA),
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Text(
+              const Text(
                 'Nhập thông tin lịch',
                 style: TextStyle(
                   fontSize: 26,
                   color: Color(0xFF097746),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _ghiChuController,
                   decoration: InputDecoration(
                     labelText: 'Nội dung thu hồi',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
 
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -147,7 +147,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
       ),
       bottomNavigationBar: BottomAppBar(
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 15),
+          margin: const EdgeInsets.symmetric(horizontal: 15),
           child: ElevatedButton(
             onPressed: () {
               // Xử lý sự kiện khi nút "Thêm" được nhấn
@@ -155,7 +155,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
                 _addEvent(context);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('Vui lòng nhập đủ thông tin.'),
                     backgroundColor: Colors.red,
                   ),
@@ -163,12 +163,12 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
               }
             },
             style: TextButton.styleFrom(
-              backgroundColor: Color(0xFF097746),
-              padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
+              backgroundColor: const Color(0xFF097746),
+              padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              fixedSize: Size(320.0, 40.0),
+              fixedSize: const Size(320.0, 40.0),
             ),
             child: const Text(
               'Thêm',
@@ -184,7 +184,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
     final DateTime now = DateTime.now(); // Lấy thời gian hiện tại
     final formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
     // Tạo một UUID ngẫu nhiên
-    String idLTHTT = Uuid().v4();
+    String idLTHTT = const Uuid().v4();
     final event = CalendarRecallReplacement(
       idLTHTT: idLTHTT,
       ghiChuLTHTT: _ghiChuController.text,

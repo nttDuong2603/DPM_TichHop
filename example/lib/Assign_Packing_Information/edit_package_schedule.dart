@@ -58,7 +58,7 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
 
     // Tùy chọn, bạn có thể hiển thị một snackbar hoặc điều hướng đến màn hình khác
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Cập nhật lịch thành công'),
+      const SnackBar(content: Text('Cập nhật lịch thành công'),
         backgroundColor: Color(0xFF4EB47D),
 
       ),
@@ -77,7 +77,7 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE9EBF1),
+        backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
         leading: Padding(
@@ -95,7 +95,7 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
             ),
           ),
         ),
-        title: Text(
+        title: const Text(
           'Cập nhật lịch',
           style: TextStyle(
             fontSize: 22,
@@ -106,47 +106,47 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
         actions: [],
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(30, 15, 30, 0),
-        constraints: BoxConstraints.expand(),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(30, 15, 30, 0),
+        constraints: const BoxConstraints.expand(),
+        color: const Color(0xFFFAFAFA),
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Text(
+              const Text(
                 'Nhập thông tin',
                 style: TextStyle(
                   fontSize: 26,
                   color: Color(0xFF097746),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _maLichDongBaoController,
                   decoration: InputDecoration(
                     labelText: 'Mã lịch đóng bao',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 20
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -157,34 +157,34 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _tenSanPhamController,
                   decoration: InputDecoration(
                     labelText: 'Tên sản phẩm',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 20
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -195,34 +195,34 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _ghiChuController,
                   decoration: InputDecoration(
                     labelText: 'Ghi chú',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   ),
                 ),
               ),
@@ -245,12 +245,12 @@ class _EditPackgageCalendarPageState extends State<EditPackageCalendarPage> {
                           }
                         },
                         style: TextButton.styleFrom(
-                          backgroundColor: Color(0xFF097746),
-                          padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
+                          backgroundColor: const Color(0xFF097746),
+                          padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.0),
                           ),
-                          fixedSize: Size(320.0, 50.0),
+                          fixedSize: const Size(320.0, 50.0),
                         ),
                         child: const Text(
                           'Cập nhật',

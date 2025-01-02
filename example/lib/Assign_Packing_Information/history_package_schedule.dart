@@ -19,9 +19,9 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
   final TextEditingController _searchController = TextEditingController();
 
   Future<List<CalendarDistributionInf>>? _eventListFuture;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   List<CalendarDistributionInf> currentEvents = [];
-  final packageInfStorage = FlutterSecureStorage();
+  final packageInfStorage = const FlutterSecureStorage();
   Map<String, bool> danhdaudaQuetMap = {};
 
   @override
@@ -31,10 +31,10 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
     // _loadDaQuetMap();
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -76,7 +76,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
 
   Future<Map<String, dynamic>> loadCountsPackageInfFromStorage(
       String eventId) async {
-    final storage = FlutterSecureStorage();
+    final storage = const FlutterSecureStorage();
 
     // Tạo một map để lưu các giá trị
     final Map<String, dynamic> data = {};
@@ -163,7 +163,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
     final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE9EBF1),
+        backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
         leading: Padding(
@@ -185,7 +185,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
           style: TextStyle(
             fontSize: screenWith * 0.07,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: const Color(0xFF097746),
           ),
         ),
       ),
@@ -194,30 +194,30 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(30, 20, 30, 20),
             child: Container(
-              color: Color(0xFFFAFAFA),
+              color: const Color(0xFFFAFAFA),
               child: TextField(
                 controller: _searchController,
                 onChanged: onSearchTextChanged,
                 decoration: InputDecoration(
                   hintText: 'Nhập tìm kiếm',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: Color(0xFFA2A4A8),
                     fontWeight: FontWeight.normal,
                   ),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                   filled: true,
-                  fillColor: Color(0xFFEBEDEC),
+                  fillColor: const Color(0xFFEBEDEC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -236,7 +236,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
           ),
           Expanded(
             child: _eventListFuture == null
-                ? Padding(
+                ? const Padding(
               padding: EdgeInsets.all(20.0),
               child: Center(
                 child: SizedBox(
@@ -252,7 +252,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                   future: _eventListFuture!,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Padding(
+                      return const Padding(
                           padding: EdgeInsets.all(20.0),
                           child: Center(
                             child: SizedBox(
@@ -272,9 +272,9 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                       final eventList = snapshot.data!;
                       if (eventList.isEmpty) {
                         return Container(
-                          padding: EdgeInsets.fromLTRB(30, 220, 30, 0),
-                          constraints: BoxConstraints.expand(),
-                          color: Color(0xFFFAFAFA),
+                          padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                          constraints: const BoxConstraints.expand(),
+                          color: const Color(0xFFFAFAFA),
                           child: SingleChildScrollView(
                             child: Column(
                               children: <Widget>[
@@ -283,8 +283,8 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                   width: 50,
                                   height: 50,
                                 ),
-                                SizedBox(height: 15),
-                                Text(
+                                const SizedBox(height: 15),
+                                const Text(
                                   'Chưa có lịch sử đóng bao',
                                   style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                                   textAlign: TextAlign.center,
@@ -294,7 +294,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                           ),
                         );
                       } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-                        return Center(
+                        return const Center(
                           child: Text(
                             'Không tìm thấy kết quả',
                             style: TextStyle(fontSize: 16, color: Color(0xFF097746)),
@@ -306,7 +306,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                           itemCount: eventList.length,
                           itemBuilder: (context, index) {
                             final event = eventList[index];
-                            final color = index % 2 == 0 ? Color(0xFFFAFAFA) : Color(0xFFFAFAFA);
+                            final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
                             return GestureDetector(
                               child: Container(
                                 decoration: BoxDecoration(
@@ -318,12 +318,12 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                     ),
                                   ),
                                 ),
-                                padding: EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
+                                padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
                                 child: ListTile(
                                   title: Text(
                                     event.maLDB,
                                     style: TextStyle(
-                                      color: Color(0xFF097746),
+                                      color: const Color(0xFF097746),
                                       fontWeight: FontWeight.bold,
                                       fontSize: screenWith * 0.05,
                                     ),
@@ -334,35 +334,35 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                       Text(
                                         'Sản phẩm: ${event.sanPhamLDB}',
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: const Color(0xFF097746),
                                           fontSize: screenWith * 0.05,
                                         ),
                                       ),
                                       Text(
                                         'Số lượng quét: ${event.soLuongQuet}',
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: const Color(0xFF097746),
                                           fontSize: screenWith * 0.05,
                                         ),
                                       ),
                                       Text(
                                         'Ngày tạo lịch: ${event.ngayTaoLDB}',
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: const Color(0xFF097746),
                                           fontSize: screenWith * 0.05,
                                         ),
                                       ),
                                       Text(
                                         'Ngày đồng bộ : ${event.syncDate}',
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: const Color(0xFF097746),
                                           fontSize: screenWith * 0.05,
                                         ),
                                       ),
                                       Text(
                                         'Đóng bao thành công: ${event.dongBaoThanhCong}',
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: const Color(0xFF097746),
                                           fontSize: screenWith * 0.05,
                                         ),
                                       ),
@@ -373,7 +373,7 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                             title: Text(
                                               'Đóng bao thất bại: ${event.dongBaoThatbai}',
                                               style: TextStyle(
-                                                color: Color(0xFF097746),
+                                                color: const Color(0xFF097746),
                                                 fontSize: screenWith * 0.05,
                                               ),
                                             ),
@@ -388,71 +388,71 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                                     Text(
                                                       '- Mã đã đóng bao: ${event.maDaDongBao}',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ): SizedBox.shrink(),
+                                                    ): const SizedBox.shrink(),
                                                     event.maChuaKichHoat > 0
                                                     ?
                                                     Text(
                                                       '- Mã chưa kích hoạt: ${event.maChuaKichHoat}',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ) : SizedBox.shrink(),
+                                                    ) : const SizedBox.shrink(),
                                                     event.saiSanPham > 0
                                                     ?
                                                     Text(
                                                       '- Sai sản phẩm: ${event.saiSanPham}',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    )  : SizedBox.shrink(),
+                                                    )  : const SizedBox.shrink(),
                                                     event.maKhongTonTai > 0
                                                     ?
                                                     Text(
                                                       '- Mã không tồn tại:${event.maKhongTonTai} ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ): SizedBox.shrink(),
+                                                    ): const SizedBox.shrink(),
                                                     event.dadongbo > 0
                                                     ?
                                                     Text(
                                                       '- Mã đã đồng bộ:${event.dadongbo} ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
                                                     )
-                                                        : SizedBox.shrink(),
+                                                        : const SizedBox.shrink(),
                                                     event.dathuhoi > 0 ?
                                                     Text(
                                                       '- Mã đã được thu hồi:${event.dathuhoi} ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ) : SizedBox.shrink(),
+                                                    ) : const SizedBox.shrink(),
                                                     event.completSchedule > 0 ?
                                                     Text(
                                                       '- Lịch đã hoàn thành đóng bao:${event.completSchedule} ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ) : SizedBox.shrink(),
+                                                    ) : const SizedBox.shrink(),
                                                     event.otherCase > 0 ?
                                                     Text(
                                                       '- Mã lỗi khác:${event.otherCase} ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF097746),
+                                                        color: const Color(0xFF097746),
                                                         fontSize: screenWith * 0.045,
                                                       ),
-                                                    ) : SizedBox.shrink(),
+                                                    ) : const SizedBox.shrink(),
                                                   ],
                                                 ),
                                               ),
@@ -472,20 +472,20 @@ class _HistoryPackgageState extends State<HistoryPackgage> {
                                             );
                                           },
                                           child: Container(
-                                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0),
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
                                                 Text(
                                                   'Mã đã đồng bộ: ',
                                                   style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith * 0.05,
                                                   ),
                                                 ),
                                                 Icon(
                                                   Icons.navigate_next, // Biểu tượng mũi tên
-                                                  color: Color(0xFF097746),
+                                                  color: const Color(0xFF097746),
                                                   size: screenWith * 0.06, // Kích thước của biểu tượng
                                                 ),
                                               ],

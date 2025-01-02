@@ -52,7 +52,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
 
   void _showSuccessMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Thêm lịch thành công!'),
         backgroundColor: Color(0xFF4EB47D),
         duration: Duration(seconds: 2),
@@ -73,7 +73,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
     final formattedTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
     // Tạo một UUID ngẫu nhiên
-    String id = Uuid().v4();
+    String id = const Uuid().v4();
 
     final event = Calendar(
       id: id,
@@ -102,7 +102,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE9EBF1),
+        backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
         leading: Padding(
@@ -113,7 +113,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
             height: 100,
           ),
         ),
-        title: Text(
+        title: const Text(
           'Tạo lịch',
           style: TextStyle(
             fontSize: 22,
@@ -124,47 +124,47 @@ class _CreateCalendarState extends State<CreateCalendar> {
         actions: [],
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(30, 15, 30, 0),
-        constraints: BoxConstraints.expand(),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(30, 15, 30, 0),
+        constraints: const BoxConstraints.expand(),
+        color: const Color(0xFFFAFAFA),
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Text(
+              const Text(
                 'Nhập thông tin lịch',
                 style: TextStyle(
                   fontSize: 26,
                   color: Color(0xFF097746),
                 ),
               ),
-              SizedBox(height: 13),
+              const SizedBox(height: 13),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _tenDaiLyController,
                   decoration: InputDecoration(
                     labelText: 'Tên đại lý/Kho thuê',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -175,34 +175,34 @@ class _CreateCalendarState extends State<CreateCalendar> {
                   ),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _tenSanPhamController,
                   decoration: InputDecoration(
                     labelText: 'Tên sản phẩm',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -213,34 +213,34 @@ class _CreateCalendarState extends State<CreateCalendar> {
                   ),
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _soLuongController,
                   decoration: InputDecoration(
                     labelText: 'Số lượng (Tối đa 100.000 tem)',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -252,34 +252,34 @@ class _CreateCalendarState extends State<CreateCalendar> {
                   keyboardType: TextInputType.number,
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _lenhPhanPhoiController,
                   decoration: InputDecoration(
                     labelText: 'Lệnh giao hàng',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 14, 0, 0),
                       child: Text(
@@ -291,66 +291,66 @@ class _CreateCalendarState extends State<CreateCalendar> {
                   keyboardType: TextInputType.number,
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _phieuXuatKhoController,
                   decoration: InputDecoration(
                     labelText: 'Phiếu xuất kho',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   ),
                   keyboardType: TextInputType.number,
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
               Container(
                 width: 320,
                 child: TextField(
                   controller: _ghiChuController,
                   decoration: InputDecoration(
                     labelText: 'Ghi chú',
-                    labelStyle: TextStyle(
+                    labelStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                         fontSize: 22
                     ),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                      borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                   ),
                 ),
               ),
@@ -360,7 +360,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 15),
+          margin: const EdgeInsets.symmetric(horizontal: 15),
           child: ElevatedButton(
             onPressed: () {
               // Xử lý sự kiện khi nút "Thêm" được nhấn
@@ -374,7 +374,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
                   } else {
                     // Hiển thị thông báo lỗi khi giá trị nhập vào không hợp lệ
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                         content: Text('Số lượng phải là một số từ 1 đến 100,000.'),
                         backgroundColor: Colors.red,
                       ),
@@ -383,7 +383,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
                 } else {
                   // Hiển thị thông báo lỗi khi trường số lượng không được để trống
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Vui lòng nhập số lượng.'),
                       backgroundColor: Colors.red,
                     ),
@@ -391,7 +391,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('Vui lòng nhập đủ thông tin.'),
                     backgroundColor: Colors.red,
                   ),
@@ -399,12 +399,12 @@ class _CreateCalendarState extends State<CreateCalendar> {
               }
             },
             style: TextButton.styleFrom(
-              backgroundColor: Color(0xFF097746),
-              padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
+              backgroundColor: const Color(0xFF097746),
+              padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),
               ),
-              fixedSize: Size(320.0, 40.0),
+              fixedSize: const Size(320.0, 40.0),
             ),
             child: const Text(
               'Thêm',

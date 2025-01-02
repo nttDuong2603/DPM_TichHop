@@ -87,6 +87,17 @@ class UHFManager {
     }
   }
 
+  // Get connection status
+   Future<bool> getConnectionStatus() async {
+    try {
+      final bool isConnected = await _channel.invokeMethod('getConnectionStatus');
+      return isConnected;
+    } on PlatformException catch (e) {
+      print('Failed to get connection status: ${e.message}');
+      return false;
+    }
+  }
+
   // Manual Scan R5
   Future<void> manualRead(bool isStart) async {
     try

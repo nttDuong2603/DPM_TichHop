@@ -6,7 +6,7 @@ import 'UserDatatypes/user_datatype.dart';
 
 // Step 1: Define a global variable
 final UHFBlePlugin = UHFManager() ;
-Device currentDevice =  Device.R_Series;
+Device currentDevice =  Device.rSeries;
 void main() {
   runApp(const MyApp());
 }

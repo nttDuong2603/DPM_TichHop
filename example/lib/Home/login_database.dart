@@ -23,9 +23,9 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController taiKhoanController = TextEditingController();
   final TextEditingController matKhauController = TextEditingController();
   final dbHelper = CalendarDatabaseHelper();
-  final FlutterSecureStorage _storagemoi = FlutterSecureStorage();
-  FlutterSecureStorage storage = FlutterSecureStorage();
-  final FlutterSecureStorage _storageAcountCode = FlutterSecureStorage();
+  final FlutterSecureStorage _storagemoi = const FlutterSecureStorage();
+  FlutterSecureStorage storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storageAcountCode = const FlutterSecureStorage();
   bool _passwordVisible = false;
   String? maQuyen = '';
   String selectedDevice = '';
@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loadIPFromStorage() async {
-    FlutterSecureStorage storage = FlutterSecureStorage();
+    FlutterSecureStorage storage = const FlutterSecureStorage();
     String? savedIP = await storage.read(key: 'app_ip');
     if (savedIP != null && savedIP.isNotEmpty) {
       setState(() {
@@ -286,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
       await _saveAccountToSecureStorage(username, password); // Lưu tài khoản và mật khẩu
       _navigateToHomePage(context, username);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản đăng nhập.'),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản đăng nhập.'),
         backgroundColor: Colors.red,
       ));
     }
@@ -306,7 +306,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Mở ConfigurationPage và nhận giá trị trả về
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ConfigurationPage()),
+                  MaterialPageRoute(builder: (context) => const ConfigurationPage()),
                 );
 
                 // Kiểm tra kết quả trả về từ ConfigurationPage
@@ -315,7 +315,7 @@ class _LoginPageState extends State<LoginPage> {
                   });
                 }
               },
-              icon: Icon(
+              icon: const Icon(
                 Icons.settings_outlined,
                 color: AppColor.mainText
               ),
@@ -353,7 +353,7 @@ class _LoginPageState extends State<LoginPage> {
                             textAlign: TextAlign.center, // Căn giữa chữ
                           ),
                           Padding(
-                            padding: EdgeInsets.only(left: 0),
+                            padding: const EdgeInsets.only(left: 0),
                             child: Text(
                               'TỔNG CÔNG TY',
                               style: TextStyle(
@@ -390,16 +390,16 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColor.mainText),
+                            borderSide: const BorderSide(color: AppColor.mainText),
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColor.mainText),
+                            borderSide: const BorderSide(color: AppColor.mainText),
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           labelText: 'Tài khoản',
                           labelStyle: TextStyle(color: AppColor.mainText, fontSize: screenWidth * 0.06), // Màu chữ của label
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.person_2_outlined,
                             color: AppColor.mainText,
                           ),
@@ -419,16 +419,16 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColor.mainText),
+                            borderSide: const BorderSide(color: AppColor.mainText),
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: AppColor.mainText),
+                            borderSide: const BorderSide(color: AppColor.mainText),
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
                           ),
                           labelText: 'Mật khẩu',
                           labelStyle: TextStyle(color: AppColor.mainText, fontSize: screenWidth * 0.06), // Màu chữ của label
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.lock_outlined,
                             color: AppColor.mainText,
                           ),

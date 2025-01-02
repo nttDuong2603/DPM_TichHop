@@ -33,7 +33,7 @@ class CalendarRecallReplacement {
     required String ghiChuLTHTT,
     required String taiKhoanTTID,
   }) {
-    String idLTHTT = Uuid().v4();
+    String idLTHTT = const Uuid().v4();
     return CalendarRecallReplacement(
       idLTHTT: idLTHTT,
       ghiChuLTHTT: ghiChuLTHTT,

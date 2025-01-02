@@ -123,14 +123,14 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: Text(
+                title: const Text(
                   "Lỗi",
                   style: TextStyle(
                     color: Color(0xFF097746),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                content: Text(
+                content: const Text(
                   "Vui lòng chọn các Lệnh giao hàng có cùng Sản phẩm và Đại lý.",
                   style: TextStyle(
                     fontSize: 18,
@@ -139,9 +139,9 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                 ),
                 actions: <Widget>[
                   TextButton(
-                    child: Text("Đóng", style: TextStyle(color: Colors.white)),
+                    child: const Text("Đóng", style: TextStyle(color: Colors.white)),
                     style: TextButton.styleFrom(
-                      backgroundColor: Color(0xFF097746),
+                      backgroundColor: const Color(0xFF097746),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
@@ -176,8 +176,8 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 'Xác nhận mã Lệnh giao hàng đã chọn?',
                 style: TextStyle(
@@ -202,7 +202,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                           title: RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Số Lệnh giao hàng: ',
                                   style: TextStyle(
                                     color: Color(0xFF097746),
@@ -211,7 +211,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 ),
                                 TextSpan(
                                   text: '${code.lenhGiaoHang} \n${code.maPP}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -223,7 +223,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                           subtitle: RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Sản phẩm: ',
                                   style: TextStyle(
                                     color: Color(0xFF097746),
@@ -232,13 +232,13 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 ),
                                 TextSpan(
                                   text: '${code.maSanPham}\n',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Số hóa đơn: ',
                                   style: TextStyle(
                                     color: Color(0xFF097746),
@@ -247,7 +247,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 ),
                                 TextSpan(
                                   text: '${code.soHoaDon}\n',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -268,7 +268,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 //     fontWeight: FontWeight.bold,
                                 //   ),
                                 // ),
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Số bao cần xuất: ',
                                   style: TextStyle(
                                     color: Color(0xFF097746),
@@ -277,7 +277,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 ),
                                 TextSpan(
                                   text: '${code.soBaoCanXuat}\n',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -298,7 +298,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 //     fontWeight: FontWeight.bold,
                                 //   ),
                                 // ),
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Ghi chú: ',
                                   style: TextStyle(
                                     color: Color(0xFF097746),
@@ -307,7 +307,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                 ),
                                 TextSpan(
                                   text: '${code.ghiChu}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -317,7 +317,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             ),
                           ),
                         ),
-                        Divider(
+                        const Divider(
                           color: Colors.grey,
                           thickness: 1.5,
                         ),
@@ -334,32 +334,32 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                 children: [
                   TextButton(
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text('Hủy', style: TextStyle(color: Colors.white)),
+                    child: const Text('Hủy', style: TextStyle(color: Colors.white)),
                   ),
                   TextButton(
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                       shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                       ),
-                      fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                     ),
                     onPressed: () {
                       Navigator.of(context).pop(_selectedExportCodes);
                       onConfirmSelection();
                     },
-                    child: Text('Xác nhận', style: TextStyle(color: Colors.white)),
+                    child: const Text('Xác nhận', style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -382,7 +382,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Danh sách Lệnh giao hàng',
           style: TextStyle(
             fontSize: 22,
@@ -397,47 +397,47 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
             checkColor: MaterialStateProperty.all(Colors.white),
             fillColor: MaterialStateProperty.resolveWith((states) {
               if (states.contains(MaterialState.selected)) {
-                return Color(0xFF097746); // Color when checked
+                return const Color(0xFF097746); // Color when checked
               }
               return Colors.white; // Color when unchecked
             }),
             side: MaterialStateBorderSide.resolveWith(
-                    (states) => BorderSide(color: Color(0xFF097746), width: 2.0)),
+                    (states) => const BorderSide(color: Color(0xFF097746), width: 2.0)),
           ),
         ),
         child: Container(
-          padding: EdgeInsets.fromLTRB(0, 15, 0, 0),
-          constraints: BoxConstraints.expand(),
-          color: Color(0xFFFAFAFA),
+          padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
+          constraints: const BoxConstraints.expand(),
+          color: const Color(0xFFFAFAFA),
           child: Column(
             children: [
               // Phần tìm kiếm
               Container(
-                padding: EdgeInsets.fromLTRB(30, 0, 30, 0),
+                padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
                 child: TextField(
                   controller: _searchController,
                   onChanged: onSearchTextChanged,
                   decoration: InputDecoration(
                     hintText: 'Nhập tìm kiếm',
-                    hintStyle: TextStyle(
+                    hintStyle: const TextStyle(
                       color: Color(0xFFA2A4A8),
                       fontWeight: FontWeight.normal,
                     ),
                     isDense: true,
                     contentPadding:
-                    EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                    const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                     filled: true,
-                    fillColor: Color(0xFFEBEDEC),
+                    fillColor: const Color(0xFFEBEDEC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Color(0xFF097746)),
+                      borderSide: const BorderSide(color: Color(0xFF097746)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF097746)),
+                      borderSide: const BorderSide(color: Color(0xFF097746)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF097746)),
+                      borderSide: const BorderSide(color: Color(0xFF097746)),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     suffixIcon: IconButton(
@@ -445,7 +445,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                         _searchController.clear();
                         onSearchTextChanged('');
                       },
-                      icon: Icon(Icons.clear),
+                      icon: const Icon(Icons.clear),
                     ),
                   ),
                 ),
@@ -453,26 +453,26 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
               // Phần hiển thị thông tin chung
             Container(
               alignment: Alignment.topLeft,
-                padding: EdgeInsets.fromLTRB(15, 10, 15, 0), // Căn chỉnh sát trái
+                padding: const EdgeInsets.fromLTRB(15, 10, 15, 0), // Căn chỉnh sát trái
               child: commonExportCode != null ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Mã PXK: ${widget.selectedPXK}', // Hiển thị Mã PXK
-                    style: TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Phương tiện: ${widget.pTien}', // Hiển thị Phương tiện
-                    style: TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Tên Đại Lý: ${commonExportCode.tenDaiLy}', // Hiển thị Tên Đại lý
-                    style: TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, color: Color(0xFF097746), fontWeight: FontWeight.bold),
                   ),
                 ],
-              ) : SizedBox(), // Empty widget when commonExportCode is null
+              ) : const SizedBox(), // Empty widget when commonExportCode is null
             ),
-              Divider(
+              const Divider(
                 color: Colors.grey,
                 thickness: 1,
               ),
@@ -496,7 +496,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                         ),
                       ),
                       child: ListTile(
-                        contentPadding: EdgeInsets.only(left: 8.0, right: 0.0),
+                        contentPadding: const EdgeInsets.only(left: 8.0, right: 0.0),
                         title: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -504,7 +504,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                               scrollDirection: Axis.horizontal,
                               child:  Row(
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Lệnh giao hàng: ', // Không in đậm
                                     style: TextStyle(
                                       color: Color(0xFF097746),
@@ -513,7 +513,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                   ),
                                   Text(
                                     '${exportCode.lenhGiaoHang}', // In đậm lệnh giao hàng
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF097746),
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -527,7 +527,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             //    child:
                                Text(
                                 '(${exportCode.maPP})', // Mã phân phối
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Color(0xFF097746),
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -542,7 +542,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             RichText(
                               text: TextSpan(
                                 children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: 'Sản phẩm: ', // Không in đậm
                                     style: TextStyle(
                                       color: Color(0xFF097746),
@@ -551,7 +551,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                   ),
                                   TextSpan(
                                     text: '${exportCode.maSanPham}', // In đậm
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF097746),
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -563,7 +563,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             RichText(
                               text: TextSpan(
                                 children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: 'Số hóa đơn: ', // Không in đậm
                                     style: TextStyle(
                                       color: Color(0xFF097746),
@@ -572,7 +572,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                   ),
                                   TextSpan(
                                     text: '${exportCode.soHoaDon}', // In đậm
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF097746),
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -584,7 +584,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             RichText(
                               text: TextSpan(
                                 children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: 'Số bao cần xuất: ', // Không in đậm
                                     style: TextStyle(
                                       color: Color(0xFF097746),
@@ -593,7 +593,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                   ),
                                   TextSpan(
                                     text: '${exportCode.soBaoCanXuat ?? ''} ', // In đậm
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF097746),
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -626,7 +626,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                             RichText(
                               text: TextSpan(
                                 children: [
-                                  TextSpan(
+                                  const TextSpan(
                                     text: 'Ghi chú: ', // Không in đậm
                                     style: TextStyle(
                                       color: Color(0xFF097746),
@@ -635,7 +635,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                                   ),
                                   TextSpan(
                                     text: ' ${exportCode.ghiChu ?? ''}', // In đậm
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF097746),
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -647,7 +647,7 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
                           ],
                         ),
                         trailing: Container(
-                          padding: EdgeInsets.only(left: 0.0, right: 0.0), // Giảm padding bên phải của Checkbox
+                          padding: const EdgeInsets.only(left: 0.0, right: 0.0), // Giảm padding bên phải của Checkbox
                           child: Transform.scale(
                             scale: 1.2,
                             child: Checkbox(
@@ -673,15 +673,15 @@ class _SelectExportCodesPageState extends State<SelectExportCodesPage> {
       bottomNavigationBar: BottomAppBar(
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF097746),
-            padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            backgroundColor: const Color(0xFF097746),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12.0),
             ),
-            fixedSize: Size(150.0, 50.0),
+            fixedSize: const Size(150.0, 50.0),
           ),
           onPressed: _selectedExportCodes.isNotEmpty ? showSelectedCodesPreview : null,
-          child: Text(
+          child: const Text(
             'Tiếp tục',
             style: TextStyle(fontSize: 22, color: Colors.white),
           ),

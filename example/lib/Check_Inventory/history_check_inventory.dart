@@ -37,7 +37,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
   }
 
   List<DeletionInfo> deletionHistory = [];
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
 
   Future<void> loadDeletionInfoFromStorage() async {
@@ -65,7 +65,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Chi tiết mã thu hồi", style: TextStyle(
+          title: const Text("Chi tiết mã thu hồi", style: TextStyle(
             color: Color(0xFF097746),
           ),
           ),
@@ -79,11 +79,11 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
                 String epcString = CommonFunction().hexToString(deletionInfo.deletedTagList[index]);
                 // Thêm số thứ tự trước mỗi chip
                 return ListTile(
-                  leading: Text("${index + 1}.", style: TextStyle(
+                  leading: Text("${index + 1}.", style: const TextStyle(
                     color: Color(0xFF097746),
                   ),
                   ),
-                  title: Text(epcString, style: TextStyle(
+                  title: Text(epcString, style: const TextStyle(
                     color: Color(0xFF097746),
                   ),
                   ),
@@ -94,15 +94,15 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text("Đóng", style: TextStyle(
+              child: const Text("Đóng", style: TextStyle(
                 color: Colors.white,
               ),
               ),
@@ -111,7 +111,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
               },
             ),
           ],
-          contentPadding: EdgeInsets.symmetric(horizontal: 10.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10.0),
         );
       },
     );
@@ -123,7 +123,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Lịch sử kiểm kho",
           style: TextStyle(color: Color(0xFF097746),
             fontWeight: FontWeight.bold,
@@ -133,31 +133,31 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
       body: Column(
         children: [
           Container(
-            color: Color(0xFFFAFAFA),
-            padding: EdgeInsets.fromLTRB(30, 0, 30, 0),
+            color: const Color(0xFFFAFAFA),
+            padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
             child: TextField(
               controller: _searchController,
               // onChanged: onSearchTextChanged,
               decoration: InputDecoration(
                 hintText: 'Nhập tìm kiếm',
-                hintStyle: TextStyle(
+                hintStyle: const TextStyle(
                   color: Color(0xFFA2A4A8),
                   fontWeight: FontWeight.normal,
                 ),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                 filled: true,
-                fillColor: Color(0xFFEBEDEC),
+                fillColor: const Color(0xFFEBEDEC),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: Color(0xFF097746)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: Color(0xFF097746)),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: Color(0xFF097746)),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 suffixIcon: IconButton(
@@ -171,15 +171,15 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
               ),
             ),
           ),
-          SizedBox(height: 10,),
+          const SizedBox(height: 10,),
           Expanded(
             child: FutureBuilder<void>(
               future: loadDeletionInfoFromStorage(),
               builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error loading data'));
+                  return const Center(child: Text('Error loading data'));
                 } else {
                   return ListView.builder(
                     itemCount: deletionHistory.length,
@@ -197,18 +197,18 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
                                   "Mã kiểm kho 000000${deletionInfo.deletedId}: \n"
                                   "Số lượng đã thu hồi: ${deletionInfo.deletedTagsCount}\n"
                                   "Ngày thu hồi: ${DateFormat('dd/MM/yyyy').format(deletionInfo.deletionDate)}",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Color(0xFF097746),
                               ),
                             ),
-                            trailing: Icon(
+                            trailing: const Icon(
                               Icons.navigate_next,
                               color: Color(0xFF097746),
                               size: 30.0,
                             ),
                           ),
-                          Divider(
+                          const Divider(
                             color: Colors.grey,
                             thickness: 1.0,
                           ),

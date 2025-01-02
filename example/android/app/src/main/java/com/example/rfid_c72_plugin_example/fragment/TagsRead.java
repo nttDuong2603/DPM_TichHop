@@ -7,6 +7,8 @@ import android.os.Message;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import java.util.Set;
+import java.util.HashSet;
 import com.google.gson.Gson;
 
 import com.example.rfid_c72_plugin_example.Utils;
@@ -150,6 +152,9 @@ public class TagsRead {
     }
 
     public void inventorySingleTag() {
+//        if(tagList.isEmpty()){
+//            tagList.clear(); // only get one data when use inventorySingleTag
+//        }
         UHFTAGInfo info = uhfble.inventorySingleTag(); //Identify tag in single mode
         if (info != null) {
             Message msg = handler.obtainMessage(FLAG_UHFINFO);
@@ -159,6 +164,7 @@ public class TagsRead {
     }
 
     public ArrayList<HashMap<String, String>> getTagList() {
+        //if(tagList != null) tagList.clear();
         return tagList;
     }
 
@@ -167,6 +173,7 @@ public class TagsRead {
         if (isScanning) {
             return;
         }
+        clearData();
         maxRunTime =1215751192;
         Log.i("MINHCHAULOG", "maxRunTime: "+maxRunTime);
 
@@ -199,7 +206,9 @@ public class TagsRead {
     }
 
     public void triggerInventorySingleTagEvent() {
+     //   HashMap<String, String> firstElement = getTagList().get(0);
         ArrayList<HashMap<String, String>> dataList = getTagList();
+     //   dataList.add(firstElement);
        // sendDataToFlutter(dataList);
         Log.d("MINHCHAULOG", "List data feedback: " + dataList.size());
 
@@ -246,9 +255,18 @@ public class TagsRead {
         handler.removeMessages(FLAG_TIME_OVER);
         if (isScanning) {
             stopInventory();
+
         }
         isScanning = false;
         cancelInventoryTask();
+    }
+    private void clearData(){
+        // Clear the old tagList to refresh it
+        if(tagList !=null && tempDatas!=null){
+            tagList.clear();
+            tempDatas.clear();
+        }
+
     }
 
     private TimerTask mInventoryPerMinuteTask;
@@ -357,12 +375,32 @@ public class TagsRead {
         }
     }
 
-    private void addEPCToList(List<UHFTAGInfo> list) {
+    private void addEPCToList_old(List<UHFTAGInfo> list) {
         for (int k = 0; k < list.size(); k++) {
             boolean[] exists = new boolean[1];
             UHFTAGInfo info = list.get(k);
             int idx = CheckUtils.getInsertIndex(tempDatas, info, exists); // find the index to insert the tag
             insertTag(info, idx, exists[0]);
+        }
+    }
+    private void addEPCToList(List<UHFTAGInfo> list) {
+        // Sử dụng Set để kiểm tra trùng lặp
+        Set<String> uniqueEPCs = new HashSet<>();
+
+        for (int k = 0; k < list.size(); k++) {
+            UHFTAGInfo info = list.get(k);
+
+            // Kiểm tra EPC có tồn tại trong tập hợp hay không
+            if (!uniqueEPCs.contains(info.getEPC())) {
+                boolean[] exists = new boolean[1];
+                int idx = CheckUtils.getInsertIndex(tempDatas, info, exists); // Find the index to insert the tag
+
+                // Thêm EPC vào Set để đánh dấu là đã xử lý
+                uniqueEPCs.add(info.getEPC());
+
+                // Chèn vào tagList và tempDatas
+                insertTag(info, idx, exists[0]);
+            }
         }
     }
 
@@ -378,7 +416,7 @@ public class TagsRead {
                     break;
                 case FLAG_UHFINFO_LIST:
                     List<UHFTAGInfo> list = (List<UHFTAGInfo>) msg.obj;
-                    addEPCToList(list);
+                   // addEPCToList(list);
                     break;
                 case FLAG_START:
                     if (msg.arg1 == FLAG_SUCCESS) {
@@ -402,9 +440,14 @@ public class TagsRead {
                     String useTimeCustom2 = NumberTool.getPointDouble(1, useTime2) + "s";
                     break;
                 case FLAG_UHFINFO:
+
                     UHFTAGInfo info = (UHFTAGInfo) msg.obj; // Get tag info from message
                     List<UHFTAGInfo> listTemp = new ArrayList<UHFTAGInfo>();
                     listTemp.add(info);
+
+
+
+
                     addEPCToList(listTemp);
                     triggerInventorySingleTagEvent();
                     break;

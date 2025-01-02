@@ -17,7 +17,7 @@ class HistoryRecallReplacement extends StatefulWidget {
 class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
 
   Future<List<CalendarRecallReplacement>>? _eventListFuture;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -26,11 +26,11 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
     _initializeEventList();
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -59,7 +59,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
   }
 
   Future<Map<String, dynamic>> loadCountsHistoryRecallFromStorage(String eventId) async {
-    final secureRecallStorage = FlutterSecureStorage();
+    final secureRecallStorage = const FlutterSecureStorage();
     // Tạo một map để lưu các giá trị
     final Map<String, dynamic> data = {};
     // Lấy các giá trị từ bộ nhớ an toàn
@@ -111,7 +111,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
     final screenHeight = MediaQuery.of(context).size.height;
     return  Scaffold(
         appBar: AppBar(
-          backgroundColor: Color(0xFFE9EBF1),
+          backgroundColor: const Color(0xFFE9EBF1),
           elevation: 4,
           shadowColor: Colors.blue.withOpacity(0.5),
           leading: Padding(
@@ -133,7 +133,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
             style: TextStyle(
               fontSize: screenWith * 0.07,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF097746),
+              color: const Color(0xFF097746),
             ),
           ),
         ),
@@ -142,30 +142,30 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(30, 20, 30, 20),
                 child: Container(
-                  color: Color(0xFFFAFAFA),
+                  color: const Color(0xFFFAFAFA),
                   child: TextField(
                     controller: _searchController,
                     onChanged: onSearchTextChanged,
                     decoration: InputDecoration(
                       hintText: 'Nhập tìm kiếm',
-                      hintStyle: TextStyle(
+                      hintStyle: const TextStyle(
                         color: Color(0xFFA2A4A8),
                         fontWeight: FontWeight.normal,
                       ),
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                       filled: true,
-                      fillColor: Color(0xFFEBEDEC),
+                      fillColor: const Color(0xFFEBEDEC),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: Color(0xFF097746)),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: Color(0xFF097746)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: Color(0xFF097746)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       suffixIcon: IconButton(
@@ -184,7 +184,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
               ),
               Expanded(
                 // padding: EdgeInsets.only(top: 8.0),
-                child: _eventListFuture == null ? Padding(
+                child: _eventListFuture == null ? const Padding(
                   padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                   child: Center(
                     child: SizedBox(
@@ -199,7 +199,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                   future: _eventListFuture!,
                   builder: (context, snapshot){
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Padding(
+                      return const Padding(
                           padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                           child: Center(
                             child: SizedBox(
@@ -219,9 +219,9 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                       final eventList = snapshot.data!;
                       if (eventList.isEmpty) {
                         return Container(
-                          padding: EdgeInsets.fromLTRB(30, 220, 30, 0),
-                          constraints: BoxConstraints.expand(),
-                          color: Color(0xFFFAFAFA),
+                          padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                          constraints: const BoxConstraints.expand(),
+                          color: const Color(0xFFFAFAFA),
                           child: SingleChildScrollView(
                             child: Column(
                               children: <Widget>[
@@ -230,8 +230,8 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                                   width: 50,
                                   height: 50,
                                 ),
-                                SizedBox(height: 15),
-                                Text(
+                                const SizedBox(height: 15),
+                                const Text(
                                   'Chưa có lịch sử thu hồi',
                                   style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                                   textAlign: TextAlign.center,
@@ -246,7 +246,7 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                           itemCount: eventList.length,
                           itemBuilder: (context, index) {
                             final event = eventList[index];
-                            final color = index % 2 == 0 ? Color(0xFFFAFAFA) : Color(0xFFFAFAFA);
+                            final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
                             return GestureDetector(
                               child: Container(
                                 decoration: BoxDecoration(
@@ -258,11 +258,11 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                                     ),
                                   ),
                                 ),
-                                padding: EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
+                                padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
                                 child: ListTile(
                                   title: Text(
                                     '${event.ghiChuLTHTT}',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         color: Color(0xFF097746),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 22
@@ -273,14 +273,14 @@ class HistoryRecallReplacementState extends State<HistoryRecallReplacement> {
                                     children: [
                                       Text(
                                         'Số lượng thu hồi: ${event.thuHoiTTThanhCong}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             color: Color(0xFF097746),
                                             fontSize: 22
                                         ),
                                       ),
                                       Text(
                                         'Ngày thu hồi: ${event.ngayThuHoiTT}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             color: Color(0xFF097746),
                                             fontSize: 22
                                         ),

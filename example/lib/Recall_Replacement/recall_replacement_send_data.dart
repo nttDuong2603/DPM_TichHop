@@ -7,7 +7,14 @@ import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
+import 'package:rfid_c72_plugin_example/Utils/DeviceActivities/DataReadOptions.dart';
+//import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
+import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
+import '../UserDatatypes/user_datatype.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
+import '../main.dart';
+import '../utils/common_functions.dart';
 import 'dart:async';
 import '../Assign_Packing_Information/model_information_package.dart';
 import 'package:intl/intl.dart';
@@ -31,6 +38,7 @@ class SendDataRecallReplacement extends StatefulWidget {
 }
 
 class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
+ //#region Variables
   final StreamController<int> _updateStreamController = StreamController<int>.broadcast(); // Tạo StreamController
   late CalendarRecallReplacement event;
   final CalendarRecallReplacementDatabaseHelper databaseHelper = CalendarRecallReplacementDatabaseHelper();
@@ -44,35 +52,36 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
   int currentPage = 0;
   int itemsPerPage = 5;
   late CalendarRecallReplacementDatabaseHelper _databaseHelper;
-  List<TagEpcLBD> paginatedData = [];
+  List<TagEpcLDB> paginatedData = [];
   int targetTotalEPC = 100;
   late Timer _timer;
-  TextEditingController _agencyNameController = TextEditingController();
-  TextEditingController _goodsNameController = TextEditingController();
+  final TextEditingController _agencyNameController = TextEditingController();
+  final TextEditingController _goodsNameController = TextEditingController();
+  BarcodeScannerInPhoneController _barcodeScannerInPhoneController = BarcodeScannerInPhoneController();
   bool confirm = false;
-  List<TagEpcLBD> _data = [];
+  List<TagEpcLDB> _data = [];
   final List<String> _EPC = [];
-  List<TagEpcLBD> _successfulTags = [];
+  List<TagEpcLDB> _successfulTags = [];
   int totalTags = 0;
   static int _value  = 0;
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
-  Queue<List<TagEpcLBD>> p = Queue<List<TagEpcLBD>>();
+  Queue<List<TagEpcLDB>> p = Queue<List<TagEpcLDB>>();
   bool _isNotified = false;
   bool _isShowModal = false;
-  List<TagEpcLBD> newData = [];
+  List<TagEpcLDB> newData = [];
   int saveCount = 0;
   int a = 0;
   int TotalScan = 0;
   int scannedTagsCount = 0;
-  final _storage = FlutterSecureStorage();
-  final _storageRecallReplace = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
+  final _storageRecallReplace = const FlutterSecureStorage();
   String _selectedAgencyName = '';
   String _selectedGoodsName = '';
   int tagCount = 0;
   int tagRecallReplaceCount = 0;
-  bool _isContinuousCall = false;
+  bool _isSingleCall = false;
   bool _is2dscanCall = false;
   AudioPlayer _audioPlayer = AudioPlayer();
   bool dadongbao = false;
@@ -81,10 +90,10 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
   int successCountRecall = 0;
   int failCountRecall = 0;
   int _saveCounter = 0; // Biến toàn cục để theo dõi số lần lưu
-  final secureRecallStorage = FlutterSecureStorage();
-  final secureStorage = FlutterSecureStorage();
-  final _storageAcountCode = FlutterSecureStorage();
-  final secureLTHStorage = FlutterSecureStorage();
+  final secureRecallStorage = const FlutterSecureStorage();
+  final secureStorage = const FlutterSecureStorage();
+  final _storageAcountCode = const FlutterSecureStorage();
+  final secureLTHStorage = const FlutterSecureStorage();
   bool dadongbo = false;
   bool _isDialogShown = false;
   bool showConfirmationDialog = false;
@@ -102,11 +111,17 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
   bool _isClickReplaceScanButton = false;
   bool _isClickConfirmScanMethod = false;
   String extractedCode = '';
+  String getResult = '';
+  String? result;
 
   // String IP = 'http://192.168.19.69:5088';
   // String IP = 'http://192.168.19.180:5088';
   // String IP = 'http://192.168.15.183:5010';
   // String IP = 'https://jvf-admin.rynansaas.com';
+
+  bool scanStatusR5 = false;
+
+  //#endregion Variables
 
   @override
   void initState() {
@@ -120,9 +135,42 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     _goodsNameController.text = _selectedGoodsName;
     loadTagCount();
     loadRecallReplaceTagCount();
-    // KeyEventChannel(
-    //   onKeyReceived: _toggleBarCodeScanning,
-    // ).initialize();
+    KeyEventChannel(
+      onKeyReceived: checkCurrentDevice,
+    ).initialize();
+    uhfBLERegister();
+  }
+
+  Future<void> checkCurrentDevice() async {
+    if (currentDevice == Device.cSeries) {
+     await _toggleBarCodeScanning();
+      await _toggleScanningForC5();
+    }
+    else if (currentDevice == Device.rSeries) {
+      await  _toggleScanningForR5();
+    }
+    else if (currentDevice == Device.cameraBarcodes) {
+      await  _toggleScanningForR5();
+      await _toggleScanningForC5();
+    }
+  }
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
+      if(currentDevice != Device.rSeries) return;
+      // for (var item in tagList) {
+      //   print("du lieu nhan duoc + $item");
+      // }
+
+        var newData =   DataProcessing.ConvertToTagEpcLDBList(tagList);
+       // if(newData.isNotEmpty){
+       //   print("du lieu nhan duọc " + newData.first.epc);
+       // }
+      updateTagsForR5(newData);
+    });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
+      scanStatusR5 = scanStatus;
+      _toggleScanningForR5();
+    });
   }
 
   Future<void> _initDatabase() async {
@@ -134,16 +182,14 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     super.dispose();
     _updateStreamController.close();
     closeAll();
-    closeBarcodeAll();
   }
 
   closeAll() {
     RfidC72Plugin.close;
-  }
-  closeBarcodeAll() {
     RfidC72Plugin.closeScan;
   }
 
+// init for C72,C5
   Future<void> initPlatformState() async {
     String platformVersion;
     print('StrDebug: initPlatformState');
@@ -182,71 +228,167 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     }
   }
 
-  void updateTags(dynamic result) async {
-    // Kiểm tra nếu kết quả là URL (barcode)
-    if (result.toString().startsWith('http') || result.toString().contains('://')) {
-      // Đây là mã barcode, xử lý mã barcode
-      String? extractedCode = _extractCodeFromUrl(result);
+  void scanQRCodeByCamera() async {
+    try{
+      //Disconnect Scanner before
+      if(await RfidC72Plugin.isConnected == true){
+        await RfidC72Plugin.stop;
+        await RfidC72Plugin.closeScan;
+      }
+      String? code = await _barcodeScannerInPhoneController.scanQRCode();
+      if (code != null) {
+        _updateUIWithQRCode(code);
+      } else {
+      }
+    }catch(e){
+      print('Error: $e');
+    }
 
-      if (extractedCode != null) {
-        // Thêm mã QR vào danh sách EPC và phát âm thanh
-        _data.add(TagEpcLBD(epc: extractedCode));
+  }
+
+// Cập nhật UI với mã QR đã quét
+  void _updateUIWithQRCode(String code) async{
+    if (!mounted) return; // Kiểm tra xem widget có còn tồn tại trong tree không
+
+    setState(() {
+      result = _extractCodeFromUrl(code); // Cập nhật mã QR đã quét
+      // getResult = 'TH000002'; // Cập nhật mã QR đã quét
+
+    });
+    print("QrCode result: --$code");
+    if (String != null) {
+      _playScanSound();
+      setState(() {
+        _data.add(TagEpcLDB(epc: result!));
+      });
+     await _showBarcodeConfirmationDialog();
+      // bool confirmed = await showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return QRCodeConfirmationDialog(
+      //       qrCode: getResult,  // Truyền mã QR vào
+      //     );
+      //   },
+      // );
+      // if (confirmed) {
+      //   Navigator.pop(context, getResult); // Trả về mã QR đã quét
+      // }
+
+    }
+  }
+
+  Future<void> updateTagsForR5(List<TagEpcLDB> newData) async {
+    var result  =  newData.first.epc;
+
+    // QR Code scanner
+    if (result.toString().startsWith('http') || result.toString().contains('://')){
+      String? extractedCode = _extractCodeFromUrl(result); // get data from url
+      if (extractedCode != null){
+        _data.add(TagEpcLDB(epc: extractedCode));
         _playScanSound();
-
         if (mounted) {
           setState(() {
             isScanning = false; // Đánh dấu đã quét xong
             successfullySaved = _data.length; // Cập nhật trạng thái
           });
         }
-
-        // Gửi sự kiện cập nhật sau khi quét xong
         sendUpdateEvent(successfullySaved);
-
-        // Dừng quét
-        await RfidC72Plugin.stop;
+      //  await RfidC72Plugin.stop;
+        await DataReadOptions.readTagsAsync(false, currentDevice);
         setState(() {
-          _isContinuousCall = false;
+          _isSingleCall = false;
         });
-
         await _showConfirmationDialog();
-
-        // Đóng modal đang hiển thị
         if (mounted) {
           Navigator.of(context, rootNavigator: true).pop();
         }
       }
-    } else {
-      if (_data.isEmpty) { // Chỉ cho phép quét khi chưa có mã RFID nào được quét
-        List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
-
+    }
+    // Scan RFID (Single Read)
+    else{
+      if(_data.isEmpty){
         if (newData.isNotEmpty) {
-          TagEpcLBD firstTag = newData.first; // Lấy thẻ đầu tiên được quét
+          TagEpcLDB firstTag = newData.first;
+          _data.add(firstTag);
+          _playScanSound();
+          if (mounted) {
+            setState(() {
+              isScanning = false;
+              successfullySaved = _data.length;
+            });
+          }
+          sendUpdateEvent(successfullySaved);
 
-          // Thêm thẻ đầu tiên vào danh sách và phát âm thanh
+          await DataReadOptions.readTagsAsync(false, currentDevice);
+          setState(() {
+            _isSingleCall = false;
+          });
+
+          if (mounted) {
+            Navigator.of(context, rootNavigator: true).pop(); //Close modal
+          }
+          await _showConfirmationDialog();
+        }
+      }
+    }
+  }
+
+  // Update tags for C5
+  void updateTags(dynamic result) async {
+    if(currentDevice !=  Device.cSeries && currentDevice !=  Device.cameraBarcodes) return;
+
+    // QR Code scanner
+    if (result.toString().startsWith('http') || result.toString().contains('://')) {
+      String? extractedCode = _extractCodeFromUrl(result);
+      if (extractedCode != null) {
+        _data.add(TagEpcLDB(epc: extractedCode));
+        _playScanSound();
+
+        if (mounted) {
+          setState(() {
+            isScanning = false;
+            successfullySaved = _data.length;
+          });
+        }
+        sendUpdateEvent(successfullySaved);
+        await DataReadOptions.readTagsAsync(false, currentDevice);
+        setState(() {
+          _isSingleCall = false;
+        });
+        // Close scanning modal, close connection and show confirmation dialog
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          await RfidC72Plugin.stopScan;
+          await RfidC72Plugin.closeScan;
+        }
+        await _showConfirmationDialog();
+      }
+    }
+
+    // Scan RFID (Single Read)
+    else {
+      if (_data.isEmpty) {
+        List<TagEpcLDB> newData = TagEpcLDB.parseTags(result);
+        if (newData.isNotEmpty) {
+          TagEpcLDB firstTag = newData.first;
           _data.add(firstTag);
           _playScanSound();
 
           if (mounted) {
             setState(() {
-              isScanning = false; // Đánh dấu đã quét xong
-              successfullySaved = _data.length; // Cập nhật trạng thái
+              isScanning = false;
+              successfullySaved = _data.length;
             });
           }
-
-          // Gửi sự kiện cập nhật sau khi quét xong
           sendUpdateEvent(successfullySaved);
-          // Dừng quét sau khi nhận được thẻ đầu tiên
-          await RfidC72Plugin.stop; // Dừng quét
+          await DataReadOptions.readTagsAsync(false, currentDevice);
           setState(() {
-            _isContinuousCall = false;
+            _isSingleCall = false;
           });
-          await _showConfirmationDialog();
-
-          // Đóng modal đang hiển thị
           if (mounted) {
-            Navigator.of(context, rootNavigator: true).pop(); // Đóng modal đang mở
+            Navigator.of(context, rootNavigator: true).pop(); // Close scanning modal
           }
+          await _showConfirmationDialog();
         }
       }
     }
@@ -254,7 +396,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
 
 
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
-    final secureStorage = FlutterSecureStorage();
+    final secureStorage = const FlutterSecureStorage();
     await secureStorage.write(key: '${eventId}_length', value: value.toString());
   }
 
@@ -280,35 +422,35 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     _timer.cancel(); // Hủy timer
   }
 
-  Future<void> saveData(String key, List<TagEpcLBD> data) async {
+  Future<void> saveData(String key, List<TagEpcLDB> data) async {
     // Chuyển đổi danh sách tags thành chuỗi JSON sử dụng phương thức toMap()
-    String dataString = TagEpcLBD.tagsToJson(data);
+    String dataString = TagEpcLDB.tagsToJson(data);
     await _storage.write(key: key, value: dataString);
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
 
-  Future<void> saveRecallReplaceData(String key, List<TagEpcLBD> data) async {
+  Future<void> saveRecallReplaceData(String key, List<TagEpcLDB> data) async {
     // Chuyển đổi danh sách tags mới thành chuỗi JSON
-    String dataString = TagEpcLBD.tagsToJson(data);
+    String dataString = TagEpcLDB.tagsToJson(data);
 
     // Lưu chuỗi JSON vào bộ nhớ bảo mật
     await _storageRecallReplace.write(key: key, value: dataString);
   }
 
 
-  Future<List<TagEpcLBD>> loadRecallReplaceData(String key) async {
+  Future<List<TagEpcLDB>> loadRecallReplaceData(String key) async {
     String? dataString = await _storageRecallReplace.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -343,7 +485,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       await dbHelper.deleteEvent(event);
       widget.onDeleteEvent(event);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Xóa lịch thành công!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -353,7 +495,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     } catch (e) {
       print('Lỗi khi xóa lichj: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Đã xảy ra lỗi khi xóa lịch!'),
           duration: Duration(seconds: 2),
         ),
@@ -367,11 +509,11 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       builder: (BuildContext context) {
         return SingleChildScrollView(
           child: Container(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Thông tin chip',
                   style: TextStyle(
                     fontSize: 26,
@@ -379,11 +521,11 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                     color: Color(0xFF097746),
                   ),
                 ),
-                FutureBuilder<List<TagEpcLBD>>(
+                FutureBuilder<List<TagEpcLDB>>(
                   future: loadData(event.idLTHTT), // Sử dụng loadData với event.id
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
+                      return const Center(
                         child: CircularProgressIndicator(),
                       );
                     } else if (snapshot.hasError) {
@@ -393,7 +535,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                     } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           String epcString = CommonFunction().hexToString(snapshot.data![index].epc);
@@ -401,7 +543,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                           return ListTile(
                             title: Text(
                               '${index + 1}. $epcString',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF097746),
                               ),
                             ),
@@ -409,7 +551,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                         },
                       );
                     } else {
-                      return Center(
+                      return const Center(
                         child: Text(
                           'Không có dữ liệu',
                           style: TextStyle(
@@ -434,11 +576,11 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       builder: (BuildContext context) {
         return SingleChildScrollView(
           child: Container(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Thông tin chip',
                   style: TextStyle(
                     fontSize: 26,
@@ -446,11 +588,11 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                     color: Color(0xFF097746),
                   ),
                 ),
-                FutureBuilder<List<TagEpcLBD>>(
+                FutureBuilder<List<TagEpcLDB>>(
                   future: loadRecallReplaceData(event.idLTHTT), // Sử dụng loadData với event.id
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
+                      return const Center(
                         child: CircularProgressIndicator(),
                       );
                     } else if (snapshot.hasError) {
@@ -460,7 +602,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                     } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return ListView.builder(
                         shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, index) {
                           String epcString = snapshot.data![index].epc;
@@ -468,7 +610,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                           return ListTile(
                             title: Text(
                               '${index + 1}. $epcString',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF097746),
                               ),
                             ),
@@ -476,7 +618,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                         },
                       );
                     } else {
-                      return Center(
+                      return const Center(
                         child: Text(
                           'Không có dữ liệu',
                           style: TextStyle(
@@ -497,7 +639,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
 
   void loadTagCount() async {
     if (widget.event.idLTHTT!= null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
-      List<TagEpcLBD> tags = await loadData('recall_${event.idLTHTT}');
+      List<TagEpcLDB> tags = await loadData('recall_${event.idLTHTT}');
       setState(() {
         tagCount = tags.length; // Cập nhật số lượng tags vào biến trạng thái
         tagsList = tags.map((tag) => tag.epc).toList();
@@ -507,7 +649,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
 
   void loadRecallReplaceTagCount() async {
     if (widget.event.idLTHTT!= null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
-      List<TagEpcLBD> tag = await loadRecallReplaceData('replace_${event.idLTHTT}');
+      List<TagEpcLDB> tag = await loadRecallReplaceData('replace_${event.idLTHTT}');
       setState(() {
         tagRecallReplaceCount = tag.length; // Cập nhật số lượng tags vào biến trạng thái
         tagRecallReplaceList = tag.map((tag) => tag.epc).toList();
@@ -515,7 +657,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     }
   }
 
-  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLBD> tags) async {
+  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLDB> tags) async {
     // Serialize danh sách tag thành chuỗi JSON
     List<Map<String, dynamic>> jsonTags = tags.map((tag) => tag.toJson()).toList();
     String jsonString = jsonEncode(jsonTags);
@@ -523,14 +665,15 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     await _storage.write(key: 'saved_tags_$calendarId', value: jsonString);
   }
 
-  Future<List<TagEpcLBD>> loadTagsFromSecureStorage(String calendarId) async {
+  Future<List<TagEpcLDB>> loadTagsFromSecureStorage(String calendarId) async {
     String? jsonString = await _storage.read(key: 'saved_tags_$calendarId');
     if (jsonString == null) return [];
     List<dynamic> jsonTags = jsonDecode(jsonString);
-    List<TagEpcLBD> tags = jsonTags.map((jsonTag) => TagEpcLBD.fromJson(jsonTag)).toList();
+    List<TagEpcLDB> tags = jsonTags.map((jsonTag) => TagEpcLDB.fromJson(jsonTag)).toList();
     return tags;
   }
 
+  // Hộp thoại xác nhận dữ liệu sau khi quét
   Future<void> _showConfirmationDialog() async {
     // print("isRecallScan: $isRecallScan");
     return showDialog<void>(
@@ -538,7 +681,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Lưu mã chip?',
             style: TextStyle(
                 color: Color(0xFF097746),
@@ -549,20 +692,20 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SizedBox(height: 20),
-                Container(
+                const SizedBox(height: 20),
+                SizedBox(
                   // Giới hạn chiều cao của Container chứa ListTile
                   height: 100, // Hoặc một giá trị phù hợp với nhu cầu của bạn
                   child: _data.isNotEmpty
                       ? ListTile(
                     title: Text(
                       '1. ${_convertTagIfNeeded(_data.last.epc)}', // Chỉ hiển thị mã cuối cùng
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF097746),
                       ),
                     ),
                   )
-                      : Center(
+                      : const Center(
                     child: Text(
                       'Không có mã nào được quét',
                       style: TextStyle(
@@ -577,15 +720,15 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 'Hủy Bỏ',
                 style: TextStyle(
                   color: Colors.white,
@@ -601,24 +744,24 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                 });
               },
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 'Xác Nhận',
                 style: TextStyle(
                   color: Colors.white,
                 ),
               ),
-              onPressed: () async {
+              onPressed: () async { // khi nhấn xác nhận
                 // Chỉ lưu mã cuối cùng từ danh sách _data
                 if (_data.isNotEmpty) {
                   if (isRecallScan) {
@@ -632,24 +775,34 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                   }
                 }
 
-                Navigator.of(context).pop();
-                if(!_isClickConfirmScanMethod && _selectedScanningMethod == "rfid"){
+                if (context.mounted) {
                   Navigator.of(context).pop();
+                }
+                if(!_isClickConfirmScanMethod && _selectedScanningMethod == "rfid"){
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
                 }
                 setState(() {
                   loadTagCount();
                   loadRecallReplaceTagCount();
                   showConfirmationDialog = false;
-                  _selectedScanningMethod = 'qr';
+                //  _selectedScanningMethod = 'qr';
                   _isScanningStarted = false;
                   _isScanningRecallReplaceStarted = false;
+                  _data.clear();
                 });
               },
             ),
           ],
         );
       },
-    );
+    ).then((_)async{
+      showConfirmationDialog = false;
+      _isSingleCall = false;
+     // await RfidC72Plugin.stop; // stop scan RFID
+      await DataReadOptions.readTagsAsync(false, currentDevice);
+    });
   }
 
   String _convertTagIfNeeded(String tagepc) {
@@ -675,12 +828,12 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Không thể đồng bộ",style: TextStyle(
+            title: const Text("Không thể đồng bộ",style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
-            content: Text("Vui lòng kiểm tra lại dữ liệu quét.",
+            content: const Text("Vui lòng kiểm tra lại dữ liệu quét.",
                 style: TextStyle(
                   fontSize: 18,
                   color: Color(0xFF097746),
@@ -688,15 +841,15 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-                child: Text("Đóng", style: TextStyle(color: Colors.white),),
+                child: const Text("Đóng", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -725,7 +878,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                   Container(
                     alignment: Alignment.topRight,
                     child: IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.close,
                         color: Color(0xFF097746),
                         size: 30.0,
@@ -743,23 +896,23 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                   Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: Center(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF097746),
-                          padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF097746),
+                            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            minimumSize: const Size(200.0, 40.0), // Kích thước tối thiểu
                           ),
-                          minimumSize: Size(200.0, 40.0), // Kích thước tối thiểu
-                        ),
-                        onPressed: () async {
-                          await startSyncProcess();
-                        },
-                        child: Text(
-                          'Bắt đầu đồng bộ',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
-                      )
+                          onPressed: () async {
+                            await startSyncProcess();
+                          },
+                          child: const Text(
+                            'Bắt đầu đồng bộ',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        )
 
                     ),
                   ),
@@ -783,10 +936,10 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsets.fromLTRB(20, 5, 10, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 5, 10, 0),
                   child: Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF097746),
@@ -798,7 +951,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
               ),
             ],
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
 
           // FutureBuilder để hiển thị dữ liệu EPC
           Expanded(
@@ -806,11 +959,11 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
               future: futureData, // Gọi hàm lấy dữ liệu EPC
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Có lỗi xảy ra: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Không có dữ liệu EPC.'));
+                  return const Center(child: Text('Không có dữ liệu EPC.'));
                 }
                 List<EPCInforRecall> epcData = snapshot.data!;
                 return ListView.builder(
@@ -819,8 +972,8 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                   itemBuilder: (context, index) {
                     EPCInforRecall epcInfo = epcData[index];
                     return Container(
-                      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      padding: EdgeInsets.all(10),
+                      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey),
@@ -831,73 +984,73 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                           RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Mã EPC: ',
                                   style: TextStyle(fontSize: 16, color: Color(0xFF097746)),
                                 ),
                                 TextSpan(
                                   text: epcInfo.EPC,
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Tên sản phẩm: ',
                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
                                 ),
                                 TextSpan(
                                   text: epcInfo.ProductCode,
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 5,),
+                          const SizedBox(height: 5,),
                           RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Tình trạng Đóng bao: ',
                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
                                 ),
                                 TextSpan(
                                   text: epcInfo.PackageStatus == 'true' ? 'Đã đóng bao': ' ',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Tình trạng Phân phối: ',
                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
                                 ),
                                 TextSpan(
                                   text: epcInfo.DistributionStatus == 'true' ? 'Đã phân phối' : ' ',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
                                 ),
                               ],
                             ),
                           ),
-                          SizedBox(height: 5),
+                          const SizedBox(height: 5),
                           RichText(
                             text: TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'Phân phối kho thuê: ',
                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
                                 ),
                                 TextSpan(
                                   text: epcInfo.WarehouseRentalDistributionStatus == 'true' ? 'Đã phân phối kho thuê': ' ',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
                                 ),
                               ],
                             ),
@@ -920,7 +1073,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Không thể lưu',
             style: TextStyle(
                 color: Color(0xFF097746),
@@ -930,7 +1083,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -947,7 +1100,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Lưu mã chip?',
+          title: const Text('Lưu mã chip?',
             style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold
@@ -958,7 +1111,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 // Text('Bạn có chắc chắn muốn lưu kết quả quét không?'),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Container(
                   // Giới hạn chiều cao của Container chứa ListView.builder
                   height: 200, // Hoặc một giá trị phù hợp với nhu cầu của bạn
@@ -971,7 +1124,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                         title:
                         Text(
                           '${index+1}.$tagepc',
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Color(0xFF097746)
                           ),
                         ) ,
@@ -985,15 +1138,15 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Hủy Bỏ',
+              child: const Text('Hủy Bỏ',
                   style:TextStyle(
                     color: Colors.white,
                   )
@@ -1008,30 +1161,30 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                 });
               },
             ),
-            SizedBox(width: 8,),
+            const SizedBox(width: 8,),
             TextButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                    ),
                   ),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
-              ),
-              child: Text('Xác Nhận',
-                  style:TextStyle(
-                    color: Colors.white,
-                  )
-              ),
+                child: const Text('Xác Nhận',
+                    style:TextStyle(
+                      color: Colors.white,
+                    )
+                ),
                 onPressed: () async {
                   if(_data.isNotEmpty){
-                  if (isRecallScan) {
-                   // Nếu là quét mã thu hồi
+                    if (isRecallScan) {
+                      // Nếu là quét mã thu hồi
                       await saveData('recall_${event.idLTHTT}', _data);  // Ghi đè dữ liệu
                       await _storage.write(key: 'recall_${event.idLTHTT}_length', value: _data.length.toString());
                     } else {
-                   // Nếu là quét mã thay thế
+                      // Nếu là quét mã thay thế
                       await saveRecallReplaceData('replace_${event.idLTHTT}', _data);  // Ghi đè dữ liệu
                       await _storageRecallReplace.write(key: 'replace_${event.idLTHTT}_length', value: _data.length.toString());
                     }
@@ -1047,8 +1200,10 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
                     _selectedScanningMethod = 'qr';
                     _isScanningStarted = false;
                     _isScanningRecallReplaceStarted = false;
+                    _data.clear();
                   });
-                  Navigator.of(context).pop();
+
+                //  Navigator.of(context).pop();
                 }
             ),
           ],
@@ -1065,34 +1220,34 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     return 'sent_tags_$eventId';
   }
 
-  Future<void> saveTagState(TagEpcLBD tag) async {
-    final secureLTHStorage = FlutterSecureStorage();
+  Future<void> saveTagState(TagEpcLDB tag) async {
+    final secureLTHStorage = const FlutterSecureStorage();
     String key = 'tag_${tag.epc}';
     String json = jsonEncode(tag.toJson());
     await secureLTHStorage.write(key: key, value: json);
   }
-String epcRecall = '';
+  String epcRecall = '';
   Future<List<EPCInforRecall>> fetchEPCInfoRecallData() async {
     List<EPCInforRecall> EPCInforRecalls = [];
-    List<TagEpcLBD> allRFIDRecall = await loadData('recall_${event.idLTHTT}');
+    List<TagEpcLDB> allRFIDRecall = await loadData('recall_${event.idLTHTT}');
 
     // Gửi yêu cầu GET tới API với mã EPC
-    for(TagEpcLBD tag in allRFIDRecall){
+    for(TagEpcLDB tag in allRFIDRecall){
       if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(tag.epc) && tag.epc.length % 2 == 0) {
-    //     // Chỉ khi nào chuỗi là hex hợp lệ mới chuyển đổi
+        //     // Chỉ khi nào chuỗi là hex hợp lệ mới chuyển đổi
         epcRecall = CommonFunction().hexToString(tag.epc);
       } else {
-    //     // Đối với các chuỗi không phải hex, giữ nguyên giá trị ban đầu
+        //     // Đối với các chuỗi không phải hex, giữ nguyên giá trị ban đầu
         epcRecall = tag.epc;
       }
       // print('epc: $epcRecall');
       // print(tag.epc);
       // String epcRecall = CommonFunction().hexToString(tag.epc);
-        // String epcRecall = 'RJVD2400006C7HML';
-    // List<String>allTag=[
-    //       "RJVD2400004MVXML",
-    //     ];
-    // for (String epcRecall in allTag) {
+      // String epcRecall = 'RJVD2400006C7HML';
+      // List<String>allTag=[
+      //       "RJVD2400004MVXML",
+      //     ];
+      // for (String epcRecall in allTag) {
       final response = await http.get(
         Uri.parse('${AppConfig.IP}/api/92B13354C5044351B6D29FF4575139D4/$epcRecall'),
         headers: {
@@ -1154,25 +1309,25 @@ String epcRecall = '';
     //   ),
     // ];
     List<EPCInforRecall> EPCInforRecalls = [];
-    List<TagEpcLBD> allRFIDRecall = await loadRecallReplaceData('replace_${event.idLTHTT}');
+    List<TagEpcLDB> allRFIDRecall = await loadRecallReplaceData('replace_${event.idLTHTT}');
 
     // Gửi yêu cầu GET tới API với mã EPC
-    for(TagEpcLBD tag in allRFIDRecall){
+    for(TagEpcLDB tag in allRFIDRecall){
       if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(tag.epc) && tag.epc.length % 2 == 0) {
-    // //     // Chỉ khi nào chuỗi là hex hợp lệ mới chuyển đổi
+        // //     // Chỉ khi nào chuỗi là hex hợp lệ mới chuyển đổi
         epcRecall = CommonFunction().hexToString(tag.epc);
       } else {
-    // //     // Đối với các chuỗi không phải hex, giữ nguyên giá trị ban đầu
+        // //     // Đối với các chuỗi không phải hex, giữ nguyên giá trị ban đầu
         epcRecall = tag.epc;
       }
-    //
-    //   // String epcRecall = CommonFunction().hexToString(tag.epc);
-    //   print("mã thay thế $epcRecall");
-    //   String epcRecall = 'RJVD2400006C7HML';
-    // List<String>allTag=[
-    //   "RJVD240000485SML",
-    // ];
-    // for (String epcRecall in allTag) {
+      //
+      //   // String epcRecall = CommonFunction().hexToString(tag.epc);
+      //   print("mã thay thế $epcRecall");
+      //   String epcRecall = 'RJVD2400006C7HML';
+      // List<String>allTag=[
+      //   "RJVD240000485SML",
+      // ];
+      // for (String epcRecall in allTag) {
       final response = await http.get(
         Uri.parse('${AppConfig.IP}/api/92B13354C5044351B6D29FF4575139D4/$epcRecall'),
         headers: {
@@ -1293,77 +1448,137 @@ String epcRecall = '';
   void onAgencySelected(String selectedAgencyName) {
   }
 
-  Future<void> _toggleScanning() async {
-    if (!_isClickRecallScanButton && !_isClickReplaceScanButton){
-      return;
-    }
-    // Ngắt kết nối barcode trước khi bắt đầu quét RFID
-    if (_is2dscanCall) {
-      await RfidC72Plugin.stopScan; // Dừng quét mã QR
-      await RfidC72Plugin.closeScan; // Ngắt kết nối máy quét barcode
-      setState(() {
-        _is2dscanCall = false; // Cập nhật trạng thái quét barcode
-      });
-    }
 
-    // Tiếp tục xử lý logic quét RFID
-    await RfidC72Plugin.connect;
-    if (_isContinuousCall) {
-      // Dừng quét RFID
-      await RfidC72Plugin.stop;
-      _isContinuousCall = false;
-      // Đóng dialog quét nếu nó đang hiển thị
-      // if (_isDialogShown) {
-      //   Navigator.of(context, rootNavigator: true).pop('dialog');
-      // }
-      // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-      if (!showConfirmationDialog) {
-        Future.delayed(Duration(milliseconds: 100), () {
-          _showConfirmationDialog();
-          showConfirmationDialog = true;
-        });
+
+  Future<void> _toggleScanningForR5() async {
+
+    try{
+      if(currentDevice != Device.rSeries || _selectedScanningMethod != "rfid"|| _isDialogShown ) return;
+      await RfidC72Plugin.stopScan;
+      await RfidC72Plugin.closeScan;
+      // Check connection
+      var isConnected = await UHFBlePlugin.getConnectionStatus();
+      if (! isConnected && mounted) {
+        ConnectionNotificationRSeries.showConnectionStatus(context, false);
+        return;
       }
-    } else {
-      if (!showConfirmationDialog) {
-        await RfidC72Plugin.startSingle;
-        _data.clear();
-        _isContinuousCall = true;
-        if (!_isDialogShown) {
-          _showScanningModal();
+      // Check options
+      if (!_isClickRecallScanButton && !_isClickReplaceScanButton){
+        return;
+      }
+
+      if (_isSingleCall) {
+
+        await DataReadOptions.readTagsAsync(false,currentDevice);
+        _isSingleCall = false;
+
+      } else {
+        if (!showConfirmationDialog) {
+
+          await DataReadOptions.readTagsAsync(true,currentDevice);
+          _data.clear();
+          _isSingleCall = true;
+          if (!_isDialogShown) {
+            _showScanningModal(); //R5
+          }
         }
       }
+      setState(() {
+        _isShowModal = _isSingleCall;
+      });
+    }catch(e){
+      print('Error: $e');
     }
-    setState(() {
-      _isShowModal = _isContinuousCall;
-    });
+
+
   }
 
-  void _showBarcodeScanningModal() {
+
+  Future<void> _toggleScanningForC5() async {
+    try{
+      if((currentDevice != Device.cSeries && currentDevice != Device.cameraBarcodes)
+          || _selectedScanningMethod != "rfid"|| _isDialogShown) {
+        return;
+      }
+      if (!_isClickRecallScanButton && !_isClickReplaceScanButton){
+        return;
+      }
+      await RfidC72Plugin.stopScan;
+      await RfidC72Plugin.closeScan;
+
+      if (_is2dscanCall) {
+        setState(() {
+          _is2dscanCall = false;
+        });
+      }
+      await RfidC72Plugin.connect;
+      if (_isSingleCall) {
+        await RfidC72Plugin.stop;
+        _isSingleCall = false;
+      } else {
+        if (!showConfirmationDialog) {
+          await RfidC72Plugin.startSingle;
+          _data.clear();
+          showConfirmationDialog = true;
+          _isSingleCall = true;
+          if (!_isDialogShown) {
+            _showScanningModal();  //C5
+          }
+        }
+      }
+      setState(() {
+        _isShowModal = _isSingleCall;
+      });
+    }catch(e){
+      print('Error: $e');
+    }
+
+
+  }
+
+  Future<void> _showBarcodeScanningModal() async {
     showDialog(
       context: context,
-      barrierDismissible: false, // Không cho phép đóng khi nhấn ngoài
+      barrierDismissible: true, // Không cho phép đóng khi nhấn ngoài
       builder: (BuildContext context) {
-        return Center(
+        return const Center(
           child: Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: Color.fromARGB(255, 43, 78, 128),
             elevation: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1C88FF)),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  "Đang quét mã QR...",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ],
+            child: SizedBox(
+              height: 200, // Chiều cao cố định
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 50),
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1C88FF)),
+                  ),
+                  SizedBox(height: 50),
+                  Text(
+                    "Đang quét mã QR...",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
-    );
+    ).then((_){
+     _is2dscanCall = false; // Đặt lại trạng thái quét sau khi quét xong
+    });
+
+    // Đóng dialog sau 5 giây
+    Future.delayed(const Duration(seconds: 5), () async {
+      if (mounted && _is2dscanCall) {  // dùng mounted để kiểm tra context còn tồn tại
+        Navigator.of(context).pop();
+        _is2dscanCall = false;
+        // await RfidC72Plugin.stopScan;
+        // await RfidC72Plugin.closeScan;
+      }
+    });
+
   }
   void _showTimeoutMessage() {
     showDialog(
@@ -1371,14 +1586,14 @@ String epcRecall = '';
       barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             "Không thể quét",
             style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: Text(
+          content: const Text(
             "Không thể quét QR Code. Vui lòng sử dụng Strigger để quét!",
             style: TextStyle(
               fontSize: 18,
@@ -1388,15 +1603,15 @@ String epcRecall = '';
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 "OK",
                 style: TextStyle(color: Colors.white),
               ),
@@ -1414,13 +1629,13 @@ String epcRecall = '';
   Timer? _scanTimeoutTimer;
 
   Future<void> _toggleBarCodeScanning() async {
-    // print("được gọi");
+    if(currentDevice ==  Device.cameraBarcodes || currentDevice ==  Device.rSeries || _selectedScanningMethod != "qr" ) return;
     if (!_isClickRecallScanButton && !_isClickReplaceScanButton){
       return;
     }
     if(mounted) {
       setState(() {
-        _is2dscanCall = !_is2dscanCall; // Thay đổi trạng thái quét
+        _is2dscanCall = !_is2dscanCall; // False => True , state scan
       });
     }
 
@@ -1435,14 +1650,15 @@ String epcRecall = '';
       //     _showTimeoutMessage(); // Hiển thị thông báo timeout
       //   }
       // });
-      await RfidC72Plugin.connectBarcode; // Kết nối Barcode scanner
-      await RfidC72Plugin.scanBarcode; // Bắt đầu quét mã QR
+    //  print("Bat dau quet qur code");
+     await RfidC72Plugin.connectBarcode; // Kết nối Barcode scanner
+     await RfidC72Plugin.scanBarcode; // Bắt đầu quét mã QR
 
       if (extractedCode != null) {
         // _scanTimeoutTimer?.cancel();
         setState(() {
           _data.clear();
-          _data.add(TagEpcLBD(epc: extractedCode)); // Thêm mã QR vào danh sách EPC
+          _data.add(TagEpcLDB(epc: extractedCode)); // Thêm mã QR vào danh sách EPC
           _totalEPC = _data.length; // Cập nhật số lượng EPC quét được
           _is2dscanCall = false; // Dừng quét
         });
@@ -1460,7 +1676,7 @@ String epcRecall = '';
         }
 
         // Đóng dialog "Đang quét"
-        Navigator.of(context, rootNavigator: true).pop();
+    //    Navigator.of(context, rootNavigator: true).pop();
 
         // Hiển thị modal lưu mã chip (nếu cần)
         await _showBarcodeConfirmationDialog();
@@ -1493,23 +1709,38 @@ String epcRecall = '';
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        // Trả về widget dialog
-        return Center(
+        return (_isShowModal)
+            ? Center(
           child: Dialog(
             elevation: 0,
-            backgroundColor: Colors.transparent,
-            child: Container(
-              // Nội dung dialog
-              child: SavedTagsModal(
-                updateStream: _updateStreamController.stream,
+            backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+            child: SizedBox(
+              height :300,
+              child: Column(
+                children: [
+                  const Text("RFID",style: TextStyle(color: Colors.white)),
+                  SavedTagsModal(
+                    updateStream: _updateStreamController.stream,
+                  ),
+                ],
               ),
             ),
           ),
-        );
+        ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
       },
     ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
     _isDialogShown = true;
+
+    // Đóng dialog sau 1 giây
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted && _isDialogShown) {  // dùng mounted để kiểm tra context còn tồn tại
+        _isDialogShown = false;
+        Navigator.of(context).pop();
+        _showConfirmationDialog();
+      }
+    });
   }
+
   Future<void> startSyncProcess() async {
     try {
       // Gọi fetch để lấy dữ liệu từ API trước khi thực hiện đồng bộ
@@ -1546,9 +1777,9 @@ String epcRecall = '';
       context: context,
       barrierDismissible: false, // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1658,18 +1889,18 @@ String epcRecall = '';
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
-            content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
+            title: const Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+            content: const Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -1696,9 +1927,9 @@ String epcRecall = '';
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1818,18 +2049,18 @@ String epcRecall = '';
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
-            content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
+            title: const Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+            content: const Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -1843,17 +2074,17 @@ String epcRecall = '';
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Đồng bộ thành công", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+            title: const Text("Đồng bộ thành công", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigator.pop(context, true);
@@ -1872,7 +2103,7 @@ String epcRecall = '';
   }
 
 
-  Future<List<TagEpcLBD>> getTagEpcList(String key) async {
+  Future<List<TagEpcLDB>> getTagEpcList(String key) async {
     return await loadData(event.idLTHTT);
   }
 
@@ -1883,7 +2114,7 @@ String epcRecall = '';
     buffer.writeln("Số lượng quét: $tagCount");
     buffer.writeln("Ngày tạo lịch: ${event.ngayTaoLTHTT}");
     // Lấy danh sách TagEpcLBD từ loadData
-    List<TagEpcLBD> tagEpcList = await getTagEpcList(event.idLTHTT);
+    List<TagEpcLDB> tagEpcList = await getTagEpcList(event.idLTHTT);
     buffer.writeln("Mã EPC:");
     // Duyệt qua danh sách và thêm từng EPC vào chuỗi
     for (var tag in tagEpcList) {
@@ -1916,13 +2147,13 @@ String epcRecall = '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Tệp đã được lưu vào mục Download: $fileName'),
-          backgroundColor: Color(0xFF4EB47D),
-          duration: Duration(seconds: 3), // Thời gian hiển thị SnackBar
+          backgroundColor: const Color(0xFF4EB47D),
+          duration: const Duration(seconds: 3), // Thời gian hiển thị SnackBar
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
@@ -1930,18 +2161,13 @@ String epcRecall = '';
       );
     }
   }
-  void _simulateKeyEvent(int keyCode) {
-    // Gửi sự kiện keyCode
-    if (keyCode == 139) {
-      // Gọi quá trình quét mã QR tương tự như khi nhận được keyCode từ nút vật lý
-      _toggleBarCodeScanning();
-    }
-  }
+
 
   Future<void> scanRFID() async{
 
   }
 
+  // Chọn phương thức quét cho thu hồi
   void _showScanMethodDialog() async {
     // await RfidC72Plugin.connectBarcode;
     showDialog(
@@ -1950,115 +2176,112 @@ String epcRecall = '';
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return AlertDialog(
-              title: Text(
+              title: const Text(
                 "Vui lòng chọn hình thức quét!",
                 style: TextStyle(
                   color: Color(0xFF097746),
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "rfid";
-                        });
-                        RfidC72Plugin.closeScan;
-                        RfidC72Plugin.connect;
-                        KeyEventChannel(
-                          onKeyReceived: _toggleScanning,
-                        ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "rfid",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "rfid"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "rfid";
+                      });
+                       // RfidC72Plugin.closeScan;
+                       // RfidC72Plugin.connect;
+                      KeyEventChannel( // đăng ký dự kiện trước
+                        onKeyReceived: checkCurrentDevice,
+                      ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "rfid",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "rfid"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét mã RFID",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét mã RFID",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "qr";
-                        });
-                        // RfidC72Plugin.connectBarcode;
-                        // KeyEventChannel(
-                        //   onKeyReceived: _toggleBarCodeScanning, // Barcode quét
-                        // ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "qr",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "qr"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+                  ),
+                  GestureDetector( // Nếu chọn quét QR
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "qr";
+                      });
+                      KeyEventChannel(
+                        onKeyReceived: checkCurrentDevice, // đăng ký sự kiện đọc qr khi nhấn phím
+                      ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "qr",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "qr"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét QR code",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét QR code",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "Hủy",
                     style: TextStyle(color: Colors.white),
                   ),
@@ -2068,169 +2291,158 @@ String epcRecall = '';
                 ),
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "OK",
                     style: TextStyle(color: Colors.white),
                   ),
 
                   onPressed: () {
                     _isClickConfirmScanMethod = true;
-                    // Navigator.of(context).pop(true);
                     Navigator.of(context).pop();
-                          // Thực hiện hành động khi người dùng nhấn "OK" ở hộp thoại xác nhận
-                          if (_selectedScanningMethod.isNotEmpty) {
-                            // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
-                            if (_selectedScanningMethod == "qr") {
-                              // RfidC72Plugin.close;
-                              _toggleBarCodeScanning();
-                              // _simulateKeyEvent(139);
-                              // KeyEventChannel(
-                              //   onKeyReceived: _toggleBarCodeScanning, // Barcode quét
-                              // ).initialize();
-                            } else if (_selectedScanningMethod == "rfid") {
-                              // RfidC72Plugin.connect;
-                              // RfidC72Plugin.closeScan;
-                              _toggleScanning();
-                              // KeyEventChannel(
-                              //   onKeyReceived: _toggleScanning, // RFID quét
-                              // ).initialize();
-                            }
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          );
-        }
+                    if (_selectedScanningMethod.isNotEmpty) {
+                      if(_selectedScanningMethod == "rfid"){
+                        checkCurrentDevice();
+                      }
+                      else if (_selectedScanningMethod == "qr") {
+                        if(currentDevice == Device.cameraBarcodes || currentDevice == Device.rSeries){
+                          scanQRCodeByCamera();
+                        }else if(currentDevice == Device.cSeries ){
+                          _toggleBarCodeScanning();
+                        }
+                      }
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showScanRecallReplaceMethodDialog() async {
-    // await RfidC72Plugin.connectBarcode;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return AlertDialog(
-              title: Text(
+              title: const Text(
                 "Vui lòng chọn hình thức quét!",
                 style: TextStyle(
                   color: Color(0xFF097746),
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              content: Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "rfid";
-                        });
-                        RfidC72Plugin.closeScan;
-                        RfidC72Plugin.connect;
-                        KeyEventChannel(
-                          onKeyReceived: _toggleScanning, // RFID quét
-                        ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "rfid",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "rfid"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "rfid";
+                      });
+                      // RfidC72Plugin.closeScan;
+                      // RfidC72Plugin.connect;
+                      // KeyEventChannel(
+                      //   onKeyReceived: checkCurrentDevice, // RFID quét
+                      // ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "rfid",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "rfid"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét mã RFID",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét mã RFID",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        setStateModal(() {
-                          _selectedScanningMethod = "qr";
-                        });
-                        // RfidC72Plugin.connectBarcode;
-                        // KeyEventChannel(
-                        //   onKeyReceived: _toggleBarCodeScanning, // Barcode quét
-                        // ).initialize();
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: <Widget>[
-                            Radio<String>(
-                              value: "qr",
-                              groupValue: _selectedScanningMethod,
-                              onChanged: (String? value) {
-                                setStateModal(() {
-                                  _selectedScanningMethod = value!;
-                                });
-                              },
-                              activeColor: Color(0xFFd5a529),
-                              fillColor: MaterialStateProperty.all<Color>(
-                                _selectedScanningMethod == "qr"
-                                    ? Color(0xFFd5a529)
-                                    : Color(0xFF097746),
-                              ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setStateModal(() {
+                        _selectedScanningMethod = "qr";
+                      });
+                      KeyEventChannel(
+                        onKeyReceived: checkCurrentDevice,
+                      ).initialize();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: <Widget>[
+                          Radio<String>(
+                            value: "qr",
+                            groupValue: _selectedScanningMethod,
+                            onChanged: (String? value) {
+                              setStateModal(() {
+                                _selectedScanningMethod = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFd5a529),
+                            fillColor: MaterialStateProperty.all<Color>(
+                              _selectedScanningMethod == "qr"
+                                  ? const Color(0xFFd5a529)
+                                  : const Color(0xFF097746),
                             ),
-                            SizedBox(width: 10.0),
-                            Text(
-                              "Quét QR code",
-                              style: TextStyle(
-                                color: Color(0xFF097746),
-                                fontSize: 18.0,
-                              ),
+                          ),
+                          const SizedBox(width: 10.0),
+                          const Text(
+                            "Quét QR code",
+                            style: TextStyle(
+                              color: Color(0xFF097746),
+                              fontSize: 18.0,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "Hủy",
                     style: TextStyle(color: Colors.white),
                   ),
@@ -2240,15 +2452,15 @@ String epcRecall = '';
                 ),
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text(
+                  child: const Text(
                     "OK",
                     style: TextStyle(color: Colors.white),
                   ),
@@ -2266,10 +2478,25 @@ String epcRecall = '';
                       if (_selectedScanningMethod == "rfid") {
                         // RfidC72Plugin.connect;
                         // RfidC72Plugin.closeScan;
-                        _toggleScanning();
+                        if(currentDevice == Device.rSeries){
+                          _toggleScanningForR5();
+                        }
+                        else {
+                          _toggleScanningForC5();
+                        }
                       } else if (_selectedScanningMethod == "qr") {
                         // RfidC72Plugin.close;
-                        _toggleBarCodeScanning();
+                        //quét bằng C5
+                        if(currentDevice == Device.cameraBarcodes ||
+                            currentDevice == Device.rSeries){
+                          scanQRCodeByCamera();
+                          // only use camera phone to scan QR code
+                        }else if(currentDevice == Device.cSeries ){
+                          _toggleBarCodeScanning();
+                        }
+                        //  _toggleBarCodeScanning();
+                        //quét bằng Camera
+                        //  scanQRCodeByCamera();
                         // _simulateKeyEvent(139);
                       }
                     }
@@ -2300,300 +2527,300 @@ String epcRecall = '';
         },
         child:
         Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            toolbarHeight: screenHeight * 0.12, // Chiều cao thanh công cụ
-            backgroundColor: const Color(0xFFE9EBF1),
-            elevation: 4,
-            shadowColor: Colors.blue.withOpacity(0.5),
-            leading: Padding(
-              padding: EdgeInsets.only(left: screenWidth * 0.03), // Khoảng cách từ mép trái
-              child: Container(
-                width: screenWidth * 0.2, // Chiều rộng logo
-                height: screenHeight * 0.15, // Chiều cao logo
-                child: Image.asset(
-                  'assets/image/logoJVF_RFID.png',
-                  fit: BoxFit.contain,
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              toolbarHeight: screenHeight * 0.12, // Chiều cao thanh công cụ
+              backgroundColor: const Color(0xFFE9EBF1),
+              elevation: 4,
+              shadowColor: Colors.blue.withOpacity(0.5),
+              leading: Padding(
+                padding: EdgeInsets.only(left: screenWidth * 0.03), // Khoảng cách từ mép trái
+                child: Container(
+                  width: screenWidth * 0.2, // Chiều rộng logo
+                  height: screenHeight * 0.15, // Chiều cao logo
+                  child: Image.asset(
+                    'assets/image/logoJVF_RFID.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ),
-            title: Text(
-              'Lịch thu hồi',
-              style: TextStyle(
-                fontSize: screenWidth * 0.07, // Kích thước chữ
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF097746),
+              title: Text(
+                'Lịch thu hồi',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.07, // Kích thước chữ
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF097746),
+                ),
               ),
+              actions: [
+                Padding(
+                  padding: EdgeInsets.only(right: screenWidth * 0.03), // Khoảng cách từ mép phải
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          saveDataWithTags(event.idLTHTT, "${event.ghiChuLTHTT}");
+                        },
+                        child: Image.asset(
+                          'assets/image/download.png',
+                          width: screenWidth * 0.1, // Chiều rộng hình ảnh
+                          height: screenHeight * 0.1, // Chiều cao hình ảnh
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03), // Khoảng cách giữa hai nút
+                      InkWell(
+                        onTap: () {
+                          showDialog<void>(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Xác nhận xóa',
+                                  style: TextStyle(color: Color(0xFF097746),
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Color(0xFF097746),
+                                    )
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    style: ButtonStyle(
+                                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                        ),
+                                      ),
+                                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                    ),
+                                    child: const Text('Hủy',
+                                        style:TextStyle(
+                                          color: Colors.white,
+                                        )
+                                    ),
+                                    onPressed: () async {
+                                      Navigator.of(context).pop();
+                                      setState(() {
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(width: 8,),
+                                  TextButton(
+                                    style: ButtonStyle(
+                                      backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                        ),
+                                      ),
+                                      fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                    ),
+                                    child: const Text('Xác Nhận',
+                                        style:TextStyle(
+                                          color: Colors.white,
+                                        )
+                                    ),
+                                    onPressed: () async {
+                                      deleteEventFromCalendar();
+                                      Navigator.pop(context, true);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Image.asset(
+                          'assets/image/thungrac1.png',
+                          width: screenWidth * 0.1, // Chiều rộng hình ảnh
+                          height: screenHeight * 0.1, // Chiều cao hình ảnh
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            actions: [
-              Padding(
-                padding: EdgeInsets.only(right: screenWidth * 0.03), // Khoảng cách từ mép phải
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () async {
-                        saveDataWithTags(event.idLTHTT, "${event.ghiChuLTHTT}");
-                      },
-                      child: Image.asset(
-                        'assets/image/download.png',
-                        width: screenWidth * 0.1, // Chiều rộng hình ảnh
-                        height: screenHeight * 0.1, // Chiều cao hình ảnh
+            body: Column(
+              children: <Widget>[
+                Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          width: 2, // Độ dày của đường viền dưới
+                        ),
                       ),
                     ),
-                    SizedBox(width: screenWidth * 0.03), // Khoảng cách giữa hai nút
-                    InkWell(
-                      onTap: () {
-                        showDialog<void>(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text('Xác nhận xóa',
-                                style: TextStyle(color: Color(0xFF097746),
-                                    fontWeight: FontWeight.bold
+                    child:
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          // fontSize: 24,
+                          fontSize: screenWidth * 0.065,
+                          color: const Color(0xFF097746),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Nội dung thu hồi\n',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              // fontSize: 24,
+                              fontSize: screenWidth * 0.065,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '${event.ghiChuLTHTT}',
+                          ),
+                        ],
+                      ),
+                    )
+                ),
+                GestureDetector(
+                  onTap: () {
+                  },
+                  child: Container(
+                    // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
+                              children: [
+                                TextSpan(
+                                  text: 'Mã thu hồi\n ',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.065),
                                 ),
-                              ),
-                              content: Text("Bạn có chắc chắn muốn xóa lịch này không?",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Color(0xFF097746),
-                                  )
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
-                                      ),
-                                    ),
-                                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
-                                  ),
-                                  child: Text('Hủy',
-                                      style:TextStyle(
-                                        color: Colors.white,
-                                      )
-                                  ),
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    setState(() {
-                                    });
-                                  },
-                                ),
-                                SizedBox(width: 8,),
-                                TextButton(
-                                  style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
-                                      ),
-                                    ),
-                                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
-                                  ),
-                                  child: Text('Xác Nhận',
-                                      style:TextStyle(
-                                        color: Colors.white,
-                                      )
-                                  ),
-                                  onPressed: () async {
-                                    deleteEventFromCalendar();
-                                    Navigator.pop(context, true);
-                                  },
+                                TextSpan(
+                                  text: tagsList.isNotEmpty
+                                      ? tagsList.map((epc) {
+                                    // Kiểm tra nếu là chuỗi hex (chỉ có ký tự hợp lệ và độ dài hợp lý)
+                                    if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(epc) && epc.length % 2 == 0) {
+                                      return CommonFunction().hexToString(epc); // Chuyển hex sang chuỗi
+                                    } else {
+                                      return epc; // Đã ở dạng chuỗi, giữ nguyên
+                                    }
+                                  }).join('\n') // Hiển thị trên từng dòng
+                                      : '', // Nếu chưa có mã
                                 ),
                               ],
-                            );
-                          },
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/image/thungrac1.png',
-                        width: screenWidth * 0.1, // Chiều rộng hình ảnh
-                        height: screenHeight * 0.1, // Chiều cao hình ảnh
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          body: Column(
-            children: <Widget>[
-              Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
-                        width: 2, // Độ dày của đường viền dưới
-                      ),
-                    ),
-                  ),
-                  child:
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        // fontSize: 24,
-                        fontSize: screenWidth * 0.065,
-                        color: Color(0xFF097746),
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Nội dung thu hồi\n',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            // fontSize: 24,
-                            fontSize: screenWidth * 0.065,
+                            ),
                           ),
                         ),
-                        TextSpan(
-                          text: '${event.ghiChuLTHTT}',
-                        ),
+
+                        // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                       ],
                     ),
-                  )
-              ),
-              GestureDetector(
-                onTap: () {
-                },
-                child: Container(
-                  // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
-                            children: [
-                              TextSpan(
-                                text: 'Mã thu hồi\n ',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.065),
-                              ),
-                              TextSpan(
-                                text: tagsList.isNotEmpty
-                                    ? tagsList.map((epc) {
-                                  // Kiểm tra nếu là chuỗi hex (chỉ có ký tự hợp lệ và độ dài hợp lý)
-                                  if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(epc) && epc.length % 2 == 0) {
-                                    return CommonFunction().hexToString(epc); // Chuyển hex sang chuỗi
-                                  } else {
-                                    return epc; // Đã ở dạng chuỗi, giữ nguyên
-                                  }
-                                }).join('\n') // Hiển thị trên từng dòng
-                                    : '', // Nếu chưa có mã
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
-                    ],
                   ),
                 ),
-              ),
-              GestureDetector(
-                onTap: () {
+                GestureDetector(
+                  onTap: () {
 
-                  // if (_selectedScanningMethod.isNotEmpty) {
-                  //   // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
-                  //   if (_selectedScanningMethod == "rfid") {
-                  //     _showChipInformation(context);
-                  //   } else if (_selectedScanningMethod == "qr") {
-                  //     _showRecallReplaceChipInformation(context);
-                  //   }
-                  // }
+                    // if (_selectedScanningMethod.isNotEmpty) {
+                    //   // Dựa trên phương thức quét, khởi tạo KeyEventChannel với sự kiện tương ứng
+                    //   if (_selectedScanningMethod == "rfid") {
+                    //     _showChipInformation(context);
+                    //   } else if (_selectedScanningMethod == "qr") {
+                    //     _showRecallReplaceChipInformation(context);
+                    //   }
+                    // }
 
-                },
-                child: Container(
-                  // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
-                            children: [
-                              TextSpan(
-                                text: 'Mã thay thế\n ',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.065),
-                              ),
-                              TextSpan(
-                                text: tagRecallReplaceList.isNotEmpty
-                                    ? tagRecallReplaceList.map((epc) {
-                                  // Kiểm tra nếu là chuỗi hex (chỉ có ký tự hợp lệ và độ dài hợp lý)
-                                  if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(epc) && epc.length % 2 == 0) {
-                                    return CommonFunction().hexToString(epc); // Chuyển hex sang chuỗi
-                                  } else {
-                                    return epc; // Đã ở dạng chuỗi, giữ nguyên
-                                  }
-                                }).join('\n') // Hiển thị trên từng dòng
-                                    : '', // Nếu chưa có mã
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
-                        width: 2, // Độ dày của đường viền dưới
+                  },
+                  child: Container(
+                    // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
                       ),
                     ),
-                  ),
-                  child:
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.065,
-                        color: Color(0xFF097746),
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TextSpan(
-                          text: 'Ngày tạo lịch\n',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: screenWidth * 0.065,
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
+                              children: [
+                                TextSpan(
+                                  text: 'Mã thay thế\n ',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.065),
+                                ),
+                                TextSpan(
+                                  text: tagRecallReplaceList.isNotEmpty
+                                      ? tagRecallReplaceList.map((epc) {
+                                    // Kiểm tra nếu là chuỗi hex (chỉ có ký tự hợp lệ và độ dài hợp lý)
+                                    if (RegExp(r'^[0-9a-fA-F]+$').hasMatch(epc) && epc.length % 2 == 0) {
+                                      return CommonFunction().hexToString(epc); // Chuyển hex sang chuỗi
+                                    } else {
+                                      return epc; // Đã ở dạng chuỗi, giữ nguyên
+                                    }
+                                  }).join('\n') // Hiển thị trên từng dòng
+                                      : '', // Nếu chưa có mã
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        TextSpan(
-                          text: '${event.ngayTaoLTHTT}',
-                        ),
+
+                        // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                       ],
                     ),
-                  )
-              ),
-            ],
-          ),
+                  ),
+                ),
+                Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          width: 2, // Độ dày của đường viền dưới
+                        ),
+                      ),
+                    ),
+                    child:
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.065,
+                          color: const Color(0xFF097746),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Ngày tạo lịch\n',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: screenWidth * 0.065,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '${event.ngayTaoLTHTT}',
+                          ),
+                        ],
+                      ),
+                    )
+                ),
+              ],
+            ),
             bottomNavigationBar: BottomAppBar(
               height: screenHeight * 0.23, // Tăng chiều cao để đủ chỗ cho 3 nút
               color: Colors.transparent,
@@ -2614,38 +2841,46 @@ String epcRecall = '';
                             });
                             isRecallScan = true;
                             if (!_isScanningStarted) {
-                              RfidC72Plugin.connectBarcode;
+
                               _showScanMethodDialog(); // Nếu chưa chọn phương thức, hiển thị hộp thoại chọn phương thức
                             }
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isScanningStarted ? const Color(0xFF097746) : const Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            fixedSize: const Size(160.0, 50.0), // Kích thước cố định
+                          ),
                           child: Text(
-                           'Quét mã thu hồi', // Hiển thị nhãn dựa trên trạng thái
+                            'Quét mã thu hồi', // Hiển thị nhãn dựa trên trạng thái
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.05, // Điều chỉnh cỡ chữ phù hợp
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isScanningStarted ? Color(0xFF097746) : Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
-                            padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            fixedSize: Size(160.0, 50.0), // Kích thước cố định
-                          ),
                         ),
-                        SizedBox(width: 3,),
+                        const SizedBox(width: 3,),
                         // Nút "Quét mã thay thế"
                         ElevatedButton(
                           onPressed: () {
                             // print('_selectedScanningMethod: ${_selectedScanningMethod}');
-                            RfidC72Plugin.connectBarcode;
-                              _showScanRecallReplaceMethodDialog(); // Nếu chưa chọn phương thức, hiển thị hộp thoại chọn phương thức
+                         //   RfidC72Plugin.connectBarcode;
+                            _showScanRecallReplaceMethodDialog(); // Nếu chưa chọn phương thức, hiển thị hộp thoại chọn phương thức
                             setState(() {
                               isRecallScan = false;
                               _isClickReplaceScanButton = true;
                             });
                           },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isScanningRecallReplaceStarted ? const Color(0xFF097746) : const Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            fixedSize: const Size(165.0, 50.0), // Kích thước cố định
+                          ),
                           child: Text(
                             'Quét mã thay thế', // Hiển thị nhãn dựa trên trạng thái
                             style: TextStyle(
@@ -2653,28 +2888,20 @@ String epcRecall = '';
                               fontSize: screenWidth * 0.05, // Điều chỉnh cỡ chữ phù hợp
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isScanningRecallReplaceStarted ? Color(0xFF097746) : Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
-                            padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            fixedSize: Size(165.0, 50.0), // Kích thước cố định
-                          ),
                         ),
                       ],
                     ),
 
                     // Nút "Đồng bộ" nằm dưới hai nút trên
-                    SizedBox(height: 10), // Thêm khoảng cách giữa hai hàng
+                    const SizedBox(height: 10), // Thêm khoảng cách giữa hai hàng
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFd5a529), // Màu vàng
-                        padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                        backgroundColor: const Color(0xFFd5a529), // Màu vàng
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        fixedSize: Size(350.0, 50.0), // Kích thước cố định
+                        fixedSize: const Size(350.0, 50.0), // Kích thước cố định
                       ),
                       onPressed: () {
                         showModal();
@@ -2694,4 +2921,3 @@ String epcRecall = '';
   }
 
 }
-

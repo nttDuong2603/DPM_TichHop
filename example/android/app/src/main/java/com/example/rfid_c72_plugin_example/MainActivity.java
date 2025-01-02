@@ -107,7 +107,10 @@ public class MainActivity extends FlutterActivity {
                     deviceListActivity.connect(mac);
                     result.success(true);
                     break;
-
+                case "getConnectionStatus":
+                    boolean isConnected = deviceListActivity.getConnectionStatus();
+                    result.success(isConnected);
+                    break;
                 case "manualRead": // Manual scan
                     android.util.Log.d("MINHCHAULOG", "Manual read command from flutter");
                     boolean isStart = call.argument("isStart");

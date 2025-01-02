@@ -29,8 +29,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<String> licenseCode = [];
-  final _storageAcountCode = FlutterSecureStorage();
-  final storage = FlutterSecureStorage();
+  final _storageAcountCode = const FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   String? connectedDeviceName;
   String? connectedDeviceMac;
   String? selectedDevice;
@@ -74,19 +74,26 @@ class _HomePageState extends State<HomePage> {
     String? savedDeviceName = await storage.read(key: 'connected_device_name');
     String? savedDeviceMac = await storage.read(key: 'connected_device_mac');
 
+    // Reconnect the R5 device if it was previously saved
+    if (savedDeviceName != null && savedDeviceMac != null && savedDevice == 'R5') {
+      if(!(await UHFBlePlugin.getConnectionStatus())){
+        await UHFBlePlugin.connect(savedDeviceMac);
+      }
+    }
+
     setState(() {
       selectedDevice = savedDevice ?? 'C5'; // Nếu không có, mặc định là 'C5'
       connectedDeviceName = savedDeviceName;
       connectedDeviceMac = savedDeviceMac;
 
       if(selectedDevice == 'C5'){
-        currentDevice = Device.C_Series;
+        currentDevice = Device.cSeries;
       }
       else if(selectedDevice == 'R5'){
-        currentDevice = Device.R_Series;
+        currentDevice = Device.rSeries;
 
       }else if(selectedDevice == 'Camera'){
-        currentDevice = Device.Camera_Barcodes;
+        currentDevice = Device.cameraBarcodes;
       }
 
       AppConfig.device = selectedDevice;
@@ -290,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                 // Mở ConfigurationPage và nhận giá trị trả về
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => DeviceConfigurationPage()),
+                  MaterialPageRoute(builder: (context) => const DeviceConfigurationPage()),
                 );
 
                 // Kiểm tra kết quả trả về từ ConfigurationPage
@@ -302,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                   print('Thiết bị quét được chọn: $selectedDevice');
                 }
               },
-              icon: Icon(
+              icon: const Icon(
                   Icons.settings_outlined,
                   color: AppColor.mainText
               ),
@@ -312,7 +319,7 @@ class _HomePageState extends State<HomePage> {
       ),
     body: Container(
         padding: EdgeInsets.fromLTRB(screenWidth * 0.08, screenHeight * 0.01, screenWidth * 0.08, 0),
-        constraints: BoxConstraints.expand(),
+        constraints: const BoxConstraints.expand(),
         color: AppColor.backgroundAppColor,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween, // Ensure space between content and footer
@@ -598,7 +605,7 @@ class _HomePageState extends State<HomePage> {
               alignment: Alignment.center,
               child:
               Padding(
-                  padding: EdgeInsets.only(left: 0),
+                  padding: const EdgeInsets.only(left: 0),
                   child:
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

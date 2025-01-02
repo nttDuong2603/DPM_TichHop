@@ -19,7 +19,7 @@ class OfflineRecallReplacemantListDeleted extends StatefulWidget {
 }
 
 class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplacemantListDeleted> {
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   Future<List<CalendarRecallReplacement>>? _eventListFuture;
   int selectIndex = 0;
 
@@ -68,11 +68,11 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
     }
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -82,7 +82,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
       final dbHelper = CalendarRecallReplacementDatabaseHelper();
       await dbHelper.unDeleteEvent(event); // Cập nhật sự kiện trong cơ sở dữ liệu
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Khôi phục lịch thành công'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -94,7 +94,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Đã xảy ra lỗi khi khôi phục lịch!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -124,7 +124,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
         },
         child:Scaffold(
           appBar: AppBar(
-            backgroundColor: Color(0xFFE9EBF1),
+            backgroundColor: const Color(0xFFE9EBF1),
             shadowColor: Colors.blue.withOpacity(0.5),
             leading: Container(
             ),
@@ -134,13 +134,13 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
               style: TextStyle(
                 fontSize: screenWith * 0.065,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF097746),
+                color: const Color(0xFF097746),
               ),
             ),
           ),
           body: Padding (
-            padding: EdgeInsets.only(top: 8.0),
-            child: _eventListFuture == null ? Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: _eventListFuture == null ? const Padding(
               padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
               child: Center(
                 child: SizedBox(
@@ -155,7 +155,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
               future: _eventListFuture!,
               builder: (context, snapshot){
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Padding(
+                  return const Padding(
                     padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                     child: Center(
                       child: SizedBox(
@@ -175,9 +175,9 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                   final eventList = snapshot.data!;
                   if (eventList.isEmpty) {
                     return Container(
-                      padding: EdgeInsets.fromLTRB(30, 220, 30, 0),
-                      constraints: BoxConstraints.expand(),
-                      color: Color(0xFFFAFAFA),
+                      padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                      constraints: const BoxConstraints.expand(),
+                      color: const Color(0xFFFAFAFA),
                       child: SingleChildScrollView(
                         child: Column(
                           children: <Widget>[
@@ -186,8 +186,8 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                               width: 50,
                               height: 50,
                             ),
-                            SizedBox(height: 15),
-                            Text(
+                            const SizedBox(height: 15),
+                            const Text(
                               'Chưa có lịch thu hồi được xóa',
                               style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                               textAlign: TextAlign.center,
@@ -202,7 +202,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                       itemCount: eventList.length,
                       itemBuilder: (context, index) {
                         final event = eventList[index];
-                        final color = index % 2 == 0 ? Color(0xFFFAFAFA) : Color(0xFFFAFAFA);
+                        final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
                         return
                           Dismissible(
                               key: Key(event.idLTHTT),
@@ -214,26 +214,26 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                     barrierDismissible: false,
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        title: Text(
+                                        title: const Text(
                                           'Xác nhận khôi phục lịch',
                                           style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
                                         ),
-                                        content: Text(
+                                        content: const Text(
                                           "Bạn có chắc chắn muốn khôi phục lịch này không?",
                                           style: TextStyle(fontSize: 18, color: Color(0xFF097746)),
                                         ),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
                                                 ),
                                               ),
-                                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                              fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                             ),
-                                            child: Text(
+                                            child: const Text(
                                               'Hủy',
                                               style: TextStyle(color: Colors.white),
                                             ),
@@ -241,18 +241,18 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                               Navigator.of(context).pop(false); // Trả về false khi hủy
                                             },
                                           ),
-                                          SizedBox(width: 8),
+                                          const SizedBox(width: 8),
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
                                                 ),
                                               ),
-                                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                              fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                             ),
-                                            child: Text(
+                                            child: const Text(
                                               'Xác Nhận',
                                               style: TextStyle(color: Colors.white),
                                             ),
@@ -270,10 +270,10 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                 return false;
                               },
                               background: Container(
-                                color: Color(0xFFB3D1C0), // Màu nền khi trượt
+                                color: const Color(0xFFB3D1C0), // Màu nền khi trượt
                                 alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 20.0),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(left: 20.0),
                                   child: Icon(Icons.restore_from_trash_outlined, color: Color(0xFF097746)),
                                 ),
                               ),
@@ -285,10 +285,10 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                     barrierDismissible: false, // Ngăn đóng hộp thoại khi nhấn ra ngoài
                                     builder: (BuildContext context) {
                                       return AlertDialog(
-                                        title: Text('Xác nhận xóa lịch vĩnh viễn',
+                                        title: const Text('Xác nhận xóa lịch vĩnh viễn',
                                             style: TextStyle(
                                                 color: Color(0xFF097746), fontWeight: FontWeight.bold)),
-                                        content: Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
+                                        content: const Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
                                             style: TextStyle(
                                               fontSize: 18,
                                               color: Color(0xFF097746),
@@ -297,15 +297,15 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
                                                 ),
                                               ),
-                                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                              fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                             ),
-                                            child: Text('Hủy',
+                                            child: const Text('Hủy',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                 )),
@@ -313,19 +313,19 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                               Navigator.of(context).pop(false); // Trả về giá trị false
                                             },
                                           ),
-                                          SizedBox(width: 8),
+                                          const SizedBox(width: 8),
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
                                                 ),
                                               ),
-                                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                              fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                             ),
-                                            child: Text('Xác Nhận',
+                                            child: const Text('Xác Nhận',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                 )),
@@ -343,7 +343,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       final dbHelper = CalendarRecallReplacementDatabaseHelper();
                                       await dbHelper.deleteEventPermanently(event); // Gọi hàm xóa sự kiện
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text('Xóa lịch thành công!'),
                                           backgroundColor: Color(0xFF4EB47D),
                                           duration: Duration(seconds: 2),
@@ -355,7 +355,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       });
                                     } catch (e) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text('Đã xảy ra lỗi khi xóa lịch!'),
                                           backgroundColor: Colors.red,
                                           duration: Duration(seconds: 2),
@@ -374,7 +374,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       ),
                                     ),
                                   ),
-                                  padding: EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
+                                  padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween, // Sắp xếp theo chiều ngang
                                     children: [
@@ -384,7 +384,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                           children: [
                                             Text('${event.ghiChuLTHTT}',
                                               style: TextStyle(
-                                                  color: Color(0xFF097746),
+                                                  color: const Color(0xFF097746),
                                                   fontSize: screenWith*0.055,
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -392,21 +392,21 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                             Text(
                                               'Số lượng quét: ${event.soluongquetTT}',
                                               style: TextStyle(
-                                                color: Color(0xFF097746),
+                                                color: const Color(0xFF097746),
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
                                             Text(
                                               'Ngày tạo: ${event.ngayTaoLTHTT}',
                                               style: TextStyle(
-                                                color: Color(0xFF097746),
+                                                color: const Color(0xFF097746),
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Icon(
+                                      const Icon(
                                         Icons.delete_outline,
                                         size: 30.0,
                                         color: Color(0xFF097746),

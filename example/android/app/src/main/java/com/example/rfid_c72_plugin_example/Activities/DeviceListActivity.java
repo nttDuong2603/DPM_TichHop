@@ -142,12 +142,21 @@ public class DeviceListActivity {
         }
     }
 
+    public boolean getConnectionStatus() {
+        return uhfble.getConnectStatus() == ConnectionStatus.CONNECTED;
+    }
+
     public void connect(String deviceAddress) {
-        if (uhfble.getConnectStatus() == ConnectionStatus.CONNECTING) {
+        ConnectionStatus connectSts =  uhfble.getConnectStatus();
+        if (connectSts == ConnectionStatus.CONNECTING) {
             showToast("Connecting...");
-        } else {
+        }else if(connectSts == ConnectionStatus.CONNECTED) {
+           // showToast("Already connected");
+        }
+        else if(connectSts == ConnectionStatus.DISCONNECTED)
+        {
             uhfble.connect(deviceAddress, btStatus);
-            Log.e("MINHCHAULOG","Trang Thai Ket Noi"+ uhfble.getConnectStatus());
+            Log.e("MINHCHAULOG","Trang Thai Ket Noi: "+ uhfble.getConnectStatus());
         }
     }
     class BTStatus implements ConnectionStatusCallback<Object> {

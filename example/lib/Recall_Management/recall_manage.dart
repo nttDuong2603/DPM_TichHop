@@ -24,7 +24,7 @@ class OfflineRecallManage extends StatefulWidget {
 }
 
 class OfflineRecallManageState extends State<OfflineRecallManage> {
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   Future<List<CalendarRecall>>? _eventListFuture;
   int selectIndex = 0;
 
@@ -132,11 +132,11 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
     }
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -162,7 +162,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
       },
       child:Scaffold(
           appBar: AppBar(
-            backgroundColor: Color(0xFFE9EBF1),
+            backgroundColor: const Color(0xFFE9EBF1),
             shadowColor: Colors.blue.withOpacity(0.5),
             leading: Container(
             ),
@@ -172,13 +172,13 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
               style: TextStyle(
                 fontSize: screenWith * 0.065,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF097746),
+                color: const Color(0xFF097746),
               ),
             ),
           ),
               body: Padding (
-                padding: EdgeInsets.only(top: 8.0),
-                child: _eventListFuture == null ? Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: _eventListFuture == null ? const Padding(
                   padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                   child: Center(
                     child: SizedBox(
@@ -193,7 +193,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                   future: _eventListFuture!,
                   builder: (context, snapshot){
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Padding(
+                      return const Padding(
                         padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                         child: Center(
                           child: SizedBox(
@@ -213,9 +213,9 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                       final eventList = snapshot.data!;
                       if (eventList.isEmpty) {
                         return Container(
-                          padding: EdgeInsets.fromLTRB(30, 220, 30, 0),
-                          constraints: BoxConstraints.expand(),
-                          color: Color(0xFFFAFAFA),
+                          padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                          constraints: const BoxConstraints.expand(),
+                          color: const Color(0xFFFAFAFA),
                           child: SingleChildScrollView(
                             child: Column(
                               children: <Widget>[
@@ -224,8 +224,8 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                   width: 50,
                                   height: 50,
                                 ),
-                                SizedBox(height: 15),
-                                Text(
+                                const SizedBox(height: 15),
+                                const Text(
                                   'Chưa có lịch thu hồi',
                                   style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                                   textAlign: TextAlign.center,
@@ -240,7 +240,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                           itemCount: eventList.length,
                           itemBuilder: (context, index) {
                             final event = eventList[index];
-                            final color = index % 2 == 0 ? Color(0xFFFAFAFA) : Color(0xFFFAFAFA);
+                            final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
                             return
                               Dismissible(
                                   key: Key(event.idLTH),
@@ -266,10 +266,10 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                     return false; // Không cho phép trượt trong các trường hợp khác
                                   },
                                 background: Container(
-                                  color: Color(0xFFB3D1C0), // Màu nền khi trượt
+                                  color: const Color(0xFFB3D1C0), // Màu nền khi trượt
                                   alignment: Alignment.centerLeft,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 20.0),
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(left: 20.0),
                                     child: Icon(Icons.edit, color: Color(0xFF097746)),
                                   ),
                                 ),
@@ -298,7 +298,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                         ),
                                       ),
                                     ),
-                                    padding: EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
+                                    padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Sắp xếp theo chiều ngang
                                       children: [
@@ -308,7 +308,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                             children: [
                                               Text('${event.ghiChuLTH}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith*0.055,
                                                     fontWeight: FontWeight.bold
                                                 ),
@@ -316,14 +316,14 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                               Text(
                                                 'Số lượng quét: ${event.soluongquet}',
                                                 style: TextStyle(
-                                                  color: Color(0xFF097746),
+                                                  color: const Color(0xFF097746),
                                                   fontSize: screenWith*0.05,
                                                 ),
                                               ),
                                               Text(
                                                 'Ngày tạo: ${event.ngayTaoLTH}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                   fontSize: screenWith*0.05,
                                                 ),
                                               ),
@@ -331,7 +331,7 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                           ),
                                         ),
                                         // Biểu tượng điều hướng
-                                        Icon(
+                                        const Icon(
                                           Icons.navigate_next,
                                           size: 30.0,
                                           color: Color(0xFF097746),
@@ -379,8 +379,8 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
           onTap: _onItemTap, // Gọi hàm _onItemTap khi chọn một mục
           // showSelectedLabels: false, // Ẩn nhãn mục được chọn
           // showUnselectedLabels: false, // Ẩn nhãn mục chưa được chọn
-          selectedItemColor: Color(0xFF097746), // Màu của mục đang chọn
-          unselectedItemColor: Color(0xFF097746), // Màu của mục chưa chọn
+          selectedItemColor: const Color(0xFF097746), // Màu của mục đang chọn
+          unselectedItemColor: const Color(0xFF097746), // Màu của mục chưa chọn
         ),
       )
       );

@@ -18,7 +18,7 @@ class ChipInformationPage extends StatefulWidget {
 
 class _ChipInformationPageState extends State<ChipInformationPage> {
   late CalendarDatabaseHelper _databaseHelper;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -59,7 +59,7 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Chi tiết mã chip quét",
           style: TextStyle(
             color: Color(0xFF097746),
@@ -74,7 +74,7 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
             future: loadData(widget.eventId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
+                return const Center(
                   child: CircularProgressIndicator(),
                 );
               } else if (snapshot.hasError) {
@@ -93,13 +93,13 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
                       return ListTile(
                         title: Text(
                           '${index + 1}. $epcString',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF097746),
                           ),
                         ),
                         subtitle: Text(
                           '- $scanDate',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF097746),
                           ),
                         ),
@@ -113,15 +113,15 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      SizedBox(height: 100),
+                      const SizedBox(height: 100),
 
                       Image.asset(
                         'assets/image/canhbao1.png',
                         width: 50,
                         height: 50,
                       ),
-                      SizedBox(height: 15),
-                      Text(
+                      const SizedBox(height: 15),
+                      const Text(
                         'Không có dữ liệu',
                         style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                         textAlign: TextAlign.center,

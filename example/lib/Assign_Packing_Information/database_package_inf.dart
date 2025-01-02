@@ -243,7 +243,7 @@ class CalendarDistributionInfDatabaseHelper {
     });
   }
 
-  Future<void> insertRFIDData(TagEpcLBD data, String CalendarDistributionInfId) async {
+  Future<void> insertRFIDData(TagEpcLDB data, String CalendarDistributionInfId) async {
     final db = await database;
     // Tạo một map mới từ đối tượng TagEpcLBD để phù hợp với cấu trúc của bảng EPC_data
     Map<String, dynamic> epcDataMap = {
@@ -258,7 +258,7 @@ class CalendarDistributionInfDatabaseHelper {
     );
   }
 
-  Future<List<TagEpcLBD>> getListRFIDDataByEventId(String eventId) async {
+  Future<List<TagEpcLDB>> getListRFIDDataByEventId(String eventId) async {
     final db = await database; // Đảm bảo rằng cơ sở dữ liệu đã được khởi tạo và kết nối
     // Thực hiện truy vấn lấy dữ liệu từ bảng EPC_data dựa vào eventId
     final List<Map<String, dynamic>> maps = await db.query(
@@ -267,10 +267,10 @@ class CalendarDistributionInfDatabaseHelper {
       whereArgs: [eventId],
     );
     // Khai báo biến TagEpcLBD trước khi sử dụng
-    List<TagEpcLBD> tagEpcList = [];
+    List<TagEpcLDB> tagEpcList = [];
     // Chuyển đổi kết quả truy vấn thành danh sách các đối tượng TagEpcLBD
     for (var map in maps) {
-      TagEpcLBD tagEpcLBD = TagEpcLBD(
+      TagEpcLDB tagEpcLBD = TagEpcLDB(
         epc: map['KEY_EPC'],
       );
       print('TagEpcLBD: ${tagEpcLBD.epc}'); // In dữ liệu từ bảng ra
@@ -279,7 +279,7 @@ class CalendarDistributionInfDatabaseHelper {
     return tagEpcList;
   }
 
-  Future<List<TagEpcLBD>> getRFIDDataByEventId(String eventId) async {
+  Future<List<TagEpcLDB>> getRFIDDataByEventId(String eventId) async {
     final db = await database; // Đảm bảo rằng cơ sở dữ liệu đã được khởi tạo và kết nối
     // Thực hiện truy vấn lấy dữ liệu từ bảng EPC_data dựa vào eventId
     final List<Map<String, dynamic>> maps = await db.query(
@@ -289,13 +289,13 @@ class CalendarDistributionInfDatabaseHelper {
     );
     // Chuyển đổi kết quả truy vấn thành danh sách các đối tượng TagEpcLBD
     return List.generate(maps.length, (i) {
-      return TagEpcLBD(
+      return TagEpcLDB(
         epc: maps[i]['KEY_EPC'],
       );
     });
   }
 
-  Future<void> updateEPCDataByEventId(String eventId, List<TagEpcLBD> epcData) async {
+  Future<void> updateEPCDataByEventId(String eventId, List<TagEpcLDB> epcData) async {
     final db = await database;
     // Xóa tất cả các bản ghi EPC hiện tại cho lịch này
     await db.delete(

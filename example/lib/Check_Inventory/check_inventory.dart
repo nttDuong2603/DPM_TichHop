@@ -13,10 +13,13 @@ import 'dart:convert';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
 import '../main.dart';
 import '../Utils/scan_count_modal.dart';
 import '../Utils/key_event_channel.dart';
 import 'history_check_inventory.dart';
+
+/* INVENTORY CHECK */
 
 class CheckInventory extends StatefulWidget {
   final String taiKhoan;
@@ -71,7 +74,7 @@ class _CheckInventoryState extends State<CheckInventory> {
   int a = 0;
   int TotalScan = 0;
   int scannedTagsCount = 0;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   String _selectedAgencyName = '';
   String _selectedGoodsName = '';
   bool _dataSaved = false;
@@ -114,19 +117,19 @@ class _CheckInventoryState extends State<CheckInventory> {
 
 //#region R_Series Register Tag Read NMC97
   Future<void> checkCurrentDevice() async {
-    if (currentDevice == Device.C_Series) {
+    if (currentDevice == Device.cSeries) {
       await _toggleScanningForC5();
-    } else if (currentDevice == Device.R_Series) {
+    } else if (currentDevice == Device.rSeries) {
       await _toggleScanningForR5();
-    } else if (currentDevice == Device.Camera_Barcodes) {
-      // Todo
+    } else if (currentDevice == Device.cameraBarcodes) {
+      await _toggleScanningForC5();
     }
   }
 
   //NMC97
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
-      if(currentDevice != Device.R_Series) return;
+      if(currentDevice != Device.rSeries) return;
       setState(() {
         r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
         DataProcessing.ProcessData(r5_resultTags, _data); // Filter
@@ -210,19 +213,19 @@ class _CheckInventoryState extends State<CheckInventory> {
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: Color(0xFF097746), // Màu nền của header
               onPrimary: Color(0xFFFAFAFA), // Màu chữ của header
               onSurface: Color(0xFF097746), // Màu chữ của nội dung
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                backgroundColor: Color(0xFF097746),
-                foregroundColor: Color(0xFFFAFAFA),
+                backgroundColor: const Color(0xFF097746),
+                foregroundColor: const Color(0xFFFAFAFA),
                 // Màu chữ của nút
-                minimumSize: Size(100, 20),
+                minimumSize: const Size(100, 20),
                 // Kích thước tối thiểu của nút
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                 // Khoảng cách giữa chữ và biên của nút
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
@@ -320,7 +323,7 @@ class _CheckInventoryState extends State<CheckInventory> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Xóa Chip Thành Công", style: TextStyle(
+          title: const Text("Xóa Chip Thành Công", style: TextStyle(
             // fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Color(0xFF097746),
@@ -328,7 +331,7 @@ class _CheckInventoryState extends State<CheckInventory> {
           ),
           content: Text(
             "$numberOfTagsRemoved Chip trùng lặp đã được xóa thành công.",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               // fontWeight: FontWeight.bold,
               color: Color(0xFF097746),
@@ -338,16 +341,16 @@ class _CheckInventoryState extends State<CheckInventory> {
             TextButton(
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
-                    Color(0xFF097746)),
+                    const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
                         10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text("OK",
+              child: const Text("OK",
                 style: TextStyle(
                     color: Colors.white
                 ),
@@ -385,7 +388,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                 _data.isNotEmpty
                     ? ListView.builder(
                   shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn
+                  physics: const NeverScrollableScrollPhysics(), // Vô hiệu hóa cuộn
                   itemCount: _data.length,
                   itemBuilder: (context, index) {
                     String epcString = CommonFunction().hexToString(
@@ -461,12 +464,12 @@ class _CheckInventoryState extends State<CheckInventory> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Không thể lưu", style: TextStyle(
+            title: const Text("Không thể lưu", style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
-            content: Text("Vui lòng chọn lịch", style: TextStyle(
+            content: const Text("Vui lòng chọn lịch", style: TextStyle(
                 color: Color(0xFF097746),
                 fontSize: 18
             ),),
@@ -474,16 +477,16 @@ class _CheckInventoryState extends State<CheckInventory> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all<Color>(
-                      Color(0xFF097746)),
+                      const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                           10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(
+                child: const Text("OK", style: TextStyle(
                   color: Colors.white,
                 )
                 ),
@@ -502,8 +505,8 @@ class _CheckInventoryState extends State<CheckInventory> {
       builder: (BuildContext context) {
         return Dialog(
           child: Container(
-            padding: EdgeInsets.all(20),
-            child: Row(
+            padding: const EdgeInsets.all(20),
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
@@ -568,12 +571,12 @@ class _CheckInventoryState extends State<CheckInventory> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Thông báo", style: TextStyle(
+            title: const Text("Thông báo", style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
-            content: Text(
+            content: const Text(
               "Không tìm thấy sản phẩm trong lịch đã chọn.", style: TextStyle(
                 color: Color(0xFF097746),
                 fontSize: 18
@@ -583,16 +586,16 @@ class _CheckInventoryState extends State<CheckInventory> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all<Color>(
-                      Color(0xFF097746)),
+                      const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                           10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(
+                child: const Text("OK", style: TextStyle(
                   color: Colors.white,
                 )
                 ),
@@ -686,14 +689,14 @@ class _CheckInventoryState extends State<CheckInventory> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Hoàn Tất", style: TextStyle(
+          title: const Text("Hoàn Tất", style: TextStyle(
             color: Color(0xFF097746),
             fontWeight: FontWeight.bold,
           ),
           ),
           content: Text(
             "$numberOfEventsProcessed lịch đã được xử lý và cập nhật.",
-            style: TextStyle(
+            style: const TextStyle(
                 color: Color(0xFF097746),
                 fontSize: 18
             ),
@@ -702,16 +705,16 @@ class _CheckInventoryState extends State<CheckInventory> {
             TextButton(
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
-                    Color(0xFF097746)),
+                    const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
                         10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text("OK", style: TextStyle(
+              child: const Text("OK", style: TextStyle(
                 color: Colors.white,
               )
               ),
@@ -733,10 +736,16 @@ class _CheckInventoryState extends State<CheckInventory> {
 
 //#region ScanRFID NMC97
   Future<void> _toggleScanningForC5() async {
-    print("MinhChauLog: Start Toggle Scanning for C5!");
-    if (isProcessedEventsPageOpen || currentDevice != Device.C_Series) {
+    try{
+    //print("MinhChauLog: Start Toggle Scanning for C5!");
+    if (isProcessedEventsPageOpen || currentDevice != Device.cSeries && currentDevice !=  Device.cameraBarcodes) {
       return;
     }
+    if(currentDevice == Device.cameraBarcodes){
+      ConnectionNotificationRSeries.showDeviceWaring(context, false);
+      return;
+    }
+
     if (_isContinuousCall) {
       DataReadOptions.readTagsAsync(false, currentDevice);
       _isContinuousCall = false;
@@ -755,10 +764,18 @@ class _CheckInventoryState extends State<CheckInventory> {
     setState(() {
       _isShowModal = _isContinuousCall;
     });
+    }catch(e){
+      print('Error: $e');
+    }
   }
   Future<void> _toggleScanningForR5() async {
+    try{
     print("MinhChauLog: Start Toggle Scanning for R5!");
-    if (isProcessedEventsPageOpen || currentDevice != Device.R_Series) {
+    if (isProcessedEventsPageOpen || currentDevice != Device.rSeries) {
+      return;
+    }
+    if(currentDevice == Device.cameraBarcodes){
+      ConnectionNotificationRSeries.showDeviceWaring(context, false);
       return;
     }
     if (_isContinuousCall) {
@@ -785,25 +802,33 @@ class _CheckInventoryState extends State<CheckInventory> {
       _isShowModal = _isContinuousCall;
       scanStatusR5=false;
     });
+    }catch(e){
+      print('Error: $e');
+    }
   }
   void _showScanningModal() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        // Trả về widget dialog
-        return Center(
+        return (_isShowModal)
+            ? Center(
           child: Dialog(
             elevation: 0,
-            backgroundColor: Colors.transparent,
-            child: Container(
-              // Nội dung dialog
-              child: SavedTagsModal(
-                updateStream: _updateStreamController.stream,
+            backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+            child: SizedBox(
+              height :300,
+              child: Column(
+                children: [
+                  const Text("RFID",style: TextStyle(color: Colors.white)),
+                  SavedTagsModal(
+                    updateStream: _updateStreamController.stream,
+                  ),
+                ],
               ),
             ),
           ),
-        );
+        ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
       },
     ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
     _isDialogShown = true;
@@ -814,7 +839,6 @@ class _CheckInventoryState extends State<CheckInventory> {
     _isConnected = isConnected;
     print('successful');
   }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -825,9 +849,9 @@ class _CheckInventoryState extends State<CheckInventory> {
     return
     Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-          child: Container(
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 20.0, right: 20.0),
+          child: SizedBox(
             width: 150,
             height: 150,
           ),
@@ -852,9 +876,9 @@ class _CheckInventoryState extends State<CheckInventory> {
         ],
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(0, 15, 0, 0),
-        constraints: BoxConstraints.expand(),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
+        constraints: const BoxConstraints.expand(),
+        color: const Color(0xFFFAFAFA),
         child: Column(
           children: [
         Container(
@@ -884,42 +908,42 @@ class _CheckInventoryState extends State<CheckInventory> {
               ),
               isDense: true,
 
-              contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 6.0),
+              contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 6.0),
               filled: true,
-              fillColor:  Color(0xFFEBEDEC),
+              fillColor:  const Color(0xFFEBEDEC),
               border:
               OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.0),
-                borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
               ),
 
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                 borderRadius: BorderRadius.circular(12.0),
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFFEBEDEC)),
+                borderSide: const BorderSide(color: Color(0xFFEBEDEC)),
                 borderRadius: BorderRadius.circular(12.0),
               ),
               suffixIcon: GestureDetector(
                 onTap: () {
                   _selectDate(context);
                 },
-                child: Icon(Icons.arrow_drop_down_sharp, color: Color(0xFF097746), size: 30.0),
+                child: const Icon(Icons.arrow_drop_down_sharp, color: Color(0xFF097746), size: 30.0),
               ),
             ),
           ),
         ),
-        SizedBox(height: 10,),
+        const SizedBox(height: 10,),
             GestureDetector(
               onTap: () {
                 _showChipsInformation(context);
                 // print('đã bấm');
               },
               child: Container(
-                padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
+                padding: const EdgeInsets.fromLTRB(20, 15, 0, 12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFAFAFA),
+                  color: const Color(0xFFFAFAFA),
                   border: Border(
                     bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
                   ),
@@ -930,7 +954,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: TextStyle(fontSize: 24, color: Color(0xFF097746)),
+                          style: const TextStyle(fontSize: 24, color: Color(0xFF097746)),
                           children: [
                             const TextSpan(
                               text: 'Số lượng quét\n ',
@@ -939,7 +963,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                             TextSpan(
                               // Kiểm tra trạng thái quét để quyết định hiển thị giá trị nào
                               text:'$successfullySaved',
-                              style: TextStyle(fontSize: 22),
+                              style: const TextStyle(fontSize: 22),
 
                               //   text: '$synchronized ? $successfullySaved' : 0,
                             ),
@@ -947,20 +971,20 @@ class _CheckInventoryState extends State<CheckInventory> {
                         ),
                       ),
                     ),
-                    Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                    const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                   ],
                 ),
               ),
             ),
-          SizedBox(height: 20,),
+          const SizedBox(height: 20,),
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: Colors.grey),
                 ),
               ),
               alignment: Alignment.topLeft,
-              padding: EdgeInsets.fromLTRB(20, 0, 0, 5),
+              padding: const EdgeInsets.fromLTRB(20, 0, 0, 5),
               child: GestureDetector(
                 onTap: () {
                   setState(() {
@@ -975,10 +999,10 @@ class _CheckInventoryState extends State<CheckInventory> {
                   children: [
                     Icon(
                       isAllSelected ? Icons.check_box_outlined : Icons.check_box_outline_blank,
-                      color: Color(0xFF097746),
+                      color: const Color(0xFF097746),
                     ),
-                    SizedBox(width: 5),
-                    Text(
+                    const SizedBox(width: 5),
+                    const Text(
                       'Chọn tất cả',
                       style: TextStyle(
                         fontSize: 20,
@@ -1007,15 +1031,15 @@ class _CheckInventoryState extends State<CheckInventory> {
                               },
                               child: Icon(
                                 event.isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                                color: Color(0xFF097746),
+                                color: const Color(0xFF097746),
                               ),
                             ),
-                            SizedBox(width: 5),
+                            const SizedBox(width: 5),
                             Expanded(
                               child: ListTile(
                                 title: Text(
                                   event.tenDaiLy,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 20,
                                     color: Color(0xFF097746),
                                   ),
@@ -1025,28 +1049,28 @@ class _CheckInventoryState extends State<CheckInventory> {
                                   children: [
                                     Text(
                                       'Sản phẩm: ${event.tenSanPham}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 20,
                                         color: Color(0xFF097746),
                                       ),
                                     ),
                                     Text(
                                       'Số lượng: ${event.soLuong}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 20,
                                         color: Color(0xFF097746),
                                       ),
                                     ),
                                     Text(
                                       'Số lượng quét: ${event.epcData.length}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 20,
                                         color: Color(0xFF097746),
                                       ),
                                     ),
                                     Text(
                                       'Lệnh giao hàng: ${event.lenhPhanPhoi}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 20,
                                         color: Color(0xFF097746),
                                       ),
@@ -1057,7 +1081,7 @@ class _CheckInventoryState extends State<CheckInventory> {
                             ),
                           ],
                         ),
-                        if (index != _events.length - 1) Divider(color: Colors.grey), // Thêm Divider nếu không phải hàng cuối cùng
+                        if (index != _events.length - 1) const Divider(color: Colors.grey), // Thêm Divider nếu không phải hàng cuối cùng
                       ],
                     ),
                   );
@@ -1073,7 +1097,7 @@ class _CheckInventoryState extends State<CheckInventory> {
           children: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: (_isContinuousCall) ? Colors.red : Color(0xFF097746),
+                backgroundColor: (_isContinuousCall) ? Colors.red : const Color(0xFF097746),
                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),

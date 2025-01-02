@@ -12,6 +12,7 @@ import 'dart:async';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
 import '../main.dart';
 import 'model_information_package.dart';
 import 'database_package_inf.dart';
@@ -24,7 +25,7 @@ import '../utils/scan_count_modal.dart';
 import '../utils/key_event_channel.dart';
 import 'package_schedule_list.dart';
 import 'wearhouse_import_code_list.dart';
-
+/*Assign packing information*/
 
 class SendDistributionInf extends StatefulWidget {
 
@@ -51,7 +52,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   int currentPage = 0;
   int itemsPerPage = 5;
   late CalendarDistributionInfDatabaseHelper _databaseHelper;
-  List<TagEpcLBD> paginatedData = [];
+  List<TagEpcLDB> paginatedData = [];
   int targetTotalEPC = 100;
   late Timer _timer;
   TextEditingController _agencyNameController = TextEditingController();
@@ -62,24 +63,24 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   String _selectedMSPLDB = '';
   TextEditingController _MSPLDB = TextEditingController();
   bool dadongbo = false;
-  List<TagEpcLBD> _data = [];
+  List<TagEpcLDB> _data = [];
   final List<String> _EPC = [];
-  List<TagEpcLBD> _successfulTags = [];
+  List<TagEpcLDB> _successfulTags = [];
   int totalTags = 0;
   static int _value  = 0;
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
-  Queue<List<TagEpcLBD>> p = Queue<List<TagEpcLBD>>();
+  Queue<List<TagEpcLDB>> p = Queue<List<TagEpcLDB>>();
   bool _isNotified = false;
   bool _isShowModal = false;
-  Queue<List<TagEpcLBD>> _queue = Queue<List<TagEpcLBD>>();
-  List<TagEpcLBD> newData = [];
+  Queue<List<TagEpcLDB>> _queue = Queue<List<TagEpcLDB>>();
+  List<TagEpcLDB> newData = [];
   int saveCount = 0;
   int a = 0;
   int TotalScan = 0;
   int scannedTagsCount = 0;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   bool _dataSaved = false;
   int tagCount = 0;
   bool _isContinuousCall = false;
@@ -92,13 +93,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   Stream<int> get updateStream => _updateStreamController.stream;
   bool _isDialogShown = false;
   bool showConfirmationDialog = false;
-  final securePackageStorage = FlutterSecureStorage();
+  final securePackageStorage = const FlutterSecureStorage();
   bool dadongbao = false;
   bool dataSyncedSuccessfully = false;
-  final secureLDBStorage = FlutterSecureStorage();
+  final secureLDBStorage = const FlutterSecureStorage();
   int successCountPackageInf = 0;
   int failCountPackageInf = 0;
-  final packageInfStorage = FlutterSecureStorage();
+  final packageInfStorage = const FlutterSecureStorage();
   bool _isShowSyncModal = false;
   int successfulSends = 0;
   int alreadyDistributed = 0;
@@ -114,7 +115,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   // String IP = 'http://192.168.19.69:5088';
   // String IP = 'http://192.168.19.180:5088';
   // String IP = 'https://jvf-admin.rynansaas.com';
-  List<TagEpcLBD> r5_resultTags = [];
+  List<TagEpcLDB> r5_resultTags = [];
   bool scanStatusR5 = false;
 
 
@@ -133,23 +134,24 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     KeyEventChannel(
       onKeyReceived: _toggleScanningForC5,
     ).initialize();
+    uhfBLERegister();
   }
   //#region R_Series Register Tag Read
   Future<void> checkCurrentDevice() async {
-    if (currentDevice == Device.C_Series) {
+    if (currentDevice == Device.cSeries) {
       await _toggleScanningForC5();
-    } else if (currentDevice == Device.R_Series) {
+    } else if (currentDevice == Device.rSeries) {
       await  _toggleScanningForR5();
-    } else if (currentDevice == Device.Camera_Barcodes) {
-      // Todo
+    } else if (currentDevice == Device.cameraBarcodes) {
+      await _toggleScanningForC5();
     }
   }
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
       setState(() {
-        if(currentDevice != Device.R_Series) return;
-        r5_resultTags = DataProcessing.ConvertToTagEpcLBDList(tagList);
-        DataProcessing.ProcessDataLBD(r5_resultTags, _data); // Filter
+        if(currentDevice != Device.rSeries) return;
+        r5_resultTags = DataProcessing.ConvertToTagEpcLDBList(tagList);
+        DataProcessing.ProcessDataLDB(r5_resultTags, _data); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
@@ -207,8 +209,8 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
 
 //.....................................22.03.24.15:59..............................//
   void updateTags(dynamic result) async {
-    List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
-    DataProcessing.ProcessDataLBD(newData, _data); // Filter
+    List<TagEpcLDB> newData = TagEpcLDB.parseTags(result);
+    DataProcessing.ProcessDataLDB(newData, _data); // Filter
     updateStatusAndCountResult();
 
     // List<TagEpcLBD> currentTags = await loadData(event.idLDB);
@@ -241,7 +243,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   }
 
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
-    final secureStorage = FlutterSecureStorage();
+    final secureStorage = const FlutterSecureStorage();
     await secureStorage.write(key: '${eventId}_length', value: value.toString());
   }
 
@@ -262,16 +264,16 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     sendUpdateEvent(newData);
   }
 
-  Future<void> saveData(String key, List<TagEpcLBD> data) async {
-    String dataString = TagEpcLBD.tagsToJson(data);
+  Future<void> saveData(String key, List<TagEpcLDB> data) async {
+    String dataString = TagEpcLDB.tagsToJson(data);
     await _storage.write(key: key, value: dataString);
   }
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -317,7 +319,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     List<WearHouseTypeList> mlNKList = await fetchMLNK();
     if (mlNKList.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Không thể tải danh sách MLNK.'),
           backgroundColor: Colors.red,
         ),
@@ -345,7 +347,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       await dbHelper.deleteEvent(event);
       widget.onDeleteEvent(event);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Xóa lịch thành công!'),
           backgroundColor: Color(0xFF4EB47D),
           duration: Duration(seconds: 2),
@@ -355,7 +357,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     } catch (e) {
       // print('Lỗi khi xóa lịch: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Đã xảy ra lỗi khi xóa lịch!'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 2),
@@ -369,11 +371,11 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       context: context,
       builder: (BuildContext context) {
         return Container(
-          padding: EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Thông tin chip',
                 style: TextStyle(
                   fontSize: 26,
@@ -382,11 +384,11 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 ),
               ),
               Expanded(
-                child: FutureBuilder<List<TagEpcLBD>>(
+                child: FutureBuilder<List<TagEpcLDB>>(
                   future: loadData(event.idLDB), // Sử dụng loadData với event.id
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
+                      return const Center(
                         child: CircularProgressIndicator(),
                       );
                     } else if (snapshot.hasError) {
@@ -405,13 +407,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           return ListTile(
                             title: Text(
                               '${index + 1}. $epcString',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF097746),
                               ),
                             ),
                             subtitle: Text(
                               '- $scanDate',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF097746),
                               ),
                             ),
@@ -419,7 +421,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         },
                       );
                     } else {
-                      return Center(
+                      return const Center(
                         child: Text(
                           'Không có dữ liệu',
                           style: TextStyle(
@@ -440,14 +442,14 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
 
   void loadTagCount() async {
     if (widget.event.idLDB != null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
-      List<TagEpcLBD> tags = await loadData(event.idLDB);
+      List<TagEpcLDB> tags = await loadData(event.idLDB);
       setState(() {
         tagCount = tags.length; // Cập nhật số lượng tags vào biến trạng thái
       });
     }
   }
 
-  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLBD> tags) async {
+  Future<void> saveTagsToSecureStorage(String calendarId, List<TagEpcLDB> tags) async {
     // Serialize danh sách tag thành chuỗi JSON
     List<Map<String, dynamic>> jsonTags = tags.map((tag) => tag.toJson()).toList();
     String jsonString = jsonEncode(jsonTags);
@@ -455,12 +457,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     await _storage.write(key: 'saved_tags_$calendarId', value: jsonString);
   }
 
-  Future<List<TagEpcLBD>> loadTagsFromSecureStorage(String calendarId) async {
+  Future<List<TagEpcLDB>> loadTagsFromSecureStorage(String calendarId) async {
     String? jsonString = await _storage.read(key: 'saved_tags_$calendarId');
     if (jsonString == null) return [];
 
     List<dynamic> jsonTags = jsonDecode(jsonString);
-    List<TagEpcLBD> tags = jsonTags.map((jsonTag) => TagEpcLBD.fromJson(jsonTag)).toList();
+    List<TagEpcLDB> tags = jsonTags.map((jsonTag) => TagEpcLDB.fromJson(jsonTag)).toList();
 
     return tags;
   }
@@ -471,14 +473,14 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Lưu mã chip?',
+          title: const Text('Lưu mã chip?',
             style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Container(
                   height: 200, // Hoặc một giá trị phù hợp với nhu cầu của bạn
                   child: ListView.builder(
@@ -490,7 +492,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         title:
                         Text(
                             '${index+1}.$tagepc',
-                          style: TextStyle(color: Color(0xFF097746)),
+                          style: const TextStyle(color: Color(0xFF097746)),
                         ) ,
                       );
                     },
@@ -502,15 +504,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Hủy Bỏ',
+              child: const Text('Hủy Bỏ',
                   style:TextStyle(
                     color: Colors.white,
                   )
@@ -526,27 +528,27 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 });
               },
             ),
-            SizedBox(width: 8,),
+            const SizedBox(width: 8,),
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text('Xác Nhận',
+              child: const Text('Xác Nhận',
                   style:TextStyle(
                     color: Colors.white,
                   )
               ),
               onPressed: () async {
                 // Đầu tiên, tải danh sách tag hiện tại từ lưu trữ
-                List<TagEpcLBD> currentTags = await loadData(event.idLDB);
+                List<TagEpcLDB> currentTags = await loadData(event.idLDB);
                 // Lọc ra những tag mới chưa có trong currentTags
-                List<TagEpcLBD> newUniqueTags = _data.where((newTag) =>
+                List<TagEpcLDB> newUniqueTags = _data.where((newTag) =>
                 !currentTags.any((savedTag) => savedTag.epc == newTag.epc)).toList();
                 // Thêm các tag mới vào danh sách hiện tại và loại bỏ các tag trùng lặp
                 currentTags.addAll(newUniqueTags);
@@ -564,130 +566,72 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
           ],
         );
       },
-    );
+    ).then((_) async {
+      _isDialogShown = false;
+      await DataReadOptions.readTagsAsync(false, currentDevice);
+      checkCurrentDevice();
+    });
   }
 
   void onAgencySelected(String selectedAgencyName) {
   }
 
   //#region ScanRFID
-  Future<void> _toggleScanningForC5() async {
-    print("MinhChauLog: Start Toggle Scanning for C5!");
-    if (_isShowSyncModal  || currentDevice != Device.C_Series) {
-      return;
-    }
-    if (_isContinuousCall) {
-      DataReadOptions.readTagsAsync(false, currentDevice);
-      _isContinuousCall = false;
-      if (_isDialogShown) {
-        Navigator.of(context, rootNavigator: true).pop('dialog');
-      }
-    }
-    else {
-      DataReadOptions.readTagsAsync(true, currentDevice);
-      _isContinuousCall = true;
-      if (!_isDialogShown)
-      {
-        _showScanningModal();
-      }
-    }
-    setState(() {
-      _isShowModal = _isContinuousCall;
-    });
-  }
-  Future<void> _toggleScanningForR5() async {
-    print("MinhChauLog: Start Toggle Scanning for R5!");
-    if (_isShowSyncModal || currentDevice != Device.R_Series) {
-      return;
-    }
-    if (_isContinuousCall) {
-      if(!scanStatusR5){
-        DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
-      }
-      _isContinuousCall = false;
-      if (_isDialogShown) {
-        Navigator.of(context, rootNavigator: true).pop('dialog');
-      }
-    }
-    else
-    {
-      if(!scanStatusR5){
-        DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
-      }
-      _isContinuousCall = true;
-      if (!_isDialogShown)
-      {
-        _showScanningModal();
-      }
-    }
-    setState(() {
-      _isShowModal = _isContinuousCall;
-      scanStatusR5=false;
-    });
-  }
-  void _showScanningModal() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        // Trả về widget dialog
-        return Center(
-          child: Dialog(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            child: Container(
-              // Nội dung dialog
-              child: SavedTagsModal(
-                updateStream: _updateStreamController.stream,
-              ),
-            ),
-          ),
-        );
-      },
-    ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
-    _isDialogShown = true;
-  }
-//#endregion
-
-  // Future<void> _toggleScanning_old() async {
-  //   if(_isShowSyncModal){
+  // Future<void> _toggleScanningForC5() async {
+  //   print("MinhChauLog: Start Toggle Scanning for C5!");
+  //   if (_isShowSyncModal  || currentDevice != Device.C_Series) {
   //     return;
   //   }
   //   if (_isContinuousCall) {
-  //     // Dừng quét
-  //     await RfidC72Plugin.stop;
+  //     DataReadOptions.readTagsAsync(false, currentDevice);
   //     _isContinuousCall = false;
-  //     // Đóng dialog quét nếu nó đang hiển thị
   //     if (_isDialogShown) {
   //       Navigator.of(context, rootNavigator: true).pop('dialog');
-  //       // Không cần đặt _isDialogShown = false ở đây vì nó sẽ được cập nhật sau khi dialog đóng
   //     }
-  //     // Chờ một khoảng thời gian ngắn (nếu cần) và mở dialog xác nhận
-  //     if (!showConfirmationDialog) {
-  //       Future.delayed(Duration(milliseconds: 100), () {
-  //         _showConfirmationDialog();
-  //         showConfirmationDialog = true;
-  //       });
-  //     }
-  //   } else {
-  //
-  //     if(!showConfirmationDialog ){
-  //       await RfidC72Plugin.startContinuous;
-  //       _data.clear();
-  //       _isContinuousCall = true;
-  //       // Hiển thị dialog quét nếu không có dialog nào đang hiển thị
-  //       if (!_isDialogShown) {
-  //         _showScanningModal();
-  //         // Không cần đặt _isDialogShown = true ở đây vì nó sẽ được cập nhật trong _showScanningModal()
-  //       }
+  //   }
+  //   else {
+  //     DataReadOptions.readTagsAsync(true, currentDevice);
+  //     _isContinuousCall = true;
+  //     if (!_isDialogShown)
+  //     {
+  //       _showScanningModal();
   //     }
   //   }
   //   setState(() {
   //     _isShowModal = _isContinuousCall;
   //   });
   // }
-
-  // void _showScanningModal_old() {
+  // Future<void> _toggleScanningForR5() async {
+  //   print("MinhChauLog: Start Toggle Scanning for R5!");
+  //   if (_isShowSyncModal || currentDevice != Device.R_Series) {
+  //     return;
+  //   }
+  //   if (_isContinuousCall) {
+  //     if(!scanStatusR5){
+  //       DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+  //     }
+  //     _isContinuousCall = false;
+  //     if (_isDialogShown) {
+  //       Navigator.of(context, rootNavigator: true).pop('dialog');
+  //     }
+  //   }
+  //   else
+  //   {
+  //     if(!scanStatusR5){
+  //       DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+  //     }
+  //     _isContinuousCall = true;
+  //     if (!_isDialogShown)
+  //     {
+  //       _showScanningModal();
+  //     }
+  //   }
+  //   setState(() {
+  //     _isShowModal = _isContinuousCall;
+  //     scanStatusR5=false;
+  //   });
+  // }
+  // void _showScanningModal() {
   //   showDialog(
   //     context: context,
   //     barrierDismissible: false,
@@ -709,6 +653,152 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   //   ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
   //   _isDialogShown = true;
   // }
+//#endregion
+
+  Future<void> _toggleScanningForC5() async {
+    try{
+    if(_isShowSyncModal ||
+        currentDevice != Device.cSeries &&
+        currentDevice !=  Device.cameraBarcodes ||
+        _isDialogShown){
+      if (_isDialogShown) {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      }
+      return;
+    }
+    if(currentDevice == Device.cameraBarcodes){
+      ConnectionNotificationRSeries.showDeviceWaring(context, false);
+      return;
+    }
+    if (_isContinuousCall) {
+
+        DataReadOptions.readTagsAsync(false, currentDevice);
+      _isContinuousCall = false;
+      if (_isDialogShown) {
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+      }
+      // if (!showConfirmationDialog) {
+      //   Future.delayed(const Duration(milliseconds: 100), () {
+      //     _showConfirmationDialog();
+      //     showConfirmationDialog = true;
+      //   });
+      // }
+    } else {
+
+      if(!showConfirmationDialog ){
+
+          DataReadOptions.readTagsAsync(true, currentDevice);
+
+        _data.clear();
+        _isContinuousCall = true;
+        if (!_isDialogShown) {
+          _isDialogShown = true;
+          _showScanningModal();
+        }
+      }
+    }
+    setState(() {
+      _isShowModal = _isContinuousCall;
+    });
+  }catch(e){
+  print('Error: $e');
+  }
+  }
+  Future<void> _toggleScanningForR5() async {
+    try{
+      if(_isShowSyncModal || currentDevice != Device.rSeries || _isDialogShown){
+        if (_isDialogShown) {
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        }
+        return;
+      }
+      if(currentDevice == Device.cameraBarcodes){
+        ConnectionNotificationRSeries.showDeviceWaring(context, false);
+        return;
+      }
+      if (_isContinuousCall) {
+        if(!scanStatusR5){
+          DataReadOptions.readTagsAsync(false, currentDevice); //Start by internal device key or software button
+        }
+        _isContinuousCall = false;
+        if (_isDialogShown) {
+          Navigator.of(context, rootNavigator: true).pop('dialog');
+        }
+        // if (!showConfirmationDialog) {
+        //   Future.delayed(const Duration(milliseconds: 100), () {
+        //     _showConfirmationDialog();
+        //     showConfirmationDialog = true;
+        //   });
+        // }
+      } else {
+
+        if(!showConfirmationDialog ){
+          if(!scanStatusR5){
+            DataReadOptions.readTagsAsync(true, currentDevice);  //Stop by internal device key or software button
+          }
+          _data.clear();
+          _isContinuousCall = true;
+          if (!_isDialogShown) {
+            _isDialogShown = true;
+            _showScanningModal();
+          }
+        }
+      }
+      setState(() {
+        _isShowModal = _isContinuousCall;
+        scanStatusR5=false;
+      });
+    }catch(e){
+      print('Error: $e');
+    }
+
+
+  }
+
+  bool _isCancelled = false;
+  void _showScanningModal() {
+    _isCancelled = false; // Reset trạng thái hủy
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return (_isShowModal)
+            ? Center(
+          child: Dialog(
+            elevation: 0,
+            backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+            child: SizedBox(
+              height :300,
+              child: Column(
+                children: [
+                  const Text("RFID",style: TextStyle(color: Colors.white)),
+                  SavedTagsModal(
+                    updateStream: _updateStreamController.stream,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
+      },
+    ).then((_)  {
+
+      _showConfirmationDialog();
+      _isCancelled = true; // Đánh dấu đã hủy
+    }); // Cập nhật trạng thái khi dialog đóng
+
+
+
+    // Đóng dialog sau 1 giây
+    // Future.delayed(const Duration(seconds: 100), () {
+    //   if (!_isCancelled && mounted && _isDialogShown) {  // dùng mounted để kiểm tra context còn tồn tại
+    //     _isDialogShown = false;
+    //
+    //     Navigator.of(context).pop();
+    //     _showConfirmationDialog();
+    //   }
+    // });
+  }
 
   void updateMSP(String? msp) {
     String combinedValue = "$msp ";
@@ -922,27 +1012,27 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         return AlertDialog(
           title: Text(
             isSuccess ? "Thông báo" : "Thông báo",
-            style: TextStyle(color: isSuccess ? Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
+            style: TextStyle(color: isSuccess ? const Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
           ),
           content: Text(
             message,
             style: TextStyle(
               fontSize: 18,
-              color: isSuccess ? Color(0xFF097746) : Color(0xFF097746),
+              color: isSuccess ? const Color(0xFF097746) : const Color(0xFF097746),
             ),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text("OK", style: TextStyle(color: Colors.white)),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop(); // Đóng dialog
                 Navigator.pop(context, true);
@@ -959,9 +1049,9 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -981,7 +1071,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       },
     );
 
-    List<TagEpcLBD> allRFIDData = await loadData(event.idLDB);
+    List<TagEpcLDB> allRFIDData = await loadData(event.idLDB);
     String baseUrl = '${AppConfig.IP}/api/7787F36F76C2408E96C4C2FE96D59A17';
 
     String key = getSentTagsKey(event.idLDB);
@@ -1009,7 +1099,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     // ];
     // for (String epcString in allTag) {
       //Mã thực tế
-      for (TagEpcLBD tag in allRFIDData) {
+      for (TagEpcLDB tag in allRFIDData) {
         if (networkErrorOccurred) break;
         String epcString = CommonFunction().hexToString(tag.epc);
         String scanDate = tag.scanDate?.toIso8601String() ?? '';
@@ -1134,13 +1224,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Mất kết nối!",
+            title: const Text("Mất kết nối!",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text("Vui lòng kiểm tra kết nối mạng.",
+            content: const Text("Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
                 color: Color(0xFF097746),
@@ -1149,15 +1239,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -1172,12 +1262,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Đồng bộ thành công",style: TextStyle(
+            title: const Text("Đồng bộ thành công",style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
-            content: Text("Bạn có muốn xác nhận hoàn thành Lịch Đóng bao này?",
+            content: const Text("Bạn có muốn xác nhận hoàn thành Lịch Đóng bao này?",
                 style: TextStyle(
                   fontSize: 18,
                   color: Color(0xFF097746),
@@ -1185,15 +1275,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-                child: Text('Hủy',
+                child: const Text('Hủy',
                     style:TextStyle(
                       color: Colors.white,
                     )
@@ -1206,16 +1296,16 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 },
               ),
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
 
-                child: Text("OK", style: TextStyle(color: Colors.white),),
+                child: const Text("OK", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ
                   // String? ghiChu = await _showNoteInputDialog(context);
@@ -1249,16 +1339,16 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               'Nhập thông tin',
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            contentPadding: EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
+            contentPadding: const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
             content: SingleChildScrollView(
-              padding: EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1274,32 +1364,32 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       //   fontWeight: FontWeight.normal,
                       // ),
                       labelText: 'Nhập số lượng đóng bao thực tế',
-                      labelStyle: TextStyle(
+                      labelStyle: const TextStyle(
                           color: Colors.grey,
                           fontWeight: FontWeight.normal,
                           // fontSize: 22
                       ),
                       filled: true,
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF65a281)),
+                        borderSide: const BorderSide(color: Color(0xFF65a281)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: Color(0xFF097746)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                     ),
                   ),
-                  SizedBox(height: 20), // Tăng khoảng cách giữa các trường
+                  const SizedBox(height: 20), // Tăng khoảng cách giữa các trường
                   TextField(
                     controller: _noteController,
                     minLines: 2, // Số dòng tối thiểu
                     maxLines: 4, // Số dòng tối đa, có thể điều chỉnh tùy ý
                     decoration: InputDecoration(
                       labelText: 'Nhập ghi chú',
-                      labelStyle: TextStyle(
+                      labelStyle: const TextStyle(
                           color: Colors.grey,
                           fontWeight: FontWeight.normal,
                           // fontSize: 22
@@ -1307,49 +1397,49 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       // fillColor: Color(0xFFEBEDEC),
                       filled: true,
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF65a281)),
+                        borderSide: const BorderSide(color: Color(0xFF65a281)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: Color(0xFF097746)),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                     ),
                   ),
                 ],
               ),
             ),
-            actionsPadding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7), // Loại bỏ padding giữa content và actions
+            actionsPadding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7), // Loại bỏ padding giữa content và actions
             // buttonPadding: EdgeInsets.symmetric(horizontal: 8.0), // Giảm padding giữa các nút
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text('Hủy', style: TextStyle(color: Colors.white)),
+                child: const Text('Hủy', style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng hộp thoại mà không trả về giá trị gì
                 },
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text('OK', style: TextStyle(color: Colors.white)),
+                child: const Text('OK', style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop({
                     'note': _noteController.text, // Trả về ghi chú
@@ -1364,7 +1454,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   }
 
 
-  final _storageAcountCode = FlutterSecureStorage();
+  final _storageAcountCode = const FlutterSecureStorage();
 
   Future<String?> _gettenKhofromSecureStorage() async {
     return await _storageAcountCode.read(key: 'tenKho');
@@ -1378,7 +1468,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   }
 
   Future<void> PutpackageWithAccountCode() async {
-    List<TagEpcLBD> allRFIDData = await loadData(event.idLDB);
+    List<TagEpcLDB> allRFIDData = await loadData(event.idLDB);
     String baseUrl = '${AppConfig.IP}/api/23E350A52834497D9E8EE8D316F11A8A';
 
     String key = getSentTagsKey(event.idLDB); // Tạo khóa duy nhất dựa trên ID lịch
@@ -1413,8 +1503,8 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     return 'sent_tags_$eventId';
   }
 
-  Future<void> saveTagState(TagEpcLBD tag) async {
-    final secureLDBStorage = FlutterSecureStorage();
+  Future<void> saveTagState(TagEpcLDB tag) async {
+    final secureLDBStorage = const FlutterSecureStorage();
     String key = 'tag_${tag.epc}';
     String json = jsonEncode(tag.toJson());
     await secureLDBStorage.write(key: key, value: json);
@@ -1517,7 +1607,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     return allRecalls;
   }
 
-  Future<List<TagEpcLBD>> getTagEpcList(String key) async {
+  Future<List<TagEpcLDB>> getTagEpcList(String key) async {
     return await loadData(event.idLDB);
   }
 
@@ -1530,7 +1620,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     buffer.writeln("Ghi chú: ${event.ghiChuLDB}");
     buffer.writeln("Ngày tạo lịch: ${event.ngayTaoLDB}");
     // Lấy danh sách TagEpcLBD từ loadData
-    List<TagEpcLBD> tagEpcList = await getTagEpcList(event.idLDB);
+    List<TagEpcLDB> tagEpcList = await getTagEpcList(event.idLDB);
     buffer.writeln("Mã EPC:");
     // Duyệt qua danh sách và thêm từng EPC vào chuỗi
     for (var tag in tagEpcList) {
@@ -1564,13 +1654,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Tệp đã được lưu vào mục Download: $fileName'),
-          backgroundColor: Color(0xFF4EB47D),
-          duration: Duration(seconds: 3), // Thời gian hiển thị SnackBar
+          backgroundColor: const Color(0xFF4EB47D),
+          duration: const Duration(seconds: 3), // Thời gian hiển thị SnackBar
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
@@ -1594,12 +1684,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
        context: context,
        builder: (BuildContext context) {
          return AlertDialog(
-           title: Text("Không thể đồng bộ",style: TextStyle(
+           title: const Text("Không thể đồng bộ",style: TextStyle(
              color: Color(0xFF097746),
              fontWeight: FontWeight.bold,
            ),
            ),
-           content: Text("Vui lòng kiểm tra lại số lượng quét.",
+           content: const Text("Vui lòng kiểm tra lại số lượng quét.",
                style: TextStyle(
                  fontSize: 18,
                  color: Color(0xFF097746),
@@ -1607,15 +1697,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
            ),
            actions: <Widget>[
              TextButton( style: ButtonStyle(
-               backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+               backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                  RoundedRectangleBorder(
                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                  ),
                ),
-               fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+               fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
              ),
-               child: Text("Đóng", style: TextStyle(color: Colors.white),),
+               child: const Text("Đóng", style: TextStyle(color: Colors.white),),
                onPressed: () {
                  Navigator.of(context).pop(); // Đóng cửa sổ dialog
                },
@@ -1646,8 +1736,8 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                      children: [
                        Container(
-                         padding: EdgeInsets.fromLTRB(10, 0, 10, 10),
-                         child: Text(
+                         padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                         child: const Text(
                            'Chọn lịch đóng bao', // Tiêu đề
                            style: TextStyle(
                              fontSize: 20,
@@ -1659,7 +1749,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                        Container(
                          alignment: Alignment.topRight,
                          child: IconButton(
-                           icon: Icon(
+                           icon: const Icon(
                              Icons.close,
                              color: Color(0xFF097746),
                              size: 30.0,
@@ -1671,9 +1761,9 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                        ),
                      ],
                    ),
-                   SizedBox(height: 20,),
+                   const SizedBox(height: 20,),
                    Container(
-                       padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
                        height: 60,
                        child: TextField(
                          onTap: () async {
@@ -1687,19 +1777,19 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                          readOnly: true, // Đảm bảo rằng người dùng không thể sửa đổi giá trị trong TextField
                          decoration: InputDecoration(
                            labelText: isMatched ? '${event.maLDB}' : 'Vui lòng chọn mã lịch',
-                           labelStyle: TextStyle(
+                           labelStyle: const TextStyle(
                              color: Color(0xFF097746),
                              fontWeight: FontWeight.bold,
                              fontSize: 18,
                            ),
-                           enabledBorder: OutlineInputBorder(
+                           enabledBorder: const OutlineInputBorder(
                              borderSide: BorderSide(color: Color(0xFF097746)),
                            ),
-                           focusedBorder: OutlineInputBorder(
+                           focusedBorder: const OutlineInputBorder(
                              borderSide: BorderSide(color: Color(0xFF097746)),
                            ),
                            suffixIcon: !isMatched
-                               ? Icon(
+                               ? const Icon(
                              Icons.navigate_next,
                              color: Color(0xFF097746),
                              size: 30.0,
@@ -1707,18 +1797,18 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                          ),
                        )
                    ),
-                   SizedBox(height: 30),
+                   const SizedBox(height: 30),
                    Container(
                      alignment: Alignment.bottomCenter,
                      width: 350,
                      child: ElevatedButton(
                        style: TextButton.styleFrom(
-                         backgroundColor: Color(0xFF097746),
-                         padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                         backgroundColor: const Color(0xFF097746),
+                         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                          shape: RoundedRectangleBorder(
                            borderRadius: BorderRadius.circular(12.0),
                          ),
-                         fixedSize: Size(200.0, 40.0),
+                         fixedSize: const Size(200.0, 40.0),
                        ),
                        onPressed: () {
                          if (_goodsNameController.text.isEmpty && !isMatched) {
@@ -1727,12 +1817,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                              context: context,
                              builder: (BuildContext context) {
                                return AlertDialog(
-                                 title: Text("Không thể đồng bộ",style: TextStyle(
+                                 title: const Text("Không thể đồng bộ",style: TextStyle(
                                    color: Color(0xFF097746),
                                    fontWeight: FontWeight.bold,
                                  ),
                                  ),
-                                 content: Text("Vui lòng chọn mã lịch cần đồng bộ.",
+                                 content: const Text("Vui lòng chọn mã lịch cần đồng bộ.",
                                      style: TextStyle(
                                        fontSize: 18,
                                        color: Color(0xFF097746),
@@ -1740,15 +1830,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                                  ),
                                  actions: <Widget>[
                                    TextButton( style: ButtonStyle(
-                                     backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                     backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                        RoundedRectangleBorder(
                                          borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                        ),
                                      ),
-                                     fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                     fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                    ),
-                                     child: Text("Đóng", style: TextStyle(color: Colors.white),),
+                                     child: const Text("Đóng", style: TextStyle(color: Colors.white),),
                                      onPressed: () {
                                        Navigator.of(context).pop(); // Đóng cửa sổ dialog
                                      },
@@ -1811,7 +1901,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
               style: TextStyle(
                 fontSize: screenWidth * 0.07, // Kích thước chữ
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF097746),
+                color: const Color(0xFF097746),
               ),
             ),
             actions: [
@@ -1837,10 +1927,10 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           barrierDismissible: false,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('Xác nhận xóa',
+                              title: const Text('Xác nhận xóa',
                                 style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
                               ),
-                              content: Text("Bạn có chắc chắn muốn xóa lịch này không?",
+                              content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: Color(0xFF097746),
@@ -1849,15 +1939,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                               actions: <Widget>[
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                       ),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                   ),
-                                  child: Text('Hủy',
+                                  child: const Text('Hủy',
                                       style:TextStyle(
                                         color: Colors.white,
                                       )
@@ -1868,18 +1958,18 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                                     });
                                   },
                                 ),
-                                SizedBox(width: 8,),
+                                const SizedBox(width: 8,),
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                       ),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                   ),
-                                  child: Text('Xác Nhận',
+                                  child: const Text('Xác Nhận',
                                       style:TextStyle(
                                         color: Colors.white,
 
@@ -1913,7 +2003,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                   width: double.infinity,
                   padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.02, 0, screenHeight * 0.012),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
+                    color: const Color(0xFFFAFAFA),
                     border: Border(
                       bottom: BorderSide(
                         color: Colors.grey.withOpacity(0.5),
@@ -1925,10 +2015,10 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: screenWidth * 0.065,
-                        color: Color(0xFF097746),
+                        color: const Color(0xFF097746),
                       ),
                       children: [
-                        TextSpan(
+                        const TextSpan(
                           text: 'Mã lịch đóng bao\n',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -1946,7 +2036,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -1960,7 +2050,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         style: TextStyle(
                           // fontSize: 24,
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -1986,7 +2076,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
                       ),
@@ -1997,7 +2087,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
+                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
                               children: [
                                 TextSpan(
                                   text: 'Số lượng quét\n ',
@@ -2012,7 +2102,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                             ),
                           ),
                         ),
-                        Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                        const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                       ],
                     ),
                   ),
@@ -2022,7 +2112,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -2035,7 +2125,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -2057,7 +2147,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -2070,7 +2160,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -2100,14 +2190,15 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: (_isContinuousCall) ? Colors.red : Color(0xFF097746),
-                      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      backgroundColor: (_isContinuousCall) ? Colors.red : const Color(0xFF097746),
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
-                      fixedSize: Size(150.0, 50.0),
+                      fixedSize: const Size(150.0, 50.0),
                     ),
                     onPressed: () async {
+
                       await checkCurrentDevice();
                     },
                     child: (_isContinuousCall)
@@ -2116,12 +2207,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFd5a529),
-                      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      backgroundColor: const Color(0xFFd5a529),
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
-                      fixedSize: Size(150.0, 50.0),
+                      fixedSize: const Size(150.0, 50.0),
                     ),
                     onPressed: () async {
                       isShowSyncModal();

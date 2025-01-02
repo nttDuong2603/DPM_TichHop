@@ -8,6 +8,11 @@ import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
+import '../UserDatatypes/user_datatype.dart';
+import '../Utils/DeviceActivities/DataProcessing.dart';
+import '../Utils/DeviceActivities/DataReadOptions.dart';
+import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
+import '../main.dart';
 import '../utils/app_config.dart';
 import 'model.dart';
 import 'database.dart';
@@ -22,7 +27,7 @@ import '../utils/key_event_channel.dart';
 import '../utils/scan_count_modal.dart';
 import 'select_schedule_page.dart';
 import 'inventory_export_codes.dart';
-
+/*Distribution*/
 class SendData extends StatefulWidget {
   final Calendar event;
   final Function(Calendar) onDeleteEvent;
@@ -64,13 +69,13 @@ class _SendDataState extends State<SendData> {
   int previousSavedCount = 0;
   bool isScanning = false;
   bool _isNotified = false;
-  bool _isShowModal = false;
+  bool _isShowModal = false; // biến điều khiển show model
   List<TagEpc> newData = [];
   int saveCount = 0;
   int a = 0;
   int TotalScan = 0;
   int scannedTagsCount = 0;
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   String _selectedAgencyName = '';
   String _selectedGoodsName = '';
   bool _dataSaved = false;
@@ -80,8 +85,8 @@ class _SendDataState extends State<SendData> {
   List<TagEpc> temporarySavedTags = [];
   Queue<TagEpc> tagsToProcess = Queue<TagEpc>();
   int processedTagsCount = 0;  // Biến trung gian để theo dõi số lượng tag đã xử lý
-  bool _isDialogShown = false;
-  final _storageTemporary = FlutterSecureStorage();
+  bool _isDialogShown = false; // biến báo để close popup
+  final _storageTemporary = const FlutterSecureStorage();
   bool isSaving = false;
   bool _isSnackBarDisplayed = false;
   bool _isStop = false;
@@ -109,11 +114,11 @@ class _SendDataState extends State<SendData> {
   int completSchedule = 0;
   int notwarehouseDistributionYet = 0;
   int orthercase = 0;
-  final secureStorage = FlutterSecureStorage();
-  final distributionStorage = FlutterSecureStorage();
+  final secureStorage = const FlutterSecureStorage();
+  final distributionStorage = const FlutterSecureStorage();
   Stream<int> get updateStream => _updateStreamController.stream;
   bool isShowModal = false;
-  final _storageAcountCode = FlutterSecureStorage();
+  final _storageAcountCode = const FlutterSecureStorage();
   bool _isShowSelectSyncInfModal = false;
   List<ExportCode> selectedExportCodes = [];
   List<ExportCode> _selectedExportCodes = [];
@@ -127,6 +132,9 @@ class _SendDataState extends State<SendData> {
   // String IP = 'https://jvf-admin.rynansaas.com/api';
   // String IP = 'http://192.168.19.69:5088/api';
   // String IP = 'http://192.168.19.180:5088/api';
+
+  List<TagEpc> r5_resultTags = [];
+  bool scanStatusR5 = false;
 
 
   @override
@@ -151,9 +159,38 @@ class _SendDataState extends State<SendData> {
       });
     });
     KeyEventChannel(
-      onKeyReceived: _toggleScanning,
+      onKeyReceived: _toggleScanningForC5,
     ).initialize();
+
+    uhfBLERegister();
   }
+
+  Future<void> checkCurrentDevice() async {
+    if (currentDevice == Device.cSeries) {
+      await _toggleScanningForC5();
+    } else if (currentDevice == Device.rSeries) {
+      await _toggleScanningForR5();
+    } else if (currentDevice == Device.cameraBarcodes) {
+      await _toggleScanningForC5();
+    }
+  }
+  void uhfBLERegister() {
+    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
+      if(currentDevice != Device.rSeries) return;
+      setState(() {
+        r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
+       // DataProcessing.ProcessData(r5_resultTags, _data); // Filter
+        DataProcessing.ProcessDataQueue(r5_resultTags, _data, tagsToProcess,processNextTag);
+       // print('Data from R5: ${r5_resultTags.length}');
+      //  updateStatusAndCountResult();
+      });
+    });
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
+      scanStatusR5 = scanStatus;
+      _toggleScanningForR5();
+    });
+  }
+
   @override
   @override
   void dispose() {
@@ -207,7 +244,7 @@ class _SendDataState extends State<SendData> {
         successfullySaved = _data.length;
       });
       sendUpdateEvent(successfullySaved); // Send update event with new tag count
-        processNextTag();  // Tiếp tục xử lý nhãn tiếp theo
+      processNextTag();  // Tiếp tục xử lý nhãn tiếp theo
     } else {
     }
   }
@@ -224,7 +261,8 @@ class _SendDataState extends State<SendData> {
 
   void updateTags(dynamic result) async {
     int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
-    if (_data.length >= targetQuantity) {
+   // print("Debug: targetQuantity $targetQuantity");
+    if (_data.length >= targetQuantity) { // nêú đạt đủ số lượng thì dừng
       if (!_isNotified) {
         stopScanning(); // Stops scanning
         Navigator.pop(context);
@@ -238,14 +276,23 @@ class _SendDataState extends State<SendData> {
     }
     isScanning = true;
     List<TagEpc> newData = TagEpc.parseTags(result);
+
+    DataProcessing.ProcessDataQueue(
+        newData, _data, tagsToProcess, () {
+      _playScanSound(); // Gọi âm thanh quét sau khi thêm dữ liệu
+      processNextTag(); // Tiếp tục xử lý nhãn tiếp theo
+    });
+
     // Check new data against both _data and previously loaded tags to ensure uniqueness
-    List<TagEpc> uniqueData = newData.where((newTag) =>
-    !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-    if (uniqueData.isNotEmpty) {
-      _playScanSound();
-      tagsToProcess.addAll(uniqueData);  // Thêm tất cả nhãn duy nhất vào queue
-      processNextTag();  // Bắt đầu xử lý từ nhãn đầu tiên
-    }
+
+    // List<TagEpc> uniqueData = newData.where((newTag) =>
+    // !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    // if (uniqueData.isNotEmpty) {
+    //   _playScanSound();
+    //   tagsToProcess.addAll(uniqueData);  // Thêm tất cả nhãn duy nhất vào queue
+    //   processNextTag();  // Bắt đầu xử lý từ nhãn đầu tiên
+    // }
+
     if (_data.length >= targetQuantity && !_isNotified) {
       stopScanning();
       Navigator.pop(context);
@@ -286,9 +333,9 @@ class _SendDataState extends State<SendData> {
       context: context,
       barrierDismissible: false, // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -336,9 +383,7 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<void> stopScanning2() async {
-    // Dừng quét RFID
     await RfidC72Plugin.stop;
-    // _showSnackBar('Quét đã dừng');
     _isSnackBarDisplayed = true;
     if (_isDialogShown) {
       Navigator.of(context, rootNavigator: true).pop('dialog');
@@ -349,7 +394,7 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
-    final secureStorage = FlutterSecureStorage();
+    final secureStorage = const FlutterSecureStorage();
     await secureStorage.write(key: '${eventId}_length', value: value.toString());
   }
 
@@ -421,9 +466,11 @@ class _SendDataState extends State<SendData> {
 
 
 
-
+/// Load tag list from storage
   Future<List<TagEpc>> loadData(String key) async {
+    print("Debug: data string key ${key}"); //45851b4f-580d-4ad6-b6bf-eb0cf73b8052
     String? dataString = await _storage.read(key: key);
+    print("Debug: data string ${dataString}");
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpc
       return TagEpc.parseTags(dataString);
@@ -433,7 +480,8 @@ class _SendDataState extends State<SendData> {
 
   Future<void> stopScanning() async {
     if (!_isSnackBarDisplayed) {
-      await RfidC72Plugin.stop;
+     // await RfidC72Plugin.stop;
+       DataReadOptions.readTagsAsync(false, currentDevice);
       _showSnackBar('Đã đạt đủ số lượng');
       _isSnackBarDisplayed = true;
     }
@@ -443,7 +491,7 @@ class _SendDataState extends State<SendData> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Color(0xFF4EB47D),
+        backgroundColor: isError ? Colors.red : const Color(0xFF4EB47D),
       ),
     );
   }
@@ -464,6 +512,7 @@ class _SendDataState extends State<SendData> {
       List<TagEpc> tags = await loadData(event.id);
       setState(() {
         tagCount = tags.length; // Cập nhật số lượng tags vào biến trạng thái
+        print("Debug: cập nhật số lượng quét $tagCount");
       });
     }
   }
@@ -512,48 +561,132 @@ class _SendDataState extends State<SendData> {
   void onAgencySelected(String selectedAgencyName) {
   }
 
-  Future<void> _toggleScanning() async {
-    if (isShowModal) {
-      return;
-    }
-    if (tagCount == (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
-      _showSnackBar('Đã đạt đủ số lượng',);
-      return;
-    } else {
-      if (_isContinuousCall) {
-        await stopScanning2();
-      } else  {
-        await RfidC72Plugin.startContinuous;
+  Future<void> _toggleScanningForC5() async {
+    try{
+      if (isShowModal|| currentDevice != Device.cSeries && currentDevice !=  Device.cameraBarcodes) {
+        return;
       }
-      setState(() {
-        _isContinuousCall = !_isContinuousCall;
-        _isShowModal = _isContinuousCall;
-      });
-      if (_isContinuousCall) {
-        _data = await loadData(event.id);
-        showDialog(
-          barrierDismissible: true,
-          context: context,
-          builder: (BuildContext context) {
-            return (_isShowModal)
-                ? Center(
-                  child: Dialog(
-                    elevation: 0,
-                    backgroundColor: Colors.transparent,
-                    child: Container(
-                      child: SavedTagsModal(
-                        updateStream: _updateStreamController.stream,
+      if(currentDevice == Device.cameraBarcodes){
+        ConnectionNotificationRSeries.showDeviceWaring(context, false);
+        return;
+      }
+      print("MinhChauLog: Start Toggle Scanning for C5!");
+      // đạt đủ số lượng
+      if (tagCount == (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+        _showSnackBar('Đã đạt đủ số lượng',);
+        return;
+      } else {
+        // nếu thấy có quét liên tục thì dừng trước khi start
+        if (_isContinuousCall) {
+          // await stopScanning2();
+          DataReadOptions.readTagsAsync(false, currentDevice);
+          _isSnackBarDisplayed = true;
+          if (_isDialogShown) { // nếu có show mới đóng
+            Navigator.of(context, rootNavigator: true).pop('dialog');
+          }
+          setState(() {
+            loadTagCount();
+          });
+        } else  {
+          DataReadOptions.readTagsAsync(true, currentDevice); //Start
+        }
+        setState(() { // show model lên
+          _isContinuousCall = !_isContinuousCall;
+          _isShowModal = _isContinuousCall;
+        });
+        if (_isContinuousCall) { // đang scan
+          _data = await loadData(event.id);
+          showDialog(
+            barrierDismissible: true,
+            builder: (BuildContext context) {
+              return (_isShowModal)
+                  ? Center(
+                child: Dialog(
+                  elevation: 0,
+                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                  child: SizedBox(
+                    height :300,
+                    child: SavedTagsModal(
+                      updateStream: _updateStreamController.stream,
+                    ),
                   ),
                 ),
-              ),
-            ) : SizedBox.shrink();
-          },
-        ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng
-        _isDialogShown = true;;
-      } else {
-        _isShowModal = false;
+              ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
+            }, context: context,
+          ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
+          _isDialogShown = true;
+        } else {
+          _isShowModal = false;
+        }
       }
+    }catch(e){
+      print('Error: $e');
     }
+
+  }
+  Future<void> _toggleScanningForR5() async {
+    try{
+      if (isShowModal || currentDevice != Device.rSeries) {
+        return;
+      }
+      else if(currentDevice == Device.cameraBarcodes){
+        ConnectionNotificationRSeries.showDeviceWaring(context, false);
+        return;
+      }
+      print("MinhChauLog: Start Toggle Scanning for R5!");
+      // đạt đủ số lượng
+      if (tagCount == (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+        _showSnackBar('Đã đạt đủ số lượng',);
+        return;
+      } else {
+        // nếu thấy có quét liên tục thì dừng trước khi start
+        if (_isContinuousCall) {
+          // await stopScanning2();
+          if(!scanStatusR5) { DataReadOptions.readTagsAsync(false, currentDevice);}
+          _isSnackBarDisplayed = true;
+          if (_isDialogShown) { // nếu có show mới đóng
+            Navigator.of(context, rootNavigator: true).pop('dialog');
+          }
+          setState(() {
+            loadTagCount();
+          });
+        } else  {
+          if(!scanStatusR5)  {DataReadOptions.readTagsAsync(true, currentDevice);} //Start
+        }
+        setState(() { // show model lên
+          _isContinuousCall = !_isContinuousCall;
+          _isShowModal = _isContinuousCall;
+          scanStatusR5=false;
+        });
+        if (_isContinuousCall) { // đang scan
+          _data = await loadData(event.id);
+          showDialog(
+            barrierDismissible: true,
+            builder: (BuildContext context) {
+              return (_isShowModal)
+                  ? Center(
+                child: Dialog(
+                  elevation: 0,
+                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                  child: SizedBox(
+                    height :300,
+                    child: SavedTagsModal(
+                      updateStream: _updateStreamController.stream,
+                    ),
+                  ),
+                ),
+              ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
+            }, context: context,
+          ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
+          _isDialogShown = true;
+        } else {
+          _isShowModal = false;
+        }
+      }
+    }catch(e){
+      print('Error: $e');
+    }
+
   }
 
   Future<void> _showMPXSelection(BuildContext context) async {
@@ -570,11 +703,11 @@ class _SendDataState extends State<SendData> {
     );
   }
 
-   void _showExportCodesSelection(BuildContext context, StateSetter modalSetState, String selectedPXK, String pTien) async {
+  void _showExportCodesSelection(BuildContext context, StateSetter modalSetState, String selectedPXK, String pTien) async {
     final selectedExportCodes = await Navigator.of(context).push<List<ExportCode>>(
       MaterialPageRoute(
         builder: (context) => SelectExportCodesPage(
-            selectedPXK: selectedPXK,
+          selectedPXK: selectedPXK,
           pTien: pTien,
           onConfirm: (List<ExportCode> selectedCodes) {
             Navigator.pop(context, selectedCodes); // Trả về danh sách mã PXK đã chọn
@@ -1015,13 +1148,13 @@ class _SendDataState extends State<SendData> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Tệp đã được lưu vào mục Download: $fileName'),
-          backgroundColor: Color(0xFF4EB47D),
-          duration: Duration(seconds: 3), // Thời gian hiển thị SnackBar
+          backgroundColor: const Color(0xFF4EB47D),
+          duration: const Duration(seconds: 3), // Thời gian hiển thị SnackBar
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
@@ -1298,157 +1431,157 @@ class _SendDataState extends State<SendData> {
   // }
 //............................//
 
- //..
- //  Future<Map<String, String>?> _showNoteInputDialog(BuildContext context, String mpx) async {
- //    // Tạo các controller để giữ giá trị nhập vào cho MPX
- //    TextEditingController noteController = TextEditingController();
- //    TextEditingController quantityController = TextEditingController();
- //
- //    // Tạo một Map để lưu trạng thái checkbox của MPX
- //    bool selectedCheckbox = false;
- //
- //    // Sử dụng await để đảm bảo giá trị được trả về từ dialog
- //    return await showDialog<Map<String, String>>(
- //      context: context,
- //      barrierDismissible: false,
- //      builder: (BuildContext context) {
- //        return StatefulBuilder(
- //          builder: (context, setState) {
- //            return AlertDialog(
- //              title: Text(
- //                'Nhập thông tin cho $mpx',
- //                style: TextStyle(
- //                  color: Color(0xFF097746),
- //                  fontWeight: FontWeight.bold,
- //                ),
- //              ),
- //              contentPadding: EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
- //              content: SingleChildScrollView(
- //                padding: EdgeInsets.all(8.0),
- //                child: Column(
- //                  mainAxisSize: MainAxisSize.min,
- //                  children: [
- //                    // Checkbox cho mã MPX
- //                    Row(
- //                      children: [
- //                        Checkbox(
- //                          value: selectedCheckbox,
- //                          onChanged: (bool? value) {
- //                            setState(() {
- //                              selectedCheckbox = value ?? false;
- //                            });
- //                          },
- //                          activeColor: Color(0xFF097746), // Màu sắc của checkbox khi được chọn
- //                          checkColor: Colors.white,
- //                          side: BorderSide(color: Color(0xFF097746), width: 2),
- //                        ),
- //                        Text(
- //                          '$mpx',
- //                          style: TextStyle(
- //                            color: Color(0xFF097746),
- //                          ),
- //                        ),
- //
- //                      ],
- //                    ),
- //                    // Hiển thị TextField nếu checkbox được chọn
- //                    if (selectedCheckbox) ...[
- //                      // TextField nhập số lượng
- //                      TextField(
- //                        controller: quantityController,
- //                        keyboardType: TextInputType.number,
- //                        decoration: InputDecoration(
- //                          labelText: 'Nhập số lượng xuất thực tế',
- //                          labelStyle: TextStyle(
- //                            color: Colors.grey,
- //                            fontWeight: FontWeight.normal,
- //                          ),
- //                          filled: true,
- //                          enabledBorder: OutlineInputBorder(
- //                            borderSide: BorderSide(color: Color(0xFF65a281)),
- //                            borderRadius: BorderRadius.circular(12.0),
- //                          ),
- //                          focusedBorder: OutlineInputBorder(
- //                            borderSide: BorderSide(color: Color(0xFF097746)),
- //                            borderRadius: BorderRadius.circular(12.0),
- //                          ),
- //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
- //                        ),
- //                      ),
- //                      SizedBox(height: 10),
- //                      // TextField nhập ghi chú
- //                      TextField(
- //                        controller: noteController,
- //                        minLines: 2,
- //                        maxLines: 4,
- //                        decoration: InputDecoration(
- //                          labelText: 'Nhập ghi chú',
- //                          labelStyle: TextStyle(
- //                            color: Colors.grey,
- //                            fontWeight: FontWeight.normal,
- //                          ),
- //                          filled: true,
- //                          enabledBorder: OutlineInputBorder(
- //                            borderSide: BorderSide(color: Color(0xFF65a281)),
- //                            borderRadius: BorderRadius.circular(12.0),
- //                          ),
- //                          focusedBorder: OutlineInputBorder(
- //                            borderSide: BorderSide(color: Color(0xFF097746)),
- //                            borderRadius: BorderRadius.circular(12.0),
- //                          ),
- //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
- //                        ),
- //                      ),
- //                      SizedBox(height: 20),
- //                    ],
- //                  ],
- //                ),
- //              ),
- //              actionsPadding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
- //              actions: <Widget>[
- //                TextButton(
- //                  style: ButtonStyle(
- //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
- //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
- //                      RoundedRectangleBorder(
- //                        borderRadius: BorderRadius.circular(10.0),
- //                      ),
- //                    ),
- //                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
- //                  ),
- //                  child: Text('Hủy', style: TextStyle(color: Colors.white)),
- //                  onPressed: () {
- //                    Navigator.of(context).pop(); // Trả về null khi bấm "Hủy" để chuyển đến MPX kế tiếp
- //                  },
- //                ),
- //                TextButton(
- //                  style: ButtonStyle(
- //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
- //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
- //                      RoundedRectangleBorder(
- //                        borderRadius: BorderRadius.circular(10.0),
- //                      ),
- //                    ),
- //                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
- //                  ),
- //                  child: Text('OK', style: TextStyle(color: Colors.white)),
- //                  onPressed: () {
- //                    // Trả về dữ liệu từ dialog
- //                    Map<String, String> result = {};
- //                    if (selectedCheckbox) {
- //                      result[mpx + '_note'] = noteController.text;
- //                      result[mpx + '_quantity'] = quantityController.text;
- //                    }
- //                    Navigator.of(context).pop(result); // Trả về thông tin nhập từ dialog
- //                  },
- //                ),
- //              ],
- //            );
- //          },
- //        );
- //      },
- //    );
- //  }
+  //..
+  //  Future<Map<String, String>?> _showNoteInputDialog(BuildContext context, String mpx) async {
+  //    // Tạo các controller để giữ giá trị nhập vào cho MPX
+  //    TextEditingController noteController = TextEditingController();
+  //    TextEditingController quantityController = TextEditingController();
+  //
+  //    // Tạo một Map để lưu trạng thái checkbox của MPX
+  //    bool selectedCheckbox = false;
+  //
+  //    // Sử dụng await để đảm bảo giá trị được trả về từ dialog
+  //    return await showDialog<Map<String, String>>(
+  //      context: context,
+  //      barrierDismissible: false,
+  //      builder: (BuildContext context) {
+  //        return StatefulBuilder(
+  //          builder: (context, setState) {
+  //            return AlertDialog(
+  //              title: Text(
+  //                'Nhập thông tin cho $mpx',
+  //                style: TextStyle(
+  //                  color: Color(0xFF097746),
+  //                  fontWeight: FontWeight.bold,
+  //                ),
+  //              ),
+  //              contentPadding: EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
+  //              content: SingleChildScrollView(
+  //                padding: EdgeInsets.all(8.0),
+  //                child: Column(
+  //                  mainAxisSize: MainAxisSize.min,
+  //                  children: [
+  //                    // Checkbox cho mã MPX
+  //                    Row(
+  //                      children: [
+  //                        Checkbox(
+  //                          value: selectedCheckbox,
+  //                          onChanged: (bool? value) {
+  //                            setState(() {
+  //                              selectedCheckbox = value ?? false;
+  //                            });
+  //                          },
+  //                          activeColor: Color(0xFF097746), // Màu sắc của checkbox khi được chọn
+  //                          checkColor: Colors.white,
+  //                          side: BorderSide(color: Color(0xFF097746), width: 2),
+  //                        ),
+  //                        Text(
+  //                          '$mpx',
+  //                          style: TextStyle(
+  //                            color: Color(0xFF097746),
+  //                          ),
+  //                        ),
+  //
+  //                      ],
+  //                    ),
+  //                    // Hiển thị TextField nếu checkbox được chọn
+  //                    if (selectedCheckbox) ...[
+  //                      // TextField nhập số lượng
+  //                      TextField(
+  //                        controller: quantityController,
+  //                        keyboardType: TextInputType.number,
+  //                        decoration: InputDecoration(
+  //                          labelText: 'Nhập số lượng xuất thực tế',
+  //                          labelStyle: TextStyle(
+  //                            color: Colors.grey,
+  //                            fontWeight: FontWeight.normal,
+  //                          ),
+  //                          filled: true,
+  //                          enabledBorder: OutlineInputBorder(
+  //                            borderSide: BorderSide(color: Color(0xFF65a281)),
+  //                            borderRadius: BorderRadius.circular(12.0),
+  //                          ),
+  //                          focusedBorder: OutlineInputBorder(
+  //                            borderSide: BorderSide(color: Color(0xFF097746)),
+  //                            borderRadius: BorderRadius.circular(12.0),
+  //                          ),
+  //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+  //                        ),
+  //                      ),
+  //                      SizedBox(height: 10),
+  //                      // TextField nhập ghi chú
+  //                      TextField(
+  //                        controller: noteController,
+  //                        minLines: 2,
+  //                        maxLines: 4,
+  //                        decoration: InputDecoration(
+  //                          labelText: 'Nhập ghi chú',
+  //                          labelStyle: TextStyle(
+  //                            color: Colors.grey,
+  //                            fontWeight: FontWeight.normal,
+  //                          ),
+  //                          filled: true,
+  //                          enabledBorder: OutlineInputBorder(
+  //                            borderSide: BorderSide(color: Color(0xFF65a281)),
+  //                            borderRadius: BorderRadius.circular(12.0),
+  //                          ),
+  //                          focusedBorder: OutlineInputBorder(
+  //                            borderSide: BorderSide(color: Color(0xFF097746)),
+  //                            borderRadius: BorderRadius.circular(12.0),
+  //                          ),
+  //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+  //                        ),
+  //                      ),
+  //                      SizedBox(height: 20),
+  //                    ],
+  //                  ],
+  //                ),
+  //              ),
+  //              actionsPadding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
+  //              actions: <Widget>[
+  //                TextButton(
+  //                  style: ButtonStyle(
+  //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+  //                      RoundedRectangleBorder(
+  //                        borderRadius: BorderRadius.circular(10.0),
+  //                      ),
+  //                    ),
+  //                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+  //                  ),
+  //                  child: Text('Hủy', style: TextStyle(color: Colors.white)),
+  //                  onPressed: () {
+  //                    Navigator.of(context).pop(); // Trả về null khi bấm "Hủy" để chuyển đến MPX kế tiếp
+  //                  },
+  //                ),
+  //                TextButton(
+  //                  style: ButtonStyle(
+  //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+  //                      RoundedRectangleBorder(
+  //                        borderRadius: BorderRadius.circular(10.0),
+  //                      ),
+  //                    ),
+  //                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+  //                  ),
+  //                  child: Text('OK', style: TextStyle(color: Colors.white)),
+  //                  onPressed: () {
+  //                    // Trả về dữ liệu từ dialog
+  //                    Map<String, String> result = {};
+  //                    if (selectedCheckbox) {
+  //                      result[mpx + '_note'] = noteController.text;
+  //                      result[mpx + '_quantity'] = quantityController.text;
+  //                    }
+  //                    Navigator.of(context).pop(result); // Trả về thông tin nhập từ dialog
+  //                  },
+  //                ),
+  //              ],
+  //            );
+  //          },
+  //        );
+  //      },
+  //    );
+  //  }
   Future<Map<String, String>?> _showNoteInputDialog(BuildContext context, List<String> selectedMPXs) async {
     // Controllers để lưu các giá trị nhập vào cho từng mã MPX
     Map<String, TextEditingController> noteControllers = {};
@@ -1471,16 +1604,16 @@ class _SendDataState extends State<SendData> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text(
+              title: const Text(
                 'Nhập thông tin cho các mã MPX',
                 style: TextStyle(
                   color: Color(0xFF097746),
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              contentPadding: EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
+              contentPadding: const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
               content: SingleChildScrollView(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1495,13 +1628,13 @@ class _SendDataState extends State<SendData> {
                                 selectedCheckboxes[mpx] = value ?? false;
                               });
                             },
-                            activeColor: Color(0xFF097746),
+                            activeColor: const Color(0xFF097746),
                             checkColor: Colors.white,
-                            side: BorderSide(color: Color(0xFF097746), width: 2),
+                            side: const BorderSide(color: Color(0xFF097746), width: 2),
                           ),
                           Text(
                             mpx,
-                            style: TextStyle(color: Color(0xFF097746)),
+                            style: const TextStyle(color: Color(0xFF097746)),
                           ),
                         ],
                       ),
@@ -1512,69 +1645,69 @@ class _SendDataState extends State<SendData> {
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Nhập số lượng xuất thực tế cho $mpx',
-                            labelStyle: TextStyle(color: Colors.grey),
+                            labelStyle: const TextStyle(color: Colors.grey),
                             filled: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF65a281)),
+                              borderSide: const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF097746)),
+                              borderSide: const BorderSide(color: Color(0xFF097746)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                           ),
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         TextField(
                           controller: noteControllers[mpx],
                           minLines: 2,
                           maxLines: 4,
                           decoration: InputDecoration(
                             labelText: 'Nhập ghi chú cho $mpx',
-                            labelStyle: TextStyle(color: Colors.grey),
+                            labelStyle: const TextStyle(color: Colors.grey),
                             filled: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF65a281)),
+                              borderSide: const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF097746)),
+                              borderSide: const BorderSide(color: Color(0xFF097746)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                       ],
                     ],
                   ],
                 ),
               ),
-              actionsPadding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
+              actionsPadding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
               actions: <Widget>[
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text('Hủy', style: TextStyle(color: Colors.white)),
+                  child: const Text('Hủy', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(context).pop(); // Trả về null khi bấm "Hủy"
                   },
                 ),
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                   ),
-                  child: Text('OK', style: TextStyle(color: Colors.white)),
+                  child: const Text('OK', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     // Trả về dữ liệu từ dialog
                     Map<String, String> result = {};
@@ -1904,27 +2037,27 @@ class _SendDataState extends State<SendData> {
         return AlertDialog(
           title: Text(
             isSuccess ? "Thông báo" : "Thông báo",
-            style: TextStyle(color: isSuccess ? Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
+            style: TextStyle(color: isSuccess ? const Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
           ),
           content: Text(
             message,
             style: TextStyle(
               fontSize: 18,
-              color: isSuccess ? Color(0xFF097746) : Color(0xFF097746),
+              color: isSuccess ? const Color(0xFF097746) : const Color(0xFF097746),
             ),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text("OK", style: TextStyle(color: Colors.white)),
+              child: const Text("OK", style: TextStyle(color: Colors.white)),
               onPressed: () {
                 Navigator.of(context).pop(); // Đóng dialog
                 Navigator.pop(context, true);
@@ -1948,7 +2081,7 @@ class _SendDataState extends State<SendData> {
               future: _futureExportCodes, // Đảm bảo Future không được gọi lại
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
+                  return const Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
                     ),
@@ -1957,11 +2090,11 @@ class _SendDataState extends State<SendData> {
                   return Center(
                     child: Text(
                       'Có lỗi xảy ra: ${snapshot.error}',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Text(
                       'Không có mã phiếu xuất kho nào.',
                       style: TextStyle(fontSize: 16, color: Color(0xFF097746)),
@@ -1982,8 +2115,8 @@ class _SendDataState extends State<SendData> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                              child: Text(
+                              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                              child: const Text(
                                 'Chọn thông tin đồng bộ',
                                 style: TextStyle(
                                   fontSize: 20,
@@ -1995,7 +2128,7 @@ class _SendDataState extends State<SendData> {
                             Container(
                               alignment: Alignment.topRight,
                               child: IconButton(
-                                icon: Icon(
+                                icon: const Icon(
                                   Icons.close,
                                   color: Color(0xFF097746),
                                   size: 30.0,
@@ -2007,11 +2140,11 @@ class _SendDataState extends State<SendData> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         GestureDetector(
                           onTap: null,
                           child: Container(
-                            margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                            margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                             width: MediaQuery.of(context).size.width * 0.9,
                             child: DropdownSearch<PXKCode>(
                               selectedItem: _selectedExportCode ?? null, // Chọn item nếu có
@@ -2019,29 +2152,29 @@ class _SendDataState extends State<SendData> {
                               itemAsString: (PXKCode? u)=> u?.maPXK ?? "",
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16.0, vertical: 6.0),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12.0),
-                                    borderSide: BorderSide(color: Color(0xFF097746)),
+                                    borderSide: const BorderSide(color: Color(0xFF097746)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF097746), width: 2.0),
+                                    borderSide: const BorderSide(color: Color(0xFF097746), width: 2.0),
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Color(0xFF097746)),
+                                    borderSide: const BorderSide(color: Color(0xFF097746)),
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   filled: true,
-                                  fillColor: Color(0xFFEBEDEC),
+                                  fillColor: const Color(0xFFEBEDEC),
                                   hintText: 'Chọn Phiếu Xuất Kho',
-                                  hintStyle: TextStyle(
+                                  hintStyle: const TextStyle(
                                     color: Color(0xFF097746),
                                     fontSize: 18,
                                   ),
                                 ),
-                                baseStyle: TextStyle(
+                                baseStyle: const TextStyle(
                                   color: Color(0xFF097746),
                                   fontSize: 18,
                                 ),
@@ -2051,19 +2184,19 @@ class _SendDataState extends State<SendData> {
                                 searchFieldProps: TextFieldProps(
                                   decoration: InputDecoration(
                                     labelText: 'Nhập tìm kiếm',
-                                    labelStyle: TextStyle(
+                                    labelStyle: const TextStyle(
                                       color: Color(0xFF097746),
                                     ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12.0),
-                                      borderSide: BorderSide(color: Color(0xFF097746)),
+                                      borderSide: const BorderSide(color: Color(0xFF097746)),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Color(0xFF097746), width: 2.0),
+                                      borderSide: const BorderSide(color: Color(0xFF097746), width: 2.0),
                                       borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Color(0xFF097746)),
+                                      borderSide: const BorderSide(color: Color(0xFF097746)),
                                       borderRadius: BorderRadius.circular(12.0),
                                     ),
                                   ),
@@ -2072,7 +2205,7 @@ class _SendDataState extends State<SendData> {
                                   return ListTile(
                                     title: Text(
                                       item.maPXK, // Hiển thị mã PXK
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 18,
                                         color: Color(0xFF097746),
                                       ),
@@ -2081,7 +2214,7 @@ class _SendDataState extends State<SendData> {
                                   );
                                 },
                                 emptyBuilder: (context, searchEntry) {
-                                  return Center(
+                                  return const Center(
                                     child: Text(
                                       "Không tìm thấy Phiếu xuất kho",
                                       style: TextStyle(fontSize: 18, color: Colors.grey),
@@ -2109,7 +2242,7 @@ class _SendDataState extends State<SendData> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'Mã lệnh xuất hàng (Mã lệnh phân phối) đã chọn:',
                                   style: TextStyle(
                                     fontSize: 18,
@@ -2126,7 +2259,7 @@ class _SendDataState extends State<SendData> {
                                         return ListTile(
                                           title: Text(
                                             ' ${exportCode.lenhGiaoHang}(${exportCode.maPP})',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 16,
                                               color: Color(0xFF097746),
                                             ),
@@ -2139,17 +2272,17 @@ class _SendDataState extends State<SendData> {
                               ],
                             ),
                           ),
-                        SizedBox(height: 10),
-                        Spacer(),
+                        const SizedBox(height: 10),
+                        const Spacer(),
                         Center(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF097746),
-                              padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                              backgroundColor: const Color(0xFF097746),
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
-                              minimumSize: Size(200.0, 40.0), // Kích thước tối thiểu
+                              minimumSize: const Size(200.0, 40.0), // Kích thước tối thiểu
                             ),
                             onPressed: () {
                               if (_exportCodesController.text.isEmpty) {
@@ -2158,14 +2291,14 @@ class _SendDataState extends State<SendData> {
                                   context: context,
                                   builder: (BuildContext context) {
                                     return AlertDialog(
-                                      title: Text(
+                                      title: const Text(
                                         "Không thể đồng bộ",
                                         style: TextStyle(
                                           color: Color(0xFF097746),
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      content: Text(
+                                      content: const Text(
                                         "Vui lòng chọn Mã Phiếu xuất kho.",
                                         style: TextStyle(
                                           fontSize: 18,
@@ -2176,16 +2309,16 @@ class _SendDataState extends State<SendData> {
                                         TextButton(
                                           style: ButtonStyle(
                                             backgroundColor: MaterialStateProperty.all<Color>(
-                                                Color(0xFF097746)),
+                                                const Color(0xFF097746)),
                                             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.circular(10.0),
                                               ),
                                             ),
                                             fixedSize: MaterialStateProperty.all<Size>(
-                                                Size(100.0, 30.0)),
+                                                const Size(100.0, 30.0)),
                                           ),
-                                          child: Text(
+                                          child: const Text(
                                             "Đóng",
                                             style: TextStyle(color: Colors.white),
                                           ),
@@ -2208,7 +2341,7 @@ class _SendDataState extends State<SendData> {
                                 }
                               }
                             },
-                            child: Text(
+                            child: const Text(
                               'Bắt đầu đồng bộ',
                               style: TextStyle(fontSize: 18, color: Colors.white),
                             ),
@@ -2250,7 +2383,7 @@ class _SendDataState extends State<SendData> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
+        title: const Text(
           'Xác nhận mã Phiếu xuất kho',
           style: TextStyle(
             color: Color(0xFF097746),
@@ -2259,7 +2392,7 @@ class _SendDataState extends State<SendData> {
         ),
         content: Text(
           'Bạn đã chọn mã Phiếu xuất kho: $selectedCode. Tiếp tục để chọn Lệnh giao hàng?',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 18,
             color: Color(0xFF097746),
           ),
@@ -2279,12 +2412,12 @@ class _SendDataState extends State<SendData> {
                   });
                   Navigator.of(context).pop(); // Đóng dialog
                 },
-                child: Text(
+                child: const Text(
                   'Hủy',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF097746),
+                  backgroundColor: const Color(0xFF097746),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -2295,12 +2428,12 @@ class _SendDataState extends State<SendData> {
                   Navigator.of(context).pop(); // Đóng dialog
                   _showExportCodesSelection(context, modalSetState, selectedCode, pTien!);
                 },
-                child: Text(
+                child: const Text(
                   'Tiếp tục',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF097746),
+                  backgroundColor: const Color(0xFF097746),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -2333,8 +2466,8 @@ class _SendDataState extends State<SendData> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                        child: Text(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                        child: const Text(
                           'Chọn thông tin đồng bộ', // Tiêu đề
                           style: TextStyle(
                             fontSize: 20,
@@ -2346,7 +2479,7 @@ class _SendDataState extends State<SendData> {
                       Container(
                         alignment: Alignment.topRight,
                         child: IconButton(
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.close,
                             color: Color(0xFF097746),
                             size: 30.0,
@@ -2358,7 +2491,7 @@ class _SendDataState extends State<SendData> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 15,),
+                  const SizedBox(height: 15,),
                   GestureDetector(
                     onTap: () =>
                     // print('a'),
@@ -2366,44 +2499,44 @@ class _SendDataState extends State<SendData> {
                     // _showExportCodesSelection(context),
                     child: AbsorbPointer(
                       child: Container(
-                        margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                        margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                         width: MediaQuery.of(context).size.width * 0.9,
                         child: TextField(
                           controller: _selectedAgencyNameController,
                           readOnly: true,
                           decoration: InputDecoration(
                             labelText: 'Chọn mã phân phối',
-                            labelStyle: TextStyle(
+                            labelStyle: const TextStyle(
                               fontSize: 22,
                               color: Color(0xFF097746),
                             ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-                            suffixIcon: Icon(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                            suffixIcon: const Icon(
                               Icons.navigate_next,
                               color: Color(0xFF097746),
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide(color: Color(0xFF097746)),
+                              borderSide: const BorderSide(color: Color(0xFF097746)),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF097746)),
+                              borderSide: const BorderSide(color: Color(0xFF097746)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFF097746)),
+                              borderSide: const BorderSide(color: Color(0xFF097746)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             filled: true,
-                            fillColor: Color(0xFFEBEDEC),
+                            fillColor: const Color(0xFFEBEDEC),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       controller: _mspTspController,
@@ -2411,31 +2544,31 @@ class _SendDataState extends State<SendData> {
                       maxLines: null,
                       decoration: InputDecoration(
                         labelText: 'Đại lý/kho',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       readOnly: true,
@@ -2443,162 +2576,162 @@ class _SendDataState extends State<SendData> {
                       controller: _MnppTnppController,
                       decoration: InputDecoration(
                         labelText: 'Sản phẩm',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       controller: _PXKController,
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: 'Phiếu xuất kho',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       controller: _LXHnppController,
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: 'Lệnh giao hàng',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       controller: _SLXController,
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: 'Số lương cần xuất',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10,),
+                  const SizedBox(height: 10,),
                   Container(
-                    margin: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
                     child: TextField(
                       controller: _GCController,
                       readOnly: true,
                       decoration: InputDecoration(
                         labelText: 'Ghi chú',
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 22,
                           color: Color(0xFF097746),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF097746)),
+                          borderSide: const BorderSide(color: Color(0xFF097746)),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
-                        fillColor: Color(0xFFEBEDEC),
+                        fillColor: const Color(0xFFEBEDEC),
                       ),
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF097746),
-                        padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                        backgroundColor: const Color(0xFF097746),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        minimumSize: Size(200.0, 40.0), // Kích thước tối thiểu
+                        minimumSize: const Size(200.0, 40.0), // Kích thước tối thiểu
                       ),
                       onPressed: () {
                         if (_selectedAgencyNameController.text.isEmpty) {
@@ -2607,12 +2740,12 @@ class _SendDataState extends State<SendData> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: Text("Không thể đồng bộ",style: TextStyle(
+                                title: const Text("Không thể đồng bộ",style: TextStyle(
                                   color: Color(0xFF097746),
                                   fontWeight: FontWeight.bold,
                                 ),
                                 ),
-                                content: Text("Vui lòng chọn mã lịch phân phối.",
+                                content: const Text("Vui lòng chọn mã lịch phân phối.",
                                     style: TextStyle(
                                       fontSize: 18,
                                       color: Color(0xFF097746),
@@ -2620,15 +2753,15 @@ class _SendDataState extends State<SendData> {
                                 ),
                                 actions: <Widget>[
                                   TextButton( style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                                       ),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                                   ),
-                                    child: Text("Đóng", style: TextStyle(color: Colors.white),),
+                                    child: const Text("Đóng", style: TextStyle(color: Colors.white),),
                                     onPressed: () {
                                       Navigator.of(context).pop(); // Đóng cửa sổ dialog
                                     },
@@ -2647,7 +2780,7 @@ class _SendDataState extends State<SendData> {
                           }
                         } // Hàm gửi dữ liệu
                       },
-                      child: Text(
+                      child: const Text(
                         'Bắt đầu đồng bộ',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
@@ -2671,9 +2804,9 @@ class _SendDataState extends State<SendData> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -2965,14 +3098,14 @@ class _SendDataState extends State<SendData> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               "Mất kết nối!",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text(
+            content: const Text(
               "Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
@@ -2982,15 +3115,15 @@ class _SendDataState extends State<SendData> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text(
+                child: const Text(
                   "OK",
                   style: TextStyle(color: Colors.white),
                 ),
@@ -3007,14 +3140,14 @@ class _SendDataState extends State<SendData> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               "Đồng bộ thành công",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text(
+            content: const Text(
               "Bạn có muốn xác nhận Hoàn thành Lịch Phân phối này?",
               style: TextStyle(
                 fontSize: 18,
@@ -3024,15 +3157,15 @@ class _SendDataState extends State<SendData> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text(
+                child: const Text(
                   'Hủy',
                   style: TextStyle(color: Colors.white),
                 ),
@@ -3043,15 +3176,15 @@ class _SendDataState extends State<SendData> {
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                   print(syncedMaPPs);
@@ -3111,9 +3244,9 @@ class _SendDataState extends State<SendData> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
+        return const Dialog(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -3405,14 +3538,14 @@ class _SendDataState extends State<SendData> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               "Mất kết nối!",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text(
+            content: const Text(
               "Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
@@ -3422,15 +3555,15 @@ class _SendDataState extends State<SendData> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text(
+                child: const Text(
                   "OK",
                   style: TextStyle(color: Colors.white),
                 ),
@@ -3447,14 +3580,14 @@ class _SendDataState extends State<SendData> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(
+            title: const Text(
               "Đồng bộ thành công",
               style: TextStyle(
                 color: Color(0xFF097746),
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: Text(
+            content: const Text(
               "Bạn có muốn xác nhận Hoàn thành Lịch Phân phối kho thuê này?",
               style: TextStyle(
                 fontSize: 18,
@@ -3464,15 +3597,15 @@ class _SendDataState extends State<SendData> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text(
+                child: const Text(
                   'Hủy',
                   style: TextStyle(color: Colors.white),
                 ),
@@ -3483,15 +3616,15 @@ class _SendDataState extends State<SendData> {
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                child: Text("OK", style: TextStyle(color: Colors.white)),
+                child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                   print(syncedMaPPs);
@@ -3539,7 +3672,7 @@ class _SendDataState extends State<SendData> {
     return 'sent_tags_$eventId';
   }
   Future<void> saveTagState(TagEpc tag) async {
-    final storage = FlutterSecureStorage();
+    final storage = const FlutterSecureStorage();
     String key = 'tag_${tag.epc}';
     String json = jsonEncode(tag.toJson());
     await storage.write(key: key, value: json);
@@ -3634,12 +3767,12 @@ class _SendDataState extends State<SendData> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Không thể đồng bộ",style: TextStyle(
+            title: const Text("Không thể đồng bộ",style: TextStyle(
               color: Color(0xFF097746),
               fontWeight: FontWeight.bold,
             ),
             ),
-            content: Text("Vui lòng kiểm tra lại số lượng quét.",
+            content: const Text("Vui lòng kiểm tra lại số lượng quét.",
                 style: TextStyle(
                   fontSize: 18,
                   color: Color(0xFF097746),
@@ -3647,15 +3780,15 @@ class _SendDataState extends State<SendData> {
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-                child: Text("Đóng", style: TextStyle(color: Colors.white),),
+                child: const Text("Đóng", style: TextStyle(color: Colors.white),),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -3705,7 +3838,7 @@ class _SendDataState extends State<SendData> {
               style: TextStyle(
                 fontSize: screenWidth * 0.07, // Kích thước chữ
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF097746),
+                color: const Color(0xFF097746),
               ),
             ),
             actions: [
@@ -3716,7 +3849,7 @@ class _SendDataState extends State<SendData> {
                     SizedBox(width: screenWidth * 0.03), // Khoảng cách giữa hai nút
                     InkWell(
                       onTap: () async {;
-                        saveDataWithTags(event.id, "${event.lenhPhanPhoi}");
+                      saveDataWithTags(event.id, "${event.lenhPhanPhoi}");
                       },
                       child: Image.asset(
                         'assets/image/download.png',
@@ -3731,60 +3864,60 @@ class _SendDataState extends State<SendData> {
                           context: context,
                           barrierDismissible: false,
                           builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Xác nhận xóa',
-                          style: TextStyle(color: Color(0xFF097746),
-                          fontWeight: FontWeight.bold
-                          ),
-                        ),
-                        content: Text("Bạn có chắc chắn muốn xóa lịch này không?",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Color(0xFF097746),
-                            )
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                            return AlertDialog(
+                              title: const Text('Xác nhận xóa',
+                                style: TextStyle(color: Color(0xFF097746),
+                                    fontWeight: FontWeight.bold
                                 ),
                               ),
-                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
-                            ),
-                            child: Text('Hủy',
-                                style:TextStyle(
-                                  color: Colors.white,
-                                )
-                            ),
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-                              setState(() {
-                              });
-                            },
-                          ),
-                          SizedBox(width: 8,),
-                          TextButton(
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
-                                ),
+                              content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Color(0xFF097746),
+                                  )
                               ),
-                              fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
-                            ),
-                            child: Text('Xác Nhận',
-                                style:TextStyle(
-                                  color: Colors.white,
+                              actions: <Widget>[
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                      ),
+                                    ),
+                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                  ),
+                                  child: const Text('Hủy',
+                                      style:TextStyle(
+                                        color: Colors.white,
+                                      )
+                                  ),
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    setState(() {
+                                    });
+                                  },
+                                ),
+                                const SizedBox(width: 8,),
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                      ),
+                                    ),
+                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                  ),
+                                  child: const Text('Xác Nhận',
+                                      style:TextStyle(
+                                        color: Colors.white,
 
-                                )
-                            ),
-                            onPressed: () async {
-                              deleteEventFromCalendar();
-                              Navigator.pop(context, true);
+                                      )
+                                  ),
+                                  onPressed: () async {
+                                    deleteEventFromCalendar();
+                                    Navigator.pop(context, true);
                                   },
                                 ),
                               ],
@@ -3810,7 +3943,7 @@ class _SendDataState extends State<SendData> {
                   width: double.infinity,
                   padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.02, 0, screenHeight * 0.012),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFAFAFA),
+                    color: const Color(0xFFFAFAFA),
                     border: Border(
                       bottom: BorderSide(
                         color: Colors.grey.withOpacity(0.5),
@@ -3822,10 +3955,10 @@ class _SendDataState extends State<SendData> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: screenWidth * 0.065,
-                        color: Color(0xFF097746),
+                        color: const Color(0xFF097746),
                       ),
                       children: [
-                        TextSpan(
+                        const TextSpan(
                           text: 'Sản phẩm\n',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -3843,7 +3976,7 @@ class _SendDataState extends State<SendData> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -3857,7 +3990,7 @@ class _SendDataState extends State<SendData> {
                         style: TextStyle(
                           // fontSize: 24,
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -3880,7 +4013,7 @@ class _SendDataState extends State<SendData> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -3893,7 +4026,7 @@ class _SendDataState extends State<SendData> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -3915,7 +4048,7 @@ class _SendDataState extends State<SendData> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -3928,7 +4061,7 @@ class _SendDataState extends State<SendData> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -3950,7 +4083,7 @@ class _SendDataState extends State<SendData> {
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
                           color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
@@ -3963,7 +4096,7 @@ class _SendDataState extends State<SendData> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: Color(0xFF097746),
+                          color: const Color(0xFF097746),
                         ),
                         children: [
                           TextSpan(
@@ -3988,7 +4121,7 @@ class _SendDataState extends State<SendData> {
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFAFAFA),
+                      color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
                       ),
@@ -3999,7 +4132,7 @@ class _SendDataState extends State<SendData> {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
+                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
                               children: [
                                 TextSpan(
                                   text: 'Số lượng quét\n',
@@ -4014,7 +4147,7 @@ class _SendDataState extends State<SendData> {
                             ),
                           ),
                         ),
-                        Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                        const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
                       ],
                     ),
                   ),
@@ -4033,15 +4166,15 @@ class _SendDataState extends State<SendData> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: (_isContinuousCall) ? Colors.red : Color(0xFF097746),
-                      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      backgroundColor: (_isContinuousCall) ? Colors.red : const Color(0xFF097746),
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
-                      fixedSize: Size(150.0, 50.0),
+                      fixedSize: const Size(150.0, 50.0),
                     ),
                     onPressed: () async {
-                      await _toggleScanning();
+                      await checkCurrentDevice();
                     },
                     child: (_isContinuousCall)
                         ? Text('Dừng quét', style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.06))
@@ -4049,12 +4182,12 @@ class _SendDataState extends State<SendData> {
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFd5a529),
-                      padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      backgroundColor: const Color(0xFFd5a529),
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
-                      fixedSize: Size(150.0, 50.0),
+                      fixedSize: const Size(150.0, 50.0),
                     ),
                     onPressed: () {
                       showModal();

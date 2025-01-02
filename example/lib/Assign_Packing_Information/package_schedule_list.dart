@@ -54,51 +54,48 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
             height: 100,
           ),
         ),
-        title: Container(
-          // margin: EdgeInsets.only(left: 16.0),
-          child: Text(
-            'Danh sách lịch đóng bao',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF097746),
-            ),
+        title: const Text(
+          'Danh sách lịch đóng bao',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF097746),
           ),
         ),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(0, 15, 0, 0),
-        constraints: BoxConstraints.expand(),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
+        constraints: const BoxConstraints.expand(),
+        color: const Color(0xFFFAFAFA),
         child: Column(
           children: [
             Container(
 
-              color: Color(0xFFFAFAFA),
-              padding: EdgeInsets.fromLTRB(30, 0, 30, 0),
+              color: const Color(0xFFFAFAFA),
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
               child: TextField(
                 controller: _searchController,
                 onChanged: onSearchTextChanged,
                 decoration: InputDecoration(
                   hintText: 'Nhập tìm kiếm',
-                  hintStyle: TextStyle(color: Color(0xFFA2A4A8),
+                  hintStyle: const TextStyle(color: Color(0xFFA2A4A8),
                     fontWeight: FontWeight.normal,
                   ),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                   filled: true,
-                  fillColor:  Color(0xFFEBEDEC),
+                  fillColor:  const Color(0xFFEBEDEC),
                   border:
                   OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -119,7 +116,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                   future: widget.fetch1MLDB(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Padding(
+                      return const Padding(
                           padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                           child: Center(
                             child: SizedBox(
@@ -133,7 +130,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                       );
                     } else if (snapshot.hasError) {
                       return Padding(
-                        padding: EdgeInsets.only(top: 00.0),  // Khoảng cách phía trên
+                        padding: const EdgeInsets.only(top: 00.0),  // Khoảng cách phía trên
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,  // Căn giữa các widget trong Row
                           children: <Widget>[
@@ -142,8 +139,8 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                               width: 50,
                               height: 50,
                             ),
-                            SizedBox(height: 10),  // Khoảng cách giữa icon và văn bản
-                            Text(
+                            const SizedBox(height: 10),  // Khoảng cách giữa icon và văn bản
+                            const Text(
                               "Vui lòng kiểm tra kết nối",
                               style: TextStyle(
                                 fontSize: 18,  // Đặt kích thước chữ
@@ -174,7 +171,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                             child: ListTile(
                               title: Text(
                                 dealer.maLDB,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF097746),
@@ -185,36 +182,36 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                                 children: [
                                   Text(
                                     'Mã Sản Phẩm: ${dealer.maSP}',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       color: Color(0xFF097746),
                                     ),
                                   ),
                                   Text(
                                     'Tên Sản Phẩm: ${dealer.tenSP ?? ' '}' ,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       color: Color(0xFF097746),
                                     ),
                                   ),
                                   Text(
                                     'Số bao cần sản xuất: ${dealer.SBCSX ?? ' '}' ,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       color: Color(0xFF097746),
                                     ),
                                   ),
                                   Row(
                                     children: [
-                                      Text("Ngày sản xuất: ",  style: TextStyle(
+                                      const Text("Ngày sản xuất: ",  style: TextStyle(
                                         fontSize: 18,
                                         color: Color(0xFF097746),
                                       )),
-                                      SizedBox(width: 2),
+                                      const SizedBox(width: 2),
                                       Expanded(
                                         child: Text(
                                             DateFormat('dd/MM/yyyy').format(DateTime.parse(dealer.ngaySX!)),
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 18,
                                               color: Color(0xFF097746),
                                             )),
@@ -232,7 +229,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                         },
                       );
                     } else {
-                      return Text('Không có dữ liệu');
+                      return const Text('Không có dữ liệu');
                     }
                   },
                 )

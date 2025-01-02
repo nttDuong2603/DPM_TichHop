@@ -48,25 +48,25 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Xác nhận Loại Nhâp kho?',
             style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
           ),
           content: Text('Bạn có chắc chắn muốn chọn loại nhập kho: ${selectedMLNK.tenLNK}?',
-            style: TextStyle(color: Color(0xFF097746)),
+            style: const TextStyle(color: Color(0xFF097746)),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 'Hủy',
                 style: TextStyle(color: Colors.white),
               ),
@@ -74,18 +74,18 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                 Navigator.of(context).pop(); // Đóng modal mà không làm gì
               },
             ),
-            SizedBox(width: 8), // Khoảng cách giữa các nút
+            const SizedBox(width: 8), // Khoảng cách giữa các nút
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(Size(100.0, 30.0)),
+                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
-              child: Text(
+              child: const Text(
                 'OK',
                 style: TextStyle(color: Colors.white),
               ),
@@ -112,7 +112,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
             height: 100,
           ),
         ),
-        title: Text(
+        title: const Text(
           'Chọn Loại nhập kho!',
           style: TextStyle(
             fontSize: 22,
@@ -122,34 +122,34 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
         ),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(0, 15, 0, 0),
-        color: Color(0xFFFAFAFA),
+        padding: const EdgeInsets.fromLTRB(0, 15, 0, 0),
+        color: const Color(0xFFFAFAFA),
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.fromLTRB(30, 0, 30, 0),
+              padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Nhập tìm kiếm',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: Color(0xFFA2A4A8),
                     fontWeight: FontWeight.normal,
                   ),
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
                   filled: true,
-                  fillColor: Color(0xFFEBEDEC),
+                  fillColor: const Color(0xFFEBEDEC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: Color(0xFF097746)),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -157,7 +157,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                       _searchController.clear();
                       _onSearchTextChanged();
                     },
-                    icon: Icon(Icons.clear, color: Color(0xFF097746)),
+                    icon: const Icon(Icons.clear, color: Color(0xFF097746)),
                   ),
                 ),
               ),
@@ -168,7 +168,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                 itemBuilder: (context, index) {
                   WearHouseTypeList mlNK = _filteredMLNKList[index];
                   Padding(
-                    padding: EdgeInsets.only(top: 00.0),  // Khoảng cách phía trên
+                    padding: const EdgeInsets.only(top: 00.0),  // Khoảng cách phía trên
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,  // Căn giữa các widget trong Row
                       children: <Widget>[
@@ -177,8 +177,8 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                           width: 50,
                           height: 50,
                         ),
-                        SizedBox(height: 10),  // Khoảng cách giữa icon và văn bản
-                        Text(
+                        const SizedBox(height: 10),  // Khoảng cách giữa icon và văn bản
+                        const Text(
                           "Vui lòng kiểm tra kết nối",
                           style: TextStyle(
                             fontSize: 18,  // Đặt kích thước chữ
@@ -200,7 +200,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                     child: ListTile(
                       title: Text(
                         mlNK.tenLNK,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF097746),
@@ -208,7 +208,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                       ),
                       subtitle: Text(
                         'Mã Loại nhập kho: ${mlNK.maLNK}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           color: Color(0xFF097746),
                         ),

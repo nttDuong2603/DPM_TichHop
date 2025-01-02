@@ -27,7 +27,7 @@ class OfflineInformationDistribution extends StatefulWidget {
 }
 
 class _OfflineInformationDistributionState extends State<OfflineInformationDistribution> {
-  final _storage = FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage();
   Map<String, bool> danhdaudaQuetMap = {};
   Future<List<CalendarDistributionInf>>? _eventListFuture;
   int selectIndex = 0;
@@ -99,11 +99,11 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
   }
 
 
-  Future<List<TagEpcLBD>> loadData(String key) async {
+  Future<List<TagEpcLDB>> loadData(String key) async {
     String? dataString = await _storage.read(key: key);
     if (dataString != null) {
       // Sử dụng parseTags để chuyển đổi chuỗi JSON thành danh sách TagEpcLBD
-      return TagEpcLBD.parseTags(dataString);
+      return TagEpcLDB.parseTags(dataString);
     }
     return [];
   }
@@ -168,7 +168,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
        },
         child: Scaffold(
               appBar: AppBar(
-                backgroundColor: Color(0xFFE9EBF1),
+                backgroundColor: const Color(0xFFE9EBF1),
                 elevation: 4,
                 shadowColor: Colors.blue.withOpacity(0.5),
                 leading: Container(
@@ -179,13 +179,13 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                   style: TextStyle(
                     fontSize: screenWith * 0.065,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF097746),
+                    color: const Color(0xFF097746),
                   ),
                 ),
               ),
               body: Padding (
-                padding: EdgeInsets.only(top: 8.0),
-                child: _eventListFuture == null ? Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: _eventListFuture == null ? const Padding(
                   padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                   child: Center(
                     child: SizedBox(
@@ -201,7 +201,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                   builder: (context, snapshot){
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
                             child: Center(
                               child: SizedBox(
@@ -221,9 +221,9 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                       final eventList = snapshot.data!;
                       if (eventList.isEmpty) {
                         return Container(
-                          padding: EdgeInsets.fromLTRB(30, 220, 30, 0),
-                          constraints: BoxConstraints.expand(),
-                          color: Color(0xFFFAFAFA),
+                          padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                          constraints: const BoxConstraints.expand(),
+                          color: const Color(0xFFFAFAFA),
                           child: SingleChildScrollView(
                             child: Column(
                               children: <Widget>[
@@ -232,8 +232,8 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                   width: 50,
                                   height: 50,
                                 ),
-                                SizedBox(height: 15),
-                                Text(
+                                const SizedBox(height: 15),
+                                const Text(
                                   'Chưa có lịch đóng bao',
                                   style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
                                   textAlign: TextAlign.center,
@@ -248,7 +248,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                           itemCount: eventList.length,
                           itemBuilder: (context, index) {
                             final event = eventList[index];
-                            final color = index % 2 == 0 ? Color(0xFFFAFAFA) : Color(0xFFFAFAFA);
+                            final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
                             return
                               Dismissible(
                                   key: Key(event.idLDB),
@@ -274,10 +274,10 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                     return false; // Không cho phép trượt trong các trường hợp khác
                                   },
                                   background: Container(
-                                    color: Color(0xFFB3D1C0), // Màu nền khi trượt
+                                    color: const Color(0xFFB3D1C0), // Màu nền khi trượt
                                     alignment: Alignment.centerLeft,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 20.0),
+                                    child: const Padding(
+                                      padding: EdgeInsets.only(left: 20.0),
                                       child: Icon(Icons.edit, color: Color(0xFF097746)),
                                     ),
                                   ),
@@ -308,7 +308,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                         ),
                                       ),
                                     ),
-                                      padding: EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0),
+                                      padding: const EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0),
                                       child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Sắp xếp theo chiều ngang
                                       children: [
@@ -320,7 +320,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                               Text(
                                                 event.maLDB,
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: screenWith*0.05
                                                 ),
@@ -328,28 +328,28 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                               Text(
                                                 'Sản phẩm: ${event.sanPhamLDB}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Số lượng quét: ${event.soLuongQuet}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Ghi chú: ${event.ghiChuLDB}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Ngày Tạo: ${event.ngayTaoLDB}',
                                                 style: TextStyle(
-                                                    color: Color(0xFF097746),
+                                                    color: const Color(0xFF097746),
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
@@ -357,7 +357,7 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
                                           ),
                                         ),
                                         // Biểu tượng điều hướng
-                                        Icon(
+                                        const Icon(
                                           Icons.navigate_next,
                                           size: 30.0,
                                           color: Color(0xFF097746),
@@ -405,8 +405,8 @@ class _OfflineInformationDistributionState extends State<OfflineInformationDistr
             onTap: _onItemTap, // Gọi hàm _onItemTap khi chọn một mục
             // showSelectedLabels: false, // Ẩn nhãn mục được chọn
             // showUnselectedLabels: false, // Ẩn nhãn mục chưa được chọn
-            selectedItemColor: Color(0xFF097746), // Màu của mục đang chọn
-            unselectedItemColor: Color(0xFF097746), // Màu của mục chưa chọn
+            selectedItemColor: const Color(0xFF097746), // Màu của mục đang chọn
+            unselectedItemColor: const Color(0xFF097746), // Màu của mục chưa chọn
           ),
           )
     );
