@@ -125,14 +125,21 @@ class _CheckInventoryState extends State<CheckInventory> {
       await _toggleScanningForC5();
     }
   }
-
+  Future<void> _playScanSound() async {
+    try {
+      await _audioPlayer.setAsset('assets/sound/Bip.mp3');
+      await _audioPlayer.play();
+    } catch (e) {
+      print("$e");
+    }
+  }
   //NMC97
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
       if(currentDevice != Device.rSeries) return;
       setState(() {
         r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
-        DataProcessing.ProcessData(r5_resultTags, _data); // Filter
+        DataProcessing.ProcessData(r5_resultTags, _data,_playScanSound); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
@@ -285,19 +292,12 @@ class _CheckInventoryState extends State<CheckInventory> {
       _isLoading = false;
     });
   }
-  Future<void> _playScanSound() async {
-    try {
-      await _audioPlayer.setAsset('assets/sound/Bip.mp3');
-      await _audioPlayer.play();
-    } catch (e) {
-      print("$e");
-    }
-  }
+
 
   //#region Update Tags C Series NMC97
   void updateTags(dynamic result) async {
     List<TagEpc> newData = TagEpc.parseTags(result); //Convert to TagEpc list
-    DataProcessing.ProcessData(newData, _data); // Filter
+    DataProcessing.ProcessData(newData, _data,_playScanSound); // Filter
     updateStatusAndCountResult();
   }
 

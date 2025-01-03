@@ -163,10 +163,11 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
-      setState(() {
+      setState(() async {
         if(currentDevice != Device.rSeries) return;
         r5_resultTags = DataProcessing.ConvertToTagEpcLDBList(tagList);
-        DataProcessing.ProcessDataLDB(r5_resultTags, _data); // Filter
+        List<TagEpcLDB> currentTags = await loadData(event.idLTH);
+        DataProcessing.ProcessDataLDB(r5_resultTags,currentTags, _data,_playScanSound); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
@@ -281,10 +282,10 @@ class _SendDataRecallState extends State<SendDataRecall> {
   }
 
   void updateTags(dynamic result) async {
-
+    List<TagEpcLDB> currentTags = await loadData(event.idLTH);
     List<TagEpcLDB> newData = TagEpcLDB.parseTags(result); //Convert to TagEpc list
     print("MinhChau: data get : ${newData.length}");
-    DataProcessing.ProcessDataLDB(newData, _data); // Filter
+    DataProcessing.ProcessDataLDB(newData,currentTags ,_data,_playScanSound); // Filter
     updateStatusAndCountResult();
 
   //  List<TagEpcLBD> newData = TagEpcLBD.parseTags(result);
@@ -1836,9 +1837,11 @@ class _SendDataRecallState extends State<SendDataRecall> {
 
   Future<void> _toggleScanningForR5() async {
     try{
-      if(currentDevice != Device.rSeries || _selectedScanningMethod != "rfid"|| _isDialogShown ) return;
+      if(currentDevice != Device.rSeries || _selectedScanningMethod != "rfid"/*|| _isDialogShown*/ ) return;
+     if(await RfidC72Plugin.isConnected == true){
+
       await RfidC72Plugin.stopScan;
-      await RfidC72Plugin.closeScan;
+      await RfidC72Plugin.closeScan;}
       // Check connection
       var isConnected = await UHFBlePlugin.getConnectionStatus();
       if (! isConnected && mounted) {

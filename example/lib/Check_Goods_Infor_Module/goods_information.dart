@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import '../Distribution_Module/model.dart';
@@ -27,6 +28,7 @@ class _GoodsInformationState extends State<GoodsInformation> {
   final bool _isHaveSavedData = false;
   final bool _isStarted = false;
   final bool _isEmptyTags = false;
+  late AudioPlayer _audioPlayer;
   bool _isConnected = false;
   bool _isLoading = true;
   int _totalEPC = 0, _invalidEPC = 0, _scannedEPC = 0;
@@ -153,10 +155,18 @@ bool isShowingInfo = false;
   //     }
   //   });
   // }
+  Future<void> _playScanSound() async {
+    try {
+      await _audioPlayer.setAsset('assets/sound/Bip.mp3');
+      await _audioPlayer.play();
+    } catch (e) {
+      print("$e");
+    }
+  }
   void updateTags(dynamic result) {
     setState(() {
       List<TagEpc> newData = TagEpc.parseTags(result); //Convert to TagEpc list
-      DataProcessing.ProcessData(newData, _data); // Filter
+      DataProcessing.ProcessData(newData, _data,_playScanSound); // Filter
       _totalEPC = _data.toSet().toList().length;
     });
   }

@@ -177,12 +177,38 @@ class _SendDataState extends State<SendData> {
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
       if(currentDevice != Device.rSeries) return;
+      int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
+      if (_data.length >= targetQuantity) {
+        if (!_isNotified) {
+          stopScanning();
+          Navigator.pop(context);
+          setState(() {
+            _isContinuousCall = false;
+            _isNotified = true;
+          });
+        }
+        return;
+      }
+      isScanning = true;
+      r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
+      List<TagEpc> uniqueData = r5_resultTags.where((newTag) =>
+      !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+      if (uniqueData.isNotEmpty) {
+        _playScanSound();
+        tagsToProcess.addAll(uniqueData);
+        processNextTag();
+      }
+
+      if (_data.length >= targetQuantity && !_isNotified) {
+        stopScanning();
+        Navigator.pop(context);
+        setState(() {
+          _isContinuousCall = false;
+          _isNotified = true;
+        });
+      }
       setState(() {
-        r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
-       // DataProcessing.ProcessData(r5_resultTags, _data); // Filter
-        DataProcessing.ProcessDataQueue(r5_resultTags, _data, tagsToProcess,processNextTag);
-       // print('Data from R5: ${r5_resultTags.length}');
-      //  updateStatusAndCountResult();
+        successfullySaved = _data.length;
       });
     });
     UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
@@ -261,49 +287,35 @@ class _SendDataState extends State<SendData> {
 
   void updateTags(dynamic result) async {
     int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
-   // print("Debug: targetQuantity $targetQuantity");
-    if (_data.length >= targetQuantity) { // nêú đạt đủ số lượng thì dừng
+    if (_data.length >= targetQuantity) {
       if (!_isNotified) {
-        stopScanning(); // Stops scanning
+        stopScanning();
         Navigator.pop(context);
-
         setState(() {
           _isContinuousCall = false;
           _isNotified = true;
         });
       }
-      return; // Exit if the target quantity is met or exceeded
+      return;
     }
     isScanning = true;
     List<TagEpc> newData = TagEpc.parseTags(result);
-
-    DataProcessing.ProcessDataQueue(
-        newData, _data, tagsToProcess, () {
-      _playScanSound(); // Gọi âm thanh quét sau khi thêm dữ liệu
-      processNextTag(); // Tiếp tục xử lý nhãn tiếp theo
-    });
-
-    // Check new data against both _data and previously loaded tags to ensure uniqueness
-
-    // List<TagEpc> uniqueData = newData.where((newTag) =>
-    // !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-    // if (uniqueData.isNotEmpty) {
-    //   _playScanSound();
-    //   tagsToProcess.addAll(uniqueData);  // Thêm tất cả nhãn duy nhất vào queue
-    //   processNextTag();  // Bắt đầu xử lý từ nhãn đầu tiên
-    // }
-
+    List<TagEpc> uniqueData = newData.where((newTag) =>
+    !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+    if (uniqueData.isNotEmpty) {
+      _playScanSound();
+      tagsToProcess.addAll(uniqueData);
+      processNextTag();
+    }
     if (_data.length >= targetQuantity && !_isNotified) {
       stopScanning();
       Navigator.pop(context);
-      // Stop scanning
       setState(() {
         _isContinuousCall = false;
         _isNotified = true;
       });
     }
     setState(() {
-      // CommonFunction().playScanSound();
       successfullySaved = _data.length;
     });
   }

@@ -148,10 +148,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
   }
   void uhfBLERegister() {
     UHFBlePlugin.setMultiTagCallback((tagList) { // Listen data from R5
-      setState(() {
+      setState(() async {
         if(currentDevice != Device.rSeries) return;
+        List<TagEpcLDB> currentTags = await loadData(event.idLDB);
         r5_resultTags = DataProcessing.ConvertToTagEpcLDBList(tagList);
-        DataProcessing.ProcessDataLDB(r5_resultTags, _data); // Filter
+
+        DataProcessing.ProcessDataLDB(r5_resultTags,currentTags, _data,_playScanSound); // Filter
         print('Data from R5: ${r5_resultTags.length}');
         updateStatusAndCountResult();
       });
@@ -209,8 +211,9 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
 
 //.....................................22.03.24.15:59..............................//
   void updateTags(dynamic result) async {
+     List<TagEpcLDB> currentTags = await loadData(event.idLDB);
     List<TagEpcLDB> newData = TagEpcLDB.parseTags(result);
-    DataProcessing.ProcessDataLDB(newData, _data); // Filter
+    DataProcessing.ProcessDataLDB(newData,currentTags, _data,_playScanSound); // Filter
     updateStatusAndCountResult();
 
     // List<TagEpcLBD> currentTags = await loadData(event.idLDB);

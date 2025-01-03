@@ -5,38 +5,41 @@ import '../../Assign_Packing_Information/model_information_package.dart';
 import '../../Distribution_Module/model.dart';
 
 class DataProcessing {
-  static void ProcessData(List<TagEpc> inputData, List<TagEpc> outputData) {
+  static void ProcessData(List<TagEpc> inputData, List<TagEpc> outputData,VoidCallback playSound) {
     List<TagEpc> uniqueData = inputData
         .where((newTag) =>
             !outputData.any((existingTag) => existingTag.epc == newTag.epc))
         .toList(); // Find all tags that are not in the output list
+    if(uniqueData.isNotEmpty){
+      playSound();
+    }
     outputData.addAll(uniqueData); // Add all unique tags to the output list
   }
 
   static void ProcessDataLDB(
-      List<TagEpcLDB> inputData, List<TagEpcLDB> outputData) {
-    List<TagEpcLDB> uniqueData = inputData
-        .where((newTag) =>
-            !outputData.any((existingTag) => existingTag.epc == newTag.epc))
-        .toList(); // Find all tags that are not in the output list
+      List<TagEpcLDB> newData,
+      List<TagEpcLDB> currentTags,
+      List<TagEpcLDB> outputData,
+      void Function() playScanSound) {
+    // Tìm các thẻ duy nhất (không có trong currentTags và outputData)
+    List<TagEpcLDB> uniqueData = newData.where((newTag) =>
+    !currentTags.any((savedTag) => savedTag.epc == newTag.epc) &&
+        !outputData.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+
+    // Cập nhật thời gian quét cho từng thẻ
     uniqueData.forEach((tag) {
-      tag.scanDate = DateTime.now(); // Gán thời gian quét cho thẻ
+      tag.scanDate = DateTime.now();
     });
-    outputData.addAll(uniqueData); // Add all unique tags to the output list
+
+    // Nếu tìm thấy thẻ mới, phát âm thanh
+    if (uniqueData.isNotEmpty) {
+      playScanSound();
+    }
+
+    // Thêm các thẻ mới vào danh sách outputData
+    outputData.addAll(uniqueData);
   }
 
-  static void ProcessDataQueue_OLD(List<TagEpc> newData, List<TagEpc> data,
-      Queue<TagEpc> tagsToProcess, VoidCallback processNextTag) {
-    List<TagEpc> uniqueData = newData
-        .where((newTag) =>
-            !data.any((existingTag) => existingTag.epc == newTag.epc))
-        .toList();
-    if (uniqueData.isNotEmpty) {
-      //_playScanSound();
-      tagsToProcess.addAll(uniqueData); // Thêm tất cả nhãn duy nhất vào queue
-      processNextTag(); // Bắt đầu xử lý từ nhãn đầu tiên
-    }
-  }
   static void ProcessDataQueue(List<TagEpc> newData, List<TagEpc> data,
       Queue<TagEpc> tagsToProcess, VoidCallback processNextTag) {
     // Lọc dữ liệu duy nhất

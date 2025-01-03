@@ -1478,6 +1478,7 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
           await DataReadOptions.readTagsAsync(true,currentDevice);
           _data.clear();
           _isSingleCall = true;
+          showConfirmationDialog = true;
           if (!_isDialogShown) {
             _showScanningModal(); //R5
           }
