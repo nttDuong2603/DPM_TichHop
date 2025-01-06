@@ -68,7 +68,7 @@ class _SendDataState extends State<SendData> {
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
-  bool _isNotified = false;
+  bool _isNotifiedEnough = false;
   bool _isShowModal = false; // biến điều khiển show model
   List<TagEpc> newData = [];
   int saveCount = 0;
@@ -88,7 +88,7 @@ class _SendDataState extends State<SendData> {
   bool _isDialogShown = false; // biến báo để close popup
   final _storageTemporary = const FlutterSecureStorage();
   bool isSaving = false;
-  bool _isSnackBarDisplayed = false;
+  bool _isEnoughQuantity = false;
   bool _isStop = false;
   TextEditingController _selectedAgencyNameController  = TextEditingController();
   TextEditingController _mspTspController = TextEditingController();
@@ -175,49 +175,45 @@ class _SendDataState extends State<SendData> {
     }
   }
   void uhfBLERegister() {
-    UHFBlePlugin.setMultiTagCallback((tagList) { // Listen tag data from R5
-      if(currentDevice != Device.rSeries) return;
+    UHFBlePlugin.setMultiTagCallback((tagList) async { // Listen tag data from R5
+      if (currentDevice != Device.rSeries) return;
       int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
+
       if (_data.length >= targetQuantity) {
-        if (!_isNotified) {
-          stopScanning();
-          Navigator.pop(context);
-          setState(() {
-            _isContinuousCall = false;
-            _isNotified = true;
-          });
+        if (!_isNotifiedEnough) {
+         await stopScanning();
+         if (mounted) {
+           setState(() {
+             _isContinuousCall = false;
+             _isNotifiedEnough = true;
+           });
+         }
         }
         return;
       }
+
       isScanning = true;
       r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
       List<TagEpc> uniqueData = r5_resultTags.where((newTag) =>
       !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+      print("danh sach cac the doc lap: ${uniqueData.length}");
+
       if (uniqueData.isNotEmpty) {
         _playScanSound();
         tagsToProcess.addAll(uniqueData);
         processNextTag();
       }
 
-      if (_data.length >= targetQuantity && !_isNotified) {
-        stopScanning();
-        Navigator.pop(context);
-        setState(() {
-          _isContinuousCall = false;
-          _isNotified = true;
-        });
-      }
       setState(() {
         successfullySaved = _data.length;
       });
     });
-    UHFBlePlugin.setScanningStatusCallback((scanStatus) { // key ?
+    UHFBlePlugin.setScanningStatusCallback((scanStatus) async {
       scanStatusR5 = scanStatus;
-      _toggleScanningForR5();
+     await _toggleScanningForR5();
     });
   }
 
-  @override
   @override
   void dispose() {
     super.dispose();
@@ -286,38 +282,39 @@ class _SendDataState extends State<SendData> {
 
 
   void updateTags(dynamic result) async {
-    int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
-    if (_data.length >= targetQuantity) {
-      if (!_isNotified) {
-        stopScanning();
-        Navigator.pop(context);
-        setState(() {
-          _isContinuousCall = false;
-          _isNotified = true;
-        });
+    try {
+      int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
+
+      if (_data.length >= targetQuantity) {
+        if (!_isNotifiedEnough) {
+          await stopScanning();
+          if (mounted) {
+            setState(() {
+              _isContinuousCall = false;
+              _isNotifiedEnough = true;
+            });
+          }
+        }
+        return;
       }
+
+      isScanning = true;
+      List<TagEpc> newData = TagEpc.parseTags(result);
+      List<TagEpc> uniqueData = newData
+          .where((newTag) =>
+              !_data.any((existingTag) => existingTag.epc == newTag.epc))
+          .toList();
+      if (uniqueData.isNotEmpty) {
+        _playScanSound();
+        tagsToProcess.addAll(uniqueData);
+        processNextTag();
+      }
+      setState(() {
+        successfullySaved = _data.length;
+      });
+    } catch (e) {
       return;
     }
-    isScanning = true;
-    List<TagEpc> newData = TagEpc.parseTags(result);
-    List<TagEpc> uniqueData = newData.where((newTag) =>
-    !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
-    if (uniqueData.isNotEmpty) {
-      _playScanSound();
-      tagsToProcess.addAll(uniqueData);
-      processNextTag();
-    }
-    if (_data.length >= targetQuantity && !_isNotified) {
-      stopScanning();
-      Navigator.pop(context);
-      setState(() {
-        _isContinuousCall = false;
-        _isNotified = true;
-      });
-    }
-    setState(() {
-      successfullySaved = _data.length;
-    });
   }
 
   Future<void> saveTemporarySavedTags(String eventId, List<TagEpc> tags) async {
@@ -382,28 +379,8 @@ class _SendDataState extends State<SendData> {
     });
   }
 
-  Future<void> stopScanning1() async {
-    // Dừng quét RFID
-    await RfidC72Plugin.stop;
-    _showSnackBar('Đã đạt đủ số lượng');
-    Navigator.pop(context);
-    setState(() {
-      _isContinuousCall = false;
-      _isStop = true; // Đánh dấu đã dừng quét
-      loadTagCount();
-    });
-  }
 
-  Future<void> stopScanning2() async {
-    await RfidC72Plugin.stop;
-    _isSnackBarDisplayed = true;
-    if (_isDialogShown) {
-      Navigator.of(context, rootNavigator: true).pop('dialog');
-    }
-    setState(() {
-      loadTagCount();
-    });
-  }
+
 
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
     final secureStorage = const FlutterSecureStorage();
@@ -491,12 +468,15 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<void> stopScanning() async {
-    if (!_isSnackBarDisplayed) {
-     // await RfidC72Plugin.stop;
-       DataReadOptions.readTagsAsync(false, currentDevice);
-      _showSnackBar('Đã đạt đủ số lượng');
-      _isSnackBarDisplayed = true;
+    if(mounted){
+      if (_isDialogShown) {
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      }
     }
+      await DataReadOptions.readTagsAsync(false, currentDevice);
+
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -577,23 +557,21 @@ class _SendDataState extends State<SendData> {
     try{
       if (isShowModal|| currentDevice != Device.cSeries && currentDevice !=  Device.cameraBarcodes) {
         return;
+
       }
       if(currentDevice == Device.cameraBarcodes){
         ConnectionNotificationRSeries.showDeviceWaring(context, false);
         return;
       }
-      print("MinhChauLog: Start Toggle Scanning for C5!");
-      // đạt đủ số lượng
-      if (tagCount == (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+
+      if (_isNotifiedEnough || tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+        await DataReadOptions.readTagsAsync(false, currentDevice);
         _showSnackBar('Đã đạt đủ số lượng',);
         return;
       } else {
-        // nếu thấy có quét liên tục thì dừng trước khi start
         if (_isContinuousCall) {
-          // await stopScanning2();
           DataReadOptions.readTagsAsync(false, currentDevice);
-          _isSnackBarDisplayed = true;
-          if (_isDialogShown) { // nếu có show mới đóng
+          if (_isDialogShown && mounted) {
             Navigator.of(context, rootNavigator: true).pop('dialog');
           }
           setState(() {
@@ -602,11 +580,12 @@ class _SendDataState extends State<SendData> {
         } else  {
           DataReadOptions.readTagsAsync(true, currentDevice); //Start
         }
-        setState(() { // show model lên
+        setState(() {
           _isContinuousCall = !_isContinuousCall;
           _isShowModal = _isContinuousCall;
+          _isDialogShown = true;
         });
-        if (_isContinuousCall) { // đang scan
+        if (_isContinuousCall) {
           _data = await loadData(event.id);
           showDialog(
             barrierDismissible: true,
@@ -626,7 +605,6 @@ class _SendDataState extends State<SendData> {
               ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
             }, context: context,
           ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
-          _isDialogShown = true;
         } else {
           _isShowModal = false;
         }
@@ -638,37 +616,40 @@ class _SendDataState extends State<SendData> {
   }
   Future<void> _toggleScanningForR5() async {
     try{
+
       if (isShowModal || currentDevice != Device.rSeries) {
         return;
       }
+      // Notify if not use scanner device
       else if(currentDevice == Device.cameraBarcodes){
         ConnectionNotificationRSeries.showDeviceWaring(context, false);
         return;
       }
-      print("MinhChauLog: Start Toggle Scanning for R5!");
-      // đạt đủ số lượng
-      if (tagCount == (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+      // Notify if enough quantity
+      if (_isNotifiedEnough || tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+        await DataReadOptions.readTagsAsync(false, currentDevice);
         _showSnackBar('Đã đạt đủ số lượng',);
         return;
       } else {
-        // nếu thấy có quét liên tục thì dừng trước khi start
+        //If you see continuous scanning, stop before starting
         if (_isContinuousCall) {
-          // await stopScanning2();
-          if(!scanStatusR5) { DataReadOptions.readTagsAsync(false, currentDevice);}
-          _isSnackBarDisplayed = true;
-          if (_isDialogShown) { // nếu có show mới đóng
+          await DataReadOptions.readTagsAsync(false, currentDevice);
+          if (_isDialogShown && mounted) {
             Navigator.of(context, rootNavigator: true).pop('dialog');
           }
           setState(() {
             loadTagCount();
           });
-        } else  {
-          if(!scanStatusR5)  {DataReadOptions.readTagsAsync(true, currentDevice);} //Start
+        }
+        // Not scan continue,...
+        else  {
+         await DataReadOptions.readTagsAsync(true, currentDevice); //Start
         }
         setState(() { // show model lên
           _isContinuousCall = !_isContinuousCall;
           _isShowModal = _isContinuousCall;
           scanStatusR5=false;
+          _isDialogShown = true;
         });
         if (_isContinuousCall) { // đang scan
           _data = await loadData(event.id);
@@ -689,8 +670,10 @@ class _SendDataState extends State<SendData> {
                 ),
               ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
             }, context: context,
-          ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
-          _isDialogShown = true;
+          ).then((_) {
+            _isDialogShown = false;
+
+          }); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
         } else {
           _isShowModal = false;
         }

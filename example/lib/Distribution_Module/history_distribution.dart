@@ -24,11 +24,11 @@ class _HistoryDistributionState extends State<HistoryDistribution> {
   Future<List<Calendar>>? _eventListFuture;
   Map<String, bool> daQuetMap = {};
 
+  late TabController _tabController;
   @override
   void initState() {
     super.initState();
     _initializeEventList();
-    // _loadDaQuetMap();
   }
 
   Future<List<TagEpc>> loadData(String key) async {
@@ -41,13 +41,11 @@ class _HistoryDistributionState extends State<HistoryDistribution> {
   }
 
   Future<void> _initializeEventList() async {
+
     var events = await CalendarDatabaseHelper().getHistoryEvents(widget.taiKhoan!);
     for (var event in events) {
-      var tags = await loadData(event.id); // Sử dụng phương thức loadData
-      event.soLuongQuett = tags.length;  // Cập nhật số lượng quét
-    }
-
-    for (var event in events) {
+      var tags = await loadData(event.id);
+      event.soLuongQuett = tags.length;
       // Lấy các giá trị từ bộ nhớ an toàn cho event cụ thể
       var counts = await loadCountsDistributionStorage(event.id);
       // Gán các giá trị từ 'counts' cho các thuộc tính của 'event'

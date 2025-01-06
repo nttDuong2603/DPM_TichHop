@@ -113,6 +113,7 @@ class _OfflineDistributionState extends State<OfflineDistribution> {
     for (var event in events) {
       var tags = await loadData(event.id); // Sử dụng phương thức loadData
       event.soLuongQuett = tags.length;  // Cập nhật số lượng quét
+
     }
     setState(() {
       _eventListFuture = Future.value(events);
