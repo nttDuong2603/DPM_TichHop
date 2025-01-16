@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../Assign_Packing_Information/database_package_inf.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/services.dart';
+import '../Utils/app_color.dart';
 import 'recall_replacement_model.dart';
 import 'recall_replacement_database.dart';
 import 'recall_replacement_offline_list.dart';
@@ -64,26 +65,17 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
         backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: () {},
-              child: Image.asset(
-                'assets/image/logoJVF_RFID.png',
-                width: 120,
-                height: 120,
-              ),
-            ),
-          ),
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            icon: const Icon(Icons.arrow_back)),
         title: const Text(
-          'Tạo lịch',
+          'Tạo lịch thu hồi thay thế',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
         actions: [],
@@ -99,7 +91,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
                 'Nhập thông tin lịch',
                 style: TextStyle(
                   fontSize: 26,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
               const SizedBox(height: 15),
@@ -163,7 +155,7 @@ class _CreateCalendarRecallReplacementState extends State<CreateCalendarRecallRe
               }
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF097746),
+              backgroundColor: AppColor.mainText,
               padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),

@@ -7,6 +7,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 
+import '../Utils/app_color.dart';
+
 class ProcessedEventsPage extends StatefulWidget {
   final List<Calendar> events;
   final List<DeletionInfo> deletionHistory;
@@ -66,7 +68,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Chi tiết mã thu hồi", style: TextStyle(
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
           ),
           content: Container(
@@ -80,11 +82,11 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
                 // Thêm số thứ tự trước mỗi chip
                 return ListTile(
                   leading: Text("${index + 1}.", style: const TextStyle(
-                    color: Color(0xFF097746),
+                    color: AppColor.mainText,
                   ),
                   ),
                   title: Text(epcString, style: const TextStyle(
-                    color: Color(0xFF097746),
+                    color: AppColor.mainText,
                   ),
                   ),
                 );
@@ -94,7 +96,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -125,7 +127,7 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
       appBar: AppBar(
         title: const Text(
           "Lịch sử kiểm kho",
-          style: TextStyle(color: Color(0xFF097746),
+          style: TextStyle(color: AppColor.mainText,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -150,14 +152,14 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
                 fillColor: const Color(0xFFEBEDEC),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
-                  borderSide: const BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: AppColor.mainText),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: AppColor.mainText),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF097746)),
+                  borderSide: const BorderSide(color: AppColor.mainText),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 suffixIcon: IconButton(
@@ -199,12 +201,12 @@ class _ProcessedEventsPageState extends State<ProcessedEventsPage> {
                                   "Ngày thu hồi: ${DateFormat('dd/MM/yyyy').format(deletionInfo.deletionDate)}",
                               style: const TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF097746),
+                                color: AppColor.mainText,
                               ),
                             ),
                             trailing: const Icon(
                               Icons.navigate_next,
-                              color: Color(0xFF097746),
+                              color: AppColor.mainText,
                               size: 30.0,
                             ),
                           ),

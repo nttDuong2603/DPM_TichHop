@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'model_recall_manage.dart';
 import 'database_recall.dart';
 import 'recall_manage.dart';
@@ -9,9 +10,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class OfflineRecallManageDeleted extends StatefulWidget {
   final String taiKhoan;
+  final bool isRecallCancel;
   const OfflineRecallManageDeleted({
     Key? key,
     required this.taiKhoan,
+    required this.isRecallCancel
   }) : super(key: key);
 
   @override
@@ -126,15 +129,18 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
           appBar: AppBar(
             backgroundColor: const Color(0xFFE9EBF1),
             shadowColor: Colors.blue.withOpacity(0.5),
-            leading: Container(
-            ),
+            leading: IconButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+                icon: const Icon(Icons.arrow_back)),
             centerTitle: true,
             title: Text(
-              'Lịch thu hồi đã xóa',
+             widget.isRecallCancel ?  'Lịch thu hồi huỷ đã xóa' : 'Lịch thu hồi xuất dư đã xóa',
               style: TextStyle(
                 fontSize: screenWith * 0.065,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
           ),
@@ -147,7 +153,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                   width: 30, // Giới hạn kích thước của CircularProgressIndicator
                   height: 30,
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                   ),
                 ),
               ),
@@ -162,7 +168,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                         width: 30, // Giới hạn kích thước của CircularProgressIndicator
                         height: 30,
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                         ),
                       ),
                     ),
@@ -189,7 +195,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                             const SizedBox(height: 15),
                             const Text(
                               'Chưa có lịch thu hồi được xóa',
-                              style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                              style: TextStyle(fontSize: 22, color: AppColor.mainText),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -216,16 +222,16 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                       return AlertDialog(
                                         title: const Text(
                                           'Xác nhận khôi phục lịch',
-                                          style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                                          style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
                                         ),
                                         content: const Text(
                                           "Bạn có chắc chắn muốn khôi phục lịch này không?",
-                                          style: TextStyle(fontSize: 18, color: Color(0xFF097746)),
+                                          style: TextStyle(fontSize: 18, color: AppColor.mainText),
                                         ),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -244,7 +250,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                           const SizedBox(width: 8),
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -274,7 +280,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                 alignment: Alignment.centerLeft,
                                 child: const Padding(
                                   padding: EdgeInsets.only(left: 20.0),
-                                  child: Icon(Icons.restore_from_trash_outlined, color: Color(0xFF097746)),
+                                  child: Icon(Icons.restore_from_trash_outlined, color: AppColor.mainText),
                                 ),
                               ),
                               child: GestureDetector(
@@ -287,17 +293,17 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                       return AlertDialog(
                                         title: const Text('Xác nhận xóa lịch vĩnh viễn',
                                             style: TextStyle(
-                                                color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+                                                color: AppColor.mainText, fontWeight: FontWeight.bold)),
                                         content: const Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFF097746),
+                                              color: AppColor.mainText,
                                             )),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -317,7 +323,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -384,7 +390,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                           children: [
                                             Text('${event.ghiChuLTH}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.mainText,
                                                   fontSize: screenWith*0.055,
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -392,14 +398,14 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                             Text(
                                               'Số lượng quét: ${event.soluongquet}',
                                               style: TextStyle(
-                                                color: const Color(0xFF097746),
+                                                color: AppColor.contentText,
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
                                             Text(
                                               'Ngày tạo: ${event.ngayTaoLTH}',
                                               style: TextStyle(
-                                                color: const Color(0xFF097746),
+                                                color: AppColor.contentText,
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
@@ -409,7 +415,7 @@ class OfflineRecallManageDeletedState extends State<OfflineRecallManageDeleted> 
                                       const Icon(
                                         Icons.delete_outline,
                                         size: 30.0,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.deleteAction,
                                       ),
                                     ],
                                   ),

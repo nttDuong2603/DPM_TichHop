@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Utils/app_color.dart';
 import 'recall_replacement_model.dart';
 import 'recall_replacement_database.dart';
 
@@ -85,7 +86,7 @@ class _EditRecallReplacementCalendarPageState extends State<EditRecallReplacemen
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF097746),
+              color: AppColor.mainText,
             ),
           ),
           actions: [],
@@ -101,7 +102,7 @@ class _EditRecallReplacementCalendarPageState extends State<EditRecallReplacemen
                   'Nhập thông tin',
                   style: TextStyle(
                     fontSize: 26,
-                    color: Color(0xFF097746),
+                    color: AppColor.mainText,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -154,7 +155,7 @@ class _EditRecallReplacementCalendarPageState extends State<EditRecallReplacemen
                           }
                         },
                         style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFF097746),
+                          backgroundColor: AppColor.mainText,
                           padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.0),

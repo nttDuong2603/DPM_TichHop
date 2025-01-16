@@ -298,7 +298,7 @@
 //         return AlertDialog(
 //           title: Text('Lưu mã chip?',
 //             style: TextStyle(
-//                 color: Color(0xFF097746),
+//                 color: AppColor.mainText,
 //                 fontWeight: FontWeight.bold
 //             ),
 //           ),
@@ -321,7 +321,7 @@
 //                         Text(
 //                           '${index+1}.$tagepc',
 //                           style: TextStyle(
-//                               color: Color(0xFF097746)
+//                               color: AppColor.mainText
 //                           ),
 //                         ) ,
 //                       );
@@ -334,7 +334,7 @@
 //           actions: <Widget>[
 //             TextButton(
 //               style: ButtonStyle(
-//                 backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                 backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                   RoundedRectangleBorder(
 //                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -360,7 +360,7 @@
 //             SizedBox(width: 8,),
 //             TextButton(
 //                 style: ButtonStyle(
-//                   backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                   backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                     RoundedRectangleBorder(
 //                       borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc

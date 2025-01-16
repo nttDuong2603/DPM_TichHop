@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'model_information_package.dart';
 import 'package:intl/intl.dart';
 
@@ -47,19 +48,17 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Container(
-            width: 100,
-            height: 100,
-          ),
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            icon: const Icon(Icons.arrow_back)),
         title: const Text(
           'Danh sách lịch đóng bao',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
       ),
@@ -88,14 +87,14 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                   border:
                   OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -123,7 +122,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                               width: 30, // Giới hạn kích thước của CircularProgressIndicator
                               height: 30,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                               ),
                             ),
                           )
@@ -144,7 +143,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                               "Vui lòng kiểm tra kết nối",
                               style: TextStyle(
                                 fontSize: 18,  // Đặt kích thước chữ
-                                color: Color(0xFF097746),  // Màu chữ
+                                color: AppColor.mainText,  // Màu chữ
                               ),
                             ),
                           ],
@@ -174,7 +173,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF097746),
+                                  color: AppColor.mainText,
                                 ),
                               ),
                               subtitle: Column(
@@ -184,28 +183,28 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                                     'Mã Sản Phẩm: ${dealer.maSP}',
                                     style: const TextStyle(
                                       fontSize: 18,
-                                      color: Color(0xFF097746),
+                                      color: AppColor.mainText,
                                     ),
                                   ),
                                   Text(
                                     'Tên Sản Phẩm: ${dealer.tenSP ?? ' '}' ,
                                     style: const TextStyle(
                                       fontSize: 18,
-                                      color: Color(0xFF097746),
+                                      color: AppColor.mainText,
                                     ),
                                   ),
                                   Text(
                                     'Số bao cần sản xuất: ${dealer.SBCSX ?? ' '}' ,
                                     style: const TextStyle(
                                       fontSize: 18,
-                                      color: Color(0xFF097746),
+                                      color: AppColor.mainText,
                                     ),
                                   ),
                                   Row(
                                     children: [
                                       const Text("Ngày sản xuất: ",  style: TextStyle(
                                         fontSize: 18,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       )),
                                       const SizedBox(width: 2),
                                       Expanded(
@@ -213,7 +212,7 @@ class _PackageScheduleListState extends State<PackageScheduleList> {
                                             DateFormat('dd/MM/yyyy').format(DateTime.parse(dealer.ngaySX!)),
                                             style: const TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFF097746),
+                                              color: AppColor.mainText,
                                             )),
                                       ),
                                     ],

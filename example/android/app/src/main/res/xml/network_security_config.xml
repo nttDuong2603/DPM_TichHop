@@ -2,5 +2,8 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">192.168.19.69</domain>
+        <domain includeSubdomains="true">192.168.19.180</domain>
+        <domain includeSubdomains="true">demo2-saas.mylanhosting.com</domain>
+        <domain includeSubdomains="true">jvf.rynansaas.com</domain>
     </domain-config>
 </network-security-config>

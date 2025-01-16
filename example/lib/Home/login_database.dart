@@ -92,18 +92,18 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _addNewAccount() async {
-    TaiKhoan newAccount = TaiKhoan(taiKhoan: "Administrator", matKhau: "Jvf@2024", quyen: "MQ0008", danhsachChucNang:  ["CNKTSP", "CNPP","CNDB", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount2 = TaiKhoan(taiKhoan: "pdanhamay", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount3 = TaiKhoan(taiKhoan: "pprfid", matKhau: "123456@", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount4 = TaiKhoan(taiKhoan: "Comexim", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount5 = TaiKhoan(taiKhoan: "Danacam", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount6 = TaiKhoan(taiKhoan: "dongbao", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH"]);
+    TaiKhoan newAccount = TaiKhoan(taiKhoan: "Administrator", matKhau: "Jvf@2024", quyen: "MQ0008", danhsachChucNang:  ["CNKTSP", "CNPP","CNDB", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount2 = TaiKhoan(taiKhoan: "pdanhamay", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount3 = TaiKhoan(taiKhoan: "pprfid", matKhau: "123456@", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount4 = TaiKhoan(taiKhoan: "Comexim", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount5 = TaiKhoan(taiKhoan: "Danacam", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount6 = TaiKhoan(taiKhoan: "dongbao", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN"]);
     // Tài khoản Offline line thêm cho ver1.0.0.5 (NPF.DP24-00008)
-    TaiKhoan newAccount7 = TaiKhoan(taiKhoan: "pdaxuathang1", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount8 = TaiKhoan(taiKhoan: "pdaxuathang2", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount9 = TaiKhoan(taiKhoan: "pdaxuathang3", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);
-    TaiKhoan newAccount10 = TaiKhoan(taiKhoan: "pdadongbao1", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH"]);
-    TaiKhoan newAccount11 = TaiKhoan(taiKhoan: "pdadongbao2", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH"]);
+    TaiKhoan newAccount7 = TaiKhoan(taiKhoan: "pdaxuathang1", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount8 = TaiKhoan(taiKhoan: "pdaxuathang2", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount9 = TaiKhoan(taiKhoan: "pdaxuathang3", matKhau: "123456", quyen: "MQ0012", danhsachChucNang: ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);
+    TaiKhoan newAccount10 = TaiKhoan(taiKhoan: "pdadongbao1", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN"]);
+    TaiKhoan newAccount11 = TaiKhoan(taiKhoan: "pdadongbao2", matKhau: "123456", quyen: "MQ0013", danhsachChucNang: ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN"]);
 
     // TaiKhoan newAccount = TaiKhoan(taiKhoan: "Administrator", matKhau: "Jvf@2024");
     // TaiKhoan newAccount2 = TaiKhoan(taiKhoan: "pdanhamay", matKhau: "123456");
@@ -111,6 +111,7 @@ class _LoginPageState extends State<LoginPage> {
     // TaiKhoan newAccount4 = TaiKhoan(taiKhoan: "Comexim", matKhau: "123456");
     // TaiKhoan newAccount5 = TaiKhoan(taiKhoan: "Danacam", matKhau: "123456");
     // TaiKhoan newAccount6 = TaiKhoan(taiKhoan: "dongbao", matKhau: "123456");
+
     await dbHelper.insertAccount(newAccount);
     await dbHelper.insertAccount(newAccount2);
     await dbHelper.insertAccount(newAccount3);
@@ -124,18 +125,18 @@ class _LoginPageState extends State<LoginPage> {
     await dbHelper.insertAccount(newAccount10);
     await dbHelper.insertAccount(newAccount11);
 
-    await dbHelper.updateAccountCN(newAccount.taiKhoan, ["CNKTSP", "CNPP","CNDB", "CNKK","CNQLTH", "CNTHTT"]); // Cập nhật quyền cho "Administrator"
-    await dbHelper.updateAccountCN(newAccount2.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]); // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount3.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]); // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount4.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount5.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount6.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH"]);// Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount.taiKhoan, ["CNKTSP", "CNPP","CNDB", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]); // Cập nhật quyền cho "Administrator"
+    await dbHelper.updateAccountCN(newAccount2.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]); // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount3.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]); // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount4.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount5.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount6.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN"]);// Cập nhật quyền cho "pdanhamay"
     //
-    await dbHelper.updateAccountCN(newAccount7.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount8.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount9.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount10.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH"]); // Cập nhật quyền cho "pdanhamay"
-    await dbHelper.updateAccountCN(newAccount11.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH"]); // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount7.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount8.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount9.taiKhoan, ["CNKTSP", "CNPP", "CNKK","CNQLTH","CNQLTHH","CNQLTHN", "CNTHTT"]);  // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount10.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN"]); // Cập nhật quyền cho "pdanhamay"
+    await dbHelper.updateAccountCN(newAccount11.taiKhoan, ["CNKTSP", "CNDB", "CNQLTH","CNQLTHH","CNQLTHN",]); // Cập nhật quyền cho "pdanhamay"
   }
 
   void _navigateToHomePage(BuildContext context, String taiKhoan) async {
@@ -144,6 +145,7 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (context) => HomePage(taiKhoan: taiKhoan, )),
       );
   }
+
 
   Future<bool> getAccount(String taiKhoan, String matKhau) async {
     // Construct the URL with the provided username and password
@@ -234,6 +236,7 @@ class _LoginPageState extends State<LoginPage> {
     return false;
   }
 
+  // Check login with API response
   Future<bool> checkLogin(String taiKhoan, String matKhau) async {
     bool onlineCheck = false;
     try {
@@ -283,12 +286,18 @@ class _LoginPageState extends State<LoginPage> {
     String password = matKhauController.text.trim();
     bool loggedIn = await checkLogin(username, password);
     if (loggedIn) {
-      await _saveAccountToSecureStorage(username, password); // Lưu tài khoản và mật khẩu
+      await _saveAccountToSecureStorage(username, password);
       _navigateToHomePage(context, username);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản đăng nhập.'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Đăng nhập không thành công. Vui lòng kiểm tra lại tài khoản đăng nhập.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2), // Thời gian hiển thị
+          ),
+        );
     }
   }
 
@@ -303,13 +312,10 @@ class _LoginPageState extends State<LoginPage> {
           actions: [
             IconButton(
               onPressed: () async {
-                // Mở ConfigurationPage và nhận giá trị trả về
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ConfigurationPage()),
                 );
-
-                // Kiểm tra kết quả trả về từ ConfigurationPage
                 if (result != null) {
                   setState(() {
                   });
@@ -333,48 +339,50 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
+                    SizedBox(height: 30,),
                     Image.asset(
                       'assets/image/logoJVF_RFID.png',
-                      width: screenWidth * 0.5,
-                      height: screenHeight * 0.23,
+                      width: screenWidth * 0.75,
+                      height: screenHeight * 0.15,
                     ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo trục dọc
-                        crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa theo trục ngang
-                        children: [
-                          Text(
-                            'TẬP ĐOÀN DẦU KHÍ VIỆT NAM',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.045,
-                              color: AppColor.logoText,
-                            ),
-                            textAlign: TextAlign.center, // Căn giữa chữ
+                   // SizedBox(height: screenHeight * 0.03),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.start, // Căn giữa theo trục dọc
+                      crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa theo trục ngang
+                      children: [
+                        Text(
+                          'PVFCCo RFID',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.07,
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.logoText,
+
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 0),
-                            child: Text(
-                              'TỔNG CÔNG TY',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.bold,
-                                color: AppColor.logoText,
-                              ),
-                              textAlign: TextAlign.center, // Căn giữa chữ
-                            ),
-                          ),
-                          Text(
-                            'PHÂN BÓN VÀ HÓA CHẤT DẦU KHÍ',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.logoText,
-                            ),
-                            textAlign: TextAlign.center, // Căn giữa chữ
-                          ),
-                        ],
-                      ),
+                          textAlign: TextAlign.center, // Căn giữa chữ
+
+                        ),
+                        // Padding(
+                        //   padding: const EdgeInsets.only(left: 0),
+                        //   child: Text(
+                        //     'TỔNG CÔNG TY',
+                        //     style: TextStyle(
+                        //       fontSize: screenWidth * 0.045,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: AppColor.logoText,
+                        //     ),
+                        //     textAlign: TextAlign.center, // Căn giữa chữ
+                        //   ),
+                        // ),
+                        // Text(
+                        //   'PHÂN BÓN VÀ HÓA CHẤT DẦU KHÍ',
+                        //   style: TextStyle(
+                        //     fontSize: screenWidth * 0.045,
+                        //     fontWeight: FontWeight.bold,
+                        //     color: AppColor.logoText,
+                        //   ),
+                        //   textAlign: TextAlign.center, // Căn giữa chữ
+                        // ),
+                      ],
                     ),
                     SizedBox(
                       height: screenHeight * 0.06, // 6% của chiều cao màn hình
@@ -384,7 +392,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: screenWidth * 0.8,
                       child: TextField(
                         controller: taiKhoanController,
-                        style: TextStyle(fontSize: screenWidth * 0.06, color: AppColor.mainText), // Màu chữ chính
+                        style: TextStyle(fontSize: screenWidth * 0.06, color: AppColor.contentText), // Màu chữ chính
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(screenWidth * 0.048),
@@ -401,7 +409,7 @@ class _LoginPageState extends State<LoginPage> {
                           labelStyle: TextStyle(color: AppColor.mainText, fontSize: screenWidth * 0.06), // Màu chữ của label
                           prefixIcon: const Icon(
                             Icons.person_2_outlined,
-                            color: AppColor.mainText,
+                            color: AppColor.contentText,
                           ),
                           contentPadding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.02),
                         ),
@@ -412,7 +420,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: screenWidth * 0.8,
                       child: TextField(
                         controller: matKhauController,
-                        style: TextStyle(fontSize: screenWidth * 0.06, color: AppColor.mainText), // Màu chữ chính
+                        style: TextStyle(fontSize: screenWidth * 0.06, color: AppColor.contentText), // Màu chữ chính
                         obscureText: !_passwordVisible,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -430,13 +438,13 @@ class _LoginPageState extends State<LoginPage> {
                           labelStyle: TextStyle(color: AppColor.mainText, fontSize: screenWidth * 0.06), // Màu chữ của label
                           prefixIcon: const Icon(
                             Icons.lock_outlined,
-                            color: AppColor.mainText,
+                            color: AppColor.contentText,
                           ),
                           contentPadding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                              color: AppColor.mainText,
+                              color: AppColor.contentText,
                             ),
                             onPressed: () {
                               setState(() {
@@ -448,6 +456,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.08),
+
+                    // Login button
                     TextButton(
                       onPressed: () => _login(context),
                       style: TextButton.styleFrom(

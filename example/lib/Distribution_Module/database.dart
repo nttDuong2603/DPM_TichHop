@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:async';
@@ -21,7 +21,9 @@ class CalendarDatabaseHelper {
 
   Future<Database> initDatabase() async {
     String path = join(await getDatabasesPath(), 'BDLLPP24042024.db');
-    // print('path: $path');
+     if (kDebugMode) {
+       print('Database path: $path');
+     }
     return openDatabase(
       path,
       onCreate: (db, version) async {

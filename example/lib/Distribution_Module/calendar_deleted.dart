@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../Utils/app_color.dart';
 import 'send_data.dart';
 import 'celendar.dart';
 import 'model.dart';
@@ -176,15 +177,18 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
               backgroundColor: const Color(0xFFE9EBF1),
               elevation: 4,
               shadowColor: Colors.blue.withOpacity(0.5),
-              leading: Container(
-              ),
+              leading: IconButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  icon: const Icon(Icons.arrow_back)),
               centerTitle: true,
               title: Text(
                 'Lịch phân phối đã xóa ',
                 style: TextStyle(
                   fontSize: screenWith * 0.065,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
             ),
@@ -197,7 +201,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                     width: 30, // Giới hạn kích thước của CircularProgressIndicator
                     height: 30,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                     ),
                   ),
                 ),
@@ -212,7 +216,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                           width: 30, // Giới hạn kích thước của CircularProgressIndicator
                           height: 30,
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                           ),
                         ),
                       ),
@@ -239,7 +243,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                               const SizedBox(height: 15),
                               const Text(
                                 'Chưa có lịch phân phối được xóa',
-                                style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                                style: TextStyle(fontSize: 22, color: AppColor.mainText),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -266,16 +270,16 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                       return AlertDialog(
                                         title: const Text(
                                           'Xác nhận khôi phục lịch',
-                                          style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                                          style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
                                         ),
                                         content: const Text(
                                           "Bạn có chắc chắn muốn khôi phục lịch này không?",
-                                          style: TextStyle(fontSize: 18, color: Color(0xFF097746)),
+                                          style: TextStyle(fontSize: 18, color: AppColor.mainText),
                                         ),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -294,7 +298,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                           const SizedBox(width: 8),
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -324,7 +328,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                 alignment: Alignment.centerLeft,
                                 child: const Padding(
                                   padding: EdgeInsets.only(left: 20.0),
-                                  child: Icon(Icons.restore_from_trash_outlined, color: Color(0xFF097746)),
+                                  child: Icon(Icons.restore_from_trash_outlined, color: AppColor.mainText),
                                 ),
                               ),
                               child: GestureDetector(
@@ -337,17 +341,17 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                       return AlertDialog(
                                         title: const Text('Xác nhận xóa lịch vĩnh viễn',
                                             style: TextStyle(
-                                                color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+                                                color: AppColor.mainText, fontWeight: FontWeight.bold)),
                                         content: const Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFF097746),
+                                              color: AppColor.mainText,
                                             )),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -367,7 +371,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -435,7 +439,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                           children: [
                                             Text('${event.tenDaiLy}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.mainText,
                                                   fontSize: screenWith*0.05,
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -443,28 +447,28 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                             Text(
                                               'Thông tin sản phẩm: ${event.tenSanPham}',
                                               style: TextStyle(
-                                                color: const Color(0xFF097746),
+                                                color: AppColor.contentText,
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
                                             Text(
                                               'Số lượng: ${event.soLuong}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
                                               ),
                                             ),
                                             Text(
                                               "Số lượng quét: ${event.soLuongQuett}",
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
                                               ),
                                             ),
                                             Text(
                                               'Lệnh giao hàng: ${event.lenhPhanPhoi}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
                                               ),
                                             ),
@@ -472,14 +476,14 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                             Text(
                                               'Phiếu xuất kho: ${event.phieuXuatKho}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
                                               ),
                                             ),
                                             Text(
                                               'Ghi chú: ${event.ghiChu}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
 
                                               ),
@@ -487,7 +491,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                             Text(
                                               'Ngày Tạo: ${event.time}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.contentText,
                                                   fontSize: screenWith*0.05
                                               ),
                                             ),
@@ -497,7 +501,7 @@ class _CalendarDeletedState extends State<CalendarDeleted> {
                                       const Icon(
                                         Icons.delete_outline,
                                         size: 30.0,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.deleteAction,
                                       ),
                                     ],
                                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Utils/app_color.dart';
 import 'model.dart';
 import 'database.dart';
 
@@ -72,7 +73,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
         actions: [],
@@ -88,7 +89,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
                 'Nhập thông tin',
                 style: TextStyle(
                   fontSize: 26,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
               const SizedBox(height: 15),
@@ -328,7 +329,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
                       }
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF097746),
+                      backgroundColor: AppColor.mainText,
                       padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),

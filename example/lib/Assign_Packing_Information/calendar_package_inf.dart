@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:intl/intl.dart'; // Import thư viện intl
+import '../Utils/app_color.dart';
 import 'database_package_inf.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/services.dart';
@@ -88,27 +89,18 @@ class _CreateCalendarDistributionInfState extends State<CreateCalendarDistributi
         backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: InkWell(
-              onTap: () {},
-              child:
-                Container(
-                    width: 100,
-                    height: 100,
-              ),
-            ),
-          ),
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            icon: const Icon(Icons.arrow_back)),
         centerTitle: true,
         title: const Text(
-          'Tạo lịch',
+          'Tạo lịch đóng bao',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
       ),
@@ -123,7 +115,7 @@ class _CreateCalendarDistributionInfState extends State<CreateCalendarDistributi
                 'Nhập thông tin lịch',
                 style: TextStyle(
                   fontSize: 26,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
               const SizedBox(height: 13),
@@ -257,7 +249,7 @@ class _CreateCalendarDistributionInfState extends State<CreateCalendarDistributi
               }
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF097746),
+              backgroundColor:  AppColor.mainText,
               padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),

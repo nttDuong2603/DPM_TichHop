@@ -12,6 +12,7 @@ import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
 import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
+import '../Utils/app_color.dart';
 import '../main.dart';
 import '../utils/app_config.dart';
 import 'model.dart';
@@ -27,19 +28,23 @@ import '../utils/key_event_channel.dart';
 import '../utils/scan_count_modal.dart';
 import 'select_schedule_page.dart';
 import 'inventory_export_codes.dart';
+
 /*Distribution*/
 class SendData extends StatefulWidget {
   final Calendar event;
   final Function(Calendar) onDeleteEvent;
 
-  const SendData({Key? key, required this.event, required this.onDeleteEvent}) : super(key: key);
+  const SendData({Key? key, required this.event, required this.onDeleteEvent})
+      : super(key: key);
+
   @override
   State<SendData> createState() => _SendDataState();
 }
 
 class _SendDataState extends State<SendData> {
   //Khai báo biến
-  final StreamController<int> _updateStreamController = StreamController<int>.broadcast();
+  final StreamController<int> _updateStreamController =
+      StreamController<int>.broadcast();
   late Calendar event;
   final CalendarDatabaseHelper databaseHelper = CalendarDatabaseHelper();
   String _platformVersion = 'Unknown';
@@ -64,7 +69,7 @@ class _SendDataState extends State<SendData> {
   final List<String> _EPC = [];
   List<TagEpc> _successfulTags = [];
   int totalTags = 0;
-  static int _value  = 0;
+  static int _value = 0;
   int successfullySaved = 0;
   int previousSavedCount = 0;
   bool isScanning = false;
@@ -84,13 +89,14 @@ class _SendDataState extends State<SendData> {
   bool _shouldRequest = true;
   List<TagEpc> temporarySavedTags = [];
   Queue<TagEpc> tagsToProcess = Queue<TagEpc>();
-  int processedTagsCount = 0;  // Biến trung gian để theo dõi số lượng tag đã xử lý
+  int processedTagsCount =
+      0; // Biến trung gian để theo dõi số lượng tag đã xử lý
   bool _isDialogShown = false; // biến báo để close popup
   final _storageTemporary = const FlutterSecureStorage();
   bool isSaving = false;
   bool _isEnoughQuantity = false;
   bool _isStop = false;
-  TextEditingController _selectedAgencyNameController  = TextEditingController();
+  TextEditingController _selectedAgencyNameController = TextEditingController();
   TextEditingController _mspTspController = TextEditingController();
   TextEditingController _MnppTnppController = TextEditingController();
   TextEditingController _PXKController = TextEditingController();
@@ -116,26 +122,27 @@ class _SendDataState extends State<SendData> {
   int orthercase = 0;
   final secureStorage = const FlutterSecureStorage();
   final distributionStorage = const FlutterSecureStorage();
+
   Stream<int> get updateStream => _updateStreamController.stream;
-  bool isShowModal = false;
+  static bool isShowModal = false;
   final _storageAcountCode = const FlutterSecureStorage();
   bool _isShowSelectSyncInfModal = false;
   List<ExportCode> selectedExportCodes = [];
   List<ExportCode> _selectedExportCodes = [];
   List<String> selectedMaPPs = [];
-  List<String>selectedMaLXH = [];
+  List<String> selectedMaLXH = [];
   String maPP = '';
   String maPXK = '';
   PXKCode? _selectedExportCode; // Mã PXK đã chọn
   List<PXKCode> exportCodes = []; // Các mã PXK mẫu
   Future<List<PXKCode>>? _futureExportCodes;
+
   // String IP = 'https://jvf-admin.rynansaas.com/api';
   // String IP = 'http://192.168.19.69:5088/api';
   // String IP = 'http://192.168.19.180:5088/api';
 
   List<TagEpc> r5_resultTags = [];
   bool scanStatusR5 = false;
-
 
   @override
   void initState() {
@@ -174,28 +181,32 @@ class _SendDataState extends State<SendData> {
       await _toggleScanningForC5();
     }
   }
+
   void uhfBLERegister() {
-    UHFBlePlugin.setMultiTagCallback((tagList) async { // Listen tag data from R5
+    UHFBlePlugin.setMultiTagCallback((tagList) async {
+      // Listen tag data from R5
       if (currentDevice != Device.rSeries) return;
       int targetQuantity = (event.soLuong + (event.soLuong * 0.5)).toInt();
 
       if (_data.length >= targetQuantity) {
         if (!_isNotifiedEnough) {
-         await stopScanning();
-         if (mounted) {
-           setState(() {
-             _isContinuousCall = false;
-             _isNotifiedEnough = true;
-           });
-         }
+          await stopScanning();
+          if (mounted) {
+            setState(() {
+              _isContinuousCall = false;
+              _isNotifiedEnough = true;
+            });
+          }
         }
         return;
       }
 
       isScanning = true;
       r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
-      List<TagEpc> uniqueData = r5_resultTags.where((newTag) =>
-      !_data.any((existingTag) => existingTag.epc == newTag.epc)).toList();
+      List<TagEpc> uniqueData = r5_resultTags
+          .where((newTag) =>
+              !_data.any((existingTag) => existingTag.epc == newTag.epc))
+          .toList();
       print("danh sach cac the doc lap: ${uniqueData.length}");
 
       if (uniqueData.isNotEmpty) {
@@ -210,7 +221,7 @@ class _SendDataState extends State<SendData> {
     });
     UHFBlePlugin.setScanningStatusCallback((scanStatus) async {
       scanStatusR5 = scanStatus;
-     await _toggleScanningForR5();
+      await _toggleScanningForR5();
     });
   }
 
@@ -265,10 +276,10 @@ class _SendDataState extends State<SendData> {
         // CommonFunction().playScanSound();
         successfullySaved = _data.length;
       });
-      sendUpdateEvent(successfullySaved); // Send update event with new tag count
-      processNextTag();  // Tiếp tục xử lý nhãn tiếp theo
-    } else {
-    }
+      sendUpdateEvent(
+          successfullySaved); // Send update event with new tag count
+      processNextTag(); // Tiếp tục xử lý nhãn tiếp theo
+    } else {}
   }
 
   Future<void> _playScanSound() async {
@@ -279,7 +290,6 @@ class _SendDataState extends State<SendData> {
       print("$e");
     }
   }
-
 
   void updateTags(dynamic result) async {
     try {
@@ -318,7 +328,8 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<void> saveTemporarySavedTags(String eventId, List<TagEpc> tags) async {
-    String key = 'temporarySavedTags_$eventId'; // Tạo khóa duy nhất dựa trên ID lịch
+    String key =
+        'temporarySavedTags_$eventId'; // Tạo khóa duy nhất dựa trên ID lịch
     String tagsJson = jsonEncode(tags.map((tag) => tag.toJson()).toList());
     await _storageTemporary.write(key: key, value: tagsJson);
   }
@@ -340,7 +351,8 @@ class _SendDataState extends State<SendData> {
     List<TagEpc> tempSavedTags = await loadTemporarySavedTags(event.id);
     showDialog(
       context: context,
-      barrierDismissible: false, // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
+      barrierDismissible: false,
+      // Người dùng không thể tắt dialog bằng cách nhấn ngoài biên
       builder: (BuildContext context) {
         return const Dialog(
           child: Padding(
@@ -349,12 +361,13 @@ class _SendDataState extends State<SendData> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                 ),
                 SizedBox(width: 20),
-                Text("Đang lưu dữ liệu...",
+                Text(
+                  "Đang lưu dữ liệu...",
                   style: TextStyle(
-                    color: Color(0xFF097746),
+                    color: AppColor.mainText,
                   ),
                 ),
               ],
@@ -367,7 +380,8 @@ class _SendDataState extends State<SendData> {
       if (!tempSavedTags.any((savedTag) => savedTag.epc == tag.epc)) {
         // Nếu tag không tồn tại trong CSDL và chưa có trong temporarySavedTags
         await _databaseHelper.insertRFIDData(tag, event.id);
-        temporarySavedTags.add(tag);// Thêm tag vào danh sách tạm sau khi lưu thành công
+        temporarySavedTags
+            .add(tag); // Thêm tag vào danh sách tạm sau khi lưu thành công
         savedatabase = true;
       }
       saveTemporarySavedTags(event.id, temporarySavedTags);
@@ -379,12 +393,10 @@ class _SendDataState extends State<SendData> {
     });
   }
 
-
-
-
   Future<void> saveSuccessfullySaved(String eventId, int value) async {
     final secureStorage = const FlutterSecureStorage();
-    await secureStorage.write(key: '${eventId}_length', value: value.toString());
+    await secureStorage.write(
+        key: '${eventId}_length', value: value.toString());
   }
 
   Future<void> loadSuccessfullySaved(String eventId) async {
@@ -431,18 +443,18 @@ class _SendDataState extends State<SendData> {
     newData.forEach((newTag) {
       // Kiểm tra xem tag này đã có trong existingData chưa
       TagEpc? existingTag = existingData.firstWhere(
-            (tag) => tag.epc == newTag.epc,
-        orElse: () => TagEpc(epc: newTag.epc),  // Tạo tag mới nếu không tìm thấy
+        (tag) => tag.epc == newTag.epc,
+        orElse: () => TagEpc(epc: newTag.epc), // Tạo tag mới nếu không tìm thấy
       );
 
       // Nếu tag đã có, giữ nguyên saveDate, chỉ cập nhật nếu tag mới
       if (existingTag.saveDate == null) {
-        existingTag.saveDate = currentDate;  // Cập nhật ngày giờ cho tag mới
+        existingTag.saveDate = currentDate; // Cập nhật ngày giờ cho tag mới
       }
 
       // Thêm tag vào danh sách đã lưu
       if (!existingData.any((tag) => tag.epc == newTag.epc)) {
-        existingData.add(existingTag);  // Thêm tag mới vào danh sách
+        existingData.add(existingTag); // Thêm tag mới vào danh sách
       }
     });
 
@@ -453,11 +465,10 @@ class _SendDataState extends State<SendData> {
     await _storage.write(key: key, value: updatedDataString);
   }
 
-
-
-/// Load tag list from storage
+  /// Load tag list from storage
   Future<List<TagEpc>> loadData(String key) async {
-    print("Debug: data string key ${key}"); //45851b4f-580d-4ad6-b6bf-eb0cf73b8052
+    print(
+        "Debug: data string key ${key}"); //45851b4f-580d-4ad6-b6bf-eb0cf73b8052
     String? dataString = await _storage.read(key: key);
     print("Debug: data string ${dataString}");
     if (dataString != null) {
@@ -468,21 +479,29 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<void> stopScanning() async {
-    if(mounted){
+    if (mounted) {
       if (_isDialogShown) {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
+        Navigator.of(context, rootNavigator: true).pop('dialog');
+        _isDialogShown = false;
       }
     }
-      await DataReadOptions.readTagsAsync(false, currentDevice);
-
+    await DataReadOptions.readTagsAsync(false, currentDevice);
   }
 
-  void _showSnackBar(String message, {bool isError = false}) {
+  void _showSnackBar_bk1(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        backgroundColor: isError ? Colors.red : const Color(0xFF4EB47D),
+      ),
+    );
+  }
+  void _showSnackBar(String message,{bool isError = false}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
         backgroundColor: isError ? Colors.red : const Color(0xFF4EB47D),
       ),
     );
@@ -495,12 +514,14 @@ class _SendDataState extends State<SendData> {
   void _showChipInformation(BuildContext context, String eventId) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ChipInformationPage(eventId: eventId)),
+      MaterialPageRoute(
+          builder: (context) => ChipInformationPage(eventId: eventId)),
     );
   }
 
   void loadTagCount() async {
-    if (widget.event.id != null) { // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
+    if (widget.event.id != null) {
+      // Giả sử widget.event là sự kiện được chọn và có thuộc tính id
       List<TagEpc> tags = await loadData(event.id);
       setState(() {
         tagCount = tags.length; // Cập nhật số lượng tags vào biến trạng thái
@@ -550,34 +571,38 @@ class _SendDataState extends State<SendData> {
     }
   }
 
-  void onAgencySelected(String selectedAgencyName) {
-  }
+  void onAgencySelected(String selectedAgencyName) {}
 
   Future<void> _toggleScanningForC5() async {
-    try{
-      if (isShowModal|| currentDevice != Device.cSeries && currentDevice !=  Device.cameraBarcodes) {
+    try {
+      if (isShowModal ||
+          currentDevice != Device.cSeries &&
+              currentDevice != Device.cameraBarcodes) {
         return;
-
       }
-      if(currentDevice == Device.cameraBarcodes){
+      if (currentDevice == Device.cameraBarcodes) {
         ConnectionNotificationRSeries.showDeviceWaring(context, false);
         return;
       }
 
-      if (_isNotifiedEnough || tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+      if (_isNotifiedEnough ||
+          tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt()) {
         await DataReadOptions.readTagsAsync(false, currentDevice);
-        _showSnackBar('Đã đạt đủ số lượng',);
+        _showSnackBar(
+          'Đã đạt đủ số lượng',
+        );
         return;
       } else {
         if (_isContinuousCall) {
           DataReadOptions.readTagsAsync(false, currentDevice);
-          if (_isDialogShown && mounted) {
+          if (mounted && _isDialogShown) {
             Navigator.of(context, rootNavigator: true).pop('dialog');
+            _isDialogShown = false;
           }
           setState(() {
             loadTagCount();
           });
-        } else  {
+        } else {
           DataReadOptions.readTagsAsync(true, currentDevice); //Start
         }
         setState(() {
@@ -592,96 +617,117 @@ class _SendDataState extends State<SendData> {
             builder: (BuildContext context) {
               return (_isShowModal)
                   ? Center(
-                child: Dialog(
-                  elevation: 0,
-                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
-                  child: SizedBox(
-                    height :300,
-                    child: SavedTagsModal(
-                      updateStream: _updateStreamController.stream,
-                    ),
-                  ),
-                ),
-              ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
-            }, context: context,
-          ).then((_) => _isDialogShown = false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
+                      child: Dialog(
+                        elevation: 0,
+                        backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                        child: SizedBox(
+                          height: 300,
+                          child: SavedTagsModal(
+                            updateStream: _updateStreamController.stream,
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox
+                      .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
+            },
+            context: context,
+          ).then((_) => _isDialogShown =
+              false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
         } else {
           _isShowModal = false;
         }
       }
-    }catch(e){
+    } catch (e) {
       print('Error: $e');
     }
-
   }
-  Future<void> _toggleScanningForR5() async {
-    try{
 
+  Future<void> _toggleScanningForR5() async {
+    try {
       if (isShowModal || currentDevice != Device.rSeries) {
         return;
       }
+
       // Notify if not use scanner device
-      else if(currentDevice == Device.cameraBarcodes){
+      else if (currentDevice == Device.cameraBarcodes) {
         ConnectionNotificationRSeries.showDeviceWaring(context, false);
         return;
       }
+
+      // Check connection
+      var isConnected = await UHFBlePlugin.getConnectionStatus();
+      if (mounted && !isConnected) {
+        ConnectionNotificationRSeries.showConnectionStatus(context, false);
+        return;
+      }
+
       // Notify if enough quantity
-      if (_isNotifiedEnough || tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt() ) {
+      if (_isNotifiedEnough ||
+          tagCount >= (event.soLuong + (event.soLuong * 0.5)).toInt()) {
         await DataReadOptions.readTagsAsync(false, currentDevice);
-        _showSnackBar('Đã đạt đủ số lượng',);
+        _showSnackBar(
+          'Đã đạt đủ số lượng',
+        );
         return;
       } else {
         //If you see continuous scanning, stop before starting
         if (_isContinuousCall) {
           await DataReadOptions.readTagsAsync(false, currentDevice);
-          if (_isDialogShown && mounted) {
-            Navigator.of(context, rootNavigator: true).pop('dialog');
+          if (mounted && _isDialogShown) {
+            Navigator.of(context, rootNavigator: true)
+                .pop('dialog'); // Đóng dialog
+            _isDialogShown = false;
+            // Navigator.pop(context);
           }
           setState(() {
             loadTagCount();
           });
         }
         // Not scan continue,...
-        else  {
-         await DataReadOptions.readTagsAsync(true, currentDevice); //Start
+        else {
+          await DataReadOptions.readTagsAsync(true, currentDevice); //Start
         }
-        setState(() { // show model lên
+        setState(() {
+          // show model lên
           _isContinuousCall = !_isContinuousCall;
           _isShowModal = _isContinuousCall;
-          scanStatusR5=false;
+          scanStatusR5 = false;
           _isDialogShown = true;
         });
-        if (_isContinuousCall) { // đang scan
+        if (_isContinuousCall) {
+          // đang scan
           _data = await loadData(event.id);
           showDialog(
             barrierDismissible: true,
             builder: (BuildContext context) {
               return (_isShowModal)
                   ? Center(
-                child: Dialog(
-                  elevation: 0,
-                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
-                  child: SizedBox(
-                    height :300,
-                    child: SavedTagsModal(
-                      updateStream: _updateStreamController.stream,
-                    ),
-                  ),
-                ),
-              ) : const SizedBox.shrink();  //một widget rỗng được hiển thị nếu _isShowModal = false
-            }, context: context,
+                      child: Dialog(
+                        elevation: 0,
+                        backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                        child: SizedBox(
+                          height: 300,
+                          child: SavedTagsModal(
+                            updateStream: _updateStreamController.stream,
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox
+                      .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
+            },
+            context: context,
           ).then((_) {
             _isDialogShown = false;
-
           }); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
         } else {
           _isShowModal = false;
         }
       }
-    }catch(e){
+    } catch (e) {
       print('Error: $e');
     }
-
   }
 
   Future<void> _showMPXSelection(BuildContext context) async {
@@ -691,21 +737,25 @@ class _SendDataState extends State<SendData> {
           // fetchPXKData: fetchPXKData, // Sử dụng phương thức fetchPXKData hiện tại của bạn
           fetchPXKData: fetchPXKmaKhoData,
           onSelect: (Dealer selectedDealer) {
-            _updateUIWithSelectedDealer(selectedDealer); // Cập nhật UI với Dealer được chọn
+            _updateUIWithSelectedDealer(
+                selectedDealer); // Cập nhật UI với Dealer được chọn
           },
         ),
       ),
     );
   }
 
-  void _showExportCodesSelection(BuildContext context, StateSetter modalSetState, String selectedPXK, String pTien) async {
-    final selectedExportCodes = await Navigator.of(context).push<List<ExportCode>>(
+  void _showExportCodesSelection(BuildContext context,
+      StateSetter modalSetState, String selectedPXK, String pTien) async {
+    final selectedExportCodes =
+        await Navigator.of(context).push<List<ExportCode>>(
       MaterialPageRoute(
         builder: (context) => SelectExportCodesPage(
           selectedPXK: selectedPXK,
           pTien: pTien,
           onConfirm: (List<ExportCode> selectedCodes) {
-            Navigator.pop(context, selectedCodes); // Trả về danh sách mã PXK đã chọn
+            Navigator.pop(
+                context, selectedCodes); // Trả về danh sách mã PXK đã chọn
           },
         ),
       ),
@@ -714,14 +764,19 @@ class _SendDataState extends State<SendData> {
     // Kiểm tra nếu có mã PXK được chọn
     if (selectedExportCodes != null && selectedExportCodes.isNotEmpty) {
       modalSetState(() {
-        _selectedExportCodes = selectedExportCodes; // Cập nhật danh sách PXK đã chọn
-        _exportCodesController.text = selectedExportCodes.map((code) => code.maPXK).join(', '); // Hiển thị các mã PXK trong TextField
+        _selectedExportCodes =
+            selectedExportCodes; // Cập nhật danh sách PXK đã chọn
+        _exportCodesController.text = selectedExportCodes
+            .map((code) => code.maPXK)
+            .join(', '); // Hiển thị các mã PXK trong TextField
         selectedMaPPs = selectedExportCodes.map((code) => code.maPP).toList();
-        selectedMaLXH = selectedExportCodes.map((code) => code.lenhGiaoHang).toList();
+        selectedMaLXH =
+            selectedExportCodes.map((code) => code.lenhGiaoHang).toList();
 
         // Gộp mã PP và lệnh giao hàng thành một chuỗi duy nhất
         String combinedMaPPandLXH = selectedExportCodes
-            .map((code) => 'Mã PP: ${code.maPP}, Lệnh Giao Hàng: ${code.lenhGiaoHang}')
+            .map((code) =>
+                'Mã PP: ${code.maPP}, Lệnh Giao Hàng: ${code.lenhGiaoHang}')
             .join('\n');
 
         // Xử lý dữ liệu hoặc in ra thông tin gộp
@@ -731,7 +786,6 @@ class _SendDataState extends State<SendData> {
       });
     }
   }
-
 
   void updateMSPAndTSP(String? msp, String? tsp) {
     String combinedValue = "$tsp\n$msp ";
@@ -744,37 +798,39 @@ class _SendDataState extends State<SendData> {
   }
 
   void updateGhiChu(String? ghiChu) {
-    if(ghiChu != null){
+    if (ghiChu != null) {
       String combinedValue = "$ghiChu";
       _GCController.text = combinedValue;
-    }else{
+    } else {
       String combinedValue = "";
       _GCController.text = combinedValue;
     }
   }
 
   void updateMNPPAndTNPP(String? mnpp, String? tnpp) {
-    if (mnpp == null ) {
-      _MnppTnppController.text = "$tnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
-    } else if(tnpp == null ){
-      _MnppTnppController.text = "$mnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
-    }
-    else {
-      _MnppTnppController.text ="$tnpp\n$mnpp";
+    if (mnpp == null) {
+      _MnppTnppController.text =
+          "$tnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+    } else if (tnpp == null) {
+      _MnppTnppController.text =
+          "$mnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+    } else {
+      _MnppTnppController.text = "$tnpp\n$mnpp";
       _mspController.text = "$mnpp";
     }
   }
 
   void updatePXK(int? PXK) {
     if (PXK == null) {
-      _PXKController.text = ""; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+      _PXKController.text =
+          ""; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
     } else {
       _PXKController.text = "$PXK";
     }
   }
 
   void updateLXH(String? LXH) {
-    if(LXH == null){
+    if (LXH == null) {
       _LXHnppController.text = '';
     }
     _LXHnppController.text = LXH.toString();
@@ -839,7 +895,8 @@ class _SendDataState extends State<SendData> {
     bool hasMore = true;
     while (hasMore) {
       final response = await http.get(
-        Uri.parse('${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho'),
+        Uri.parse(
+            '${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho'),
         headers: {
           'Content-Type': 'application/json',
           'start-at': '$startAt',
@@ -851,11 +908,21 @@ class _SendDataState extends State<SendData> {
         List<dynamic> data = jsonResponse['data'];
         if (data.isNotEmpty) {
           for (var item in data) {
-            dealers.add(Dealer(MPX: item["1MPP"], MNPP: item["25MSP"], TNPP: item["10TSP"], MSP: item["6MNPP"], TSP: item["2TNPP"], PXK: item["1PXK"], LXH: item["4LXH"], SBCX: item["4SBCX"], ghiChu: item["22GC"]));
+            dealers.add(Dealer(
+                MPX: item["1MPP"],
+                MNPP: item["25MSP"],
+                TNPP: item["10TSP"],
+                MSP: item["6MNPP"],
+                TSP: item["2TNPP"],
+                PXK: item["1PXK"],
+                LXH: item["4LXH"],
+                SBCX: item["4SBCX"],
+                ghiChu: item["22GC"]));
           }
           // Chỉ tiếp tục gọi API nếu số lượng dữ liệu trả về = 1000
           if (data.length == dataAmount) {
-            startAt += dataAmount; // Cập nhật chỉ số bắt đầu cho lần yêu cầu tiếp theo
+            startAt +=
+                dataAmount; // Cập nhật chỉ số bắt đầu cho lần yêu cầu tiếp theo
           } else {
             hasMore = false; // Dừng vòng lặp nếu số lượng dữ liệu trả về < 1000
           }
@@ -931,7 +998,8 @@ class _SendDataState extends State<SendData> {
     try {
       while (hasMore) {
         final response = await http.get(
-          Uri.parse('${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho'),
+          Uri.parse(
+              '${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho'),
           headers: {
             'Content-Type': 'application/json',
             'start-at': '$startAt',
@@ -943,10 +1011,13 @@ class _SendDataState extends State<SendData> {
           var jsonResponse = json.decode(response.body);
 
           // Kiểm tra xeurl: m "data" có tồn tại và không phải null
-          if (jsonResponse != null && jsonResponse['data'] != null && jsonResponse['data'] is List) {
+          if (jsonResponse != null &&
+              jsonResponse['data'] != null &&
+              jsonResponse['data'] is List) {
             List<dynamic> data = jsonResponse['data'];
             print('data: $data');
-            print('${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho');
+            print(
+                '${AppConfig.IP}/api/B3AD8E0E35964CA4BCBFB24A8F5D4AB7/$maKho');
             for (var item in data) {
               // Kiểm tra và xử lý giá trị null trong các trường bạn cần
               String maPXK = item["MaPhieuXuatKho"] ?? 'Không có mã PXK';
@@ -974,7 +1045,6 @@ class _SendDataState extends State<SendData> {
 
     return exportCodes; // Trả về danh sách rỗng nếu có lỗi hoặc không có dữ liệu
   }
-
 
   // Future<List<ExportCode>> fetchExportCodesData() async {
   //   // Khởi tạo danh sách exportCodes
@@ -1028,7 +1098,8 @@ class _SendDataState extends State<SendData> {
     // Đọc các tag đã gửi từ FlutterSecureStorage
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
-    List<String> sentTags = sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    List<String> sentTags =
+        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     String baseUrl = '${AppConfig.IP}/api/CD28896A7B0446A0BF17403745E45C84/';
     List<TagEpc> allRFIDData = await loadData(event.id);
     String selectedMPX = _selectedAgencyNameController.text;
@@ -1097,7 +1168,9 @@ class _SendDataState extends State<SendData> {
 
   Future<void> saveFileToDownloads(String data, String fileName) async {
     try {
-      final downloadDirectory = await ExternalPath.getExternalStoragePublicDirectory(ExternalPath.DIRECTORY_DOWNLOADS);
+      final downloadDirectory =
+          await ExternalPath.getExternalStoragePublicDirectory(
+              ExternalPath.DIRECTORY_DOWNLOADS);
       final filePath = '$downloadDirectory/$fileName';
       final file = File(filePath);
       await file.writeAsString(data); // Viết dữ liệu vào tệp
@@ -1128,7 +1201,8 @@ class _SendDataState extends State<SendData> {
       String savedDateString = tag.saveDate != null
           ? DateFormat('dd/MM/yyyy HH:mm:ss').format(tag.saveDate!)
           : 'Unknown'; // Định dạng ngày
-      buffer.writeln('$epcString \n - $savedDateString \n'); // Thêm EPC và ngày lưu vào chuỗi
+      buffer.writeln(
+          '$epcString \n - $savedDateString \n'); // Thêm EPC và ngày lưu vào chuỗi
     }
     return buffer.toString();
   }
@@ -1136,10 +1210,13 @@ class _SendDataState extends State<SendData> {
   Future<void> saveDataWithTags(String key, String baseFileName) async {
     var permissionStatus = await Permission.storage.request();
     if (permissionStatus.isGranted) {
-      String formattedData = await formatDataForFileWithTags(event.id); // Lấy chuỗi định dạng
+      String formattedData =
+          await formatDataForFileWithTags(event.id); // Lấy chuỗi định dạng
       String timeStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      String fileName = '$baseFileName\_$timeStamp.txt'; // Tạo tên file với dấu thời gian
-      await saveFileToDownloads(formattedData, fileName); // Ghi dữ liệu vào tệp với tên duy nhất
+      String fileName =
+          '$baseFileName\_$timeStamp.txt'; // Tạo tên file với dấu thời gian
+      await saveFileToDownloads(
+          formattedData, fileName); // Ghi dữ liệu vào tệp với tên duy nhất
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Tệp đã được lưu vào mục Download: $fileName'),
@@ -1148,18 +1225,17 @@ class _SendDataState extends State<SendData> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          )
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Quyền truy cập bị từ chối. Không thể lưu tệp.'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ));
     }
   }
 
   Future<bool> shouldSendTag(String msp, String epcString) async {
-    final String apiUrl = '${AppConfig.IP}/api/8131F8268F8D4B349AAEE8FF82A63CC0/$msp/$epcString';
+    final String apiUrl =
+        '${AppConfig.IP}/api/8131F8268F8D4B349AAEE8FF82A63CC0/$msp/$epcString';
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -1179,6 +1255,7 @@ class _SendDataState extends State<SendData> {
     }
     return true; // Gửi nếu không tìm thấy ERROR_0000
   }
+
   bool isSuccess = false;
 
   // Future<Map<String, String>?> _showNoteInputDialog(BuildContext context) async {
@@ -1193,7 +1270,7 @@ class _SendDataState extends State<SendData> {
   //         title: Text(
   //           'Nhập thông tin',
   //           style: TextStyle(
-  //             color: Color(0xFF097746),
+  //             color: AppColor.mainText,
   //             fontWeight: FontWeight.bold,
   //           ),
   //         ),
@@ -1218,7 +1295,7 @@ class _SendDataState extends State<SendData> {
   //                     borderRadius: BorderRadius.circular(12.0),
   //                   ),
   //                   focusedBorder: OutlineInputBorder(
-  //                     borderSide: BorderSide(color: Color(0xFF097746)),
+  //                     borderSide: BorderSide(color: AppColor.mainText),
   //                     borderRadius: BorderRadius.circular(12.0),
   //                   ),
   //                   contentPadding:
@@ -1242,7 +1319,7 @@ class _SendDataState extends State<SendData> {
   //                     borderRadius: BorderRadius.circular(12.0),
   //                   ),
   //                   focusedBorder: OutlineInputBorder(
-  //                     borderSide: BorderSide(color: Color(0xFF097746)),
+  //                     borderSide: BorderSide(color: AppColor.mainText),
   //                     borderRadius: BorderRadius.circular(12.0),
   //                   ),
   //                   contentPadding:
@@ -1257,7 +1334,7 @@ class _SendDataState extends State<SendData> {
   //         actions: <Widget>[
   //           TextButton(
   //             style: ButtonStyle(
-  //               backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //               backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                 RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(10.0),
@@ -1272,7 +1349,7 @@ class _SendDataState extends State<SendData> {
   //           ),
   //           TextButton(
   //             style: ButtonStyle(
-  //               backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //               backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                 RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(10.0),
@@ -1314,7 +1391,7 @@ class _SendDataState extends State<SendData> {
   //         title: Text(
   //           'Nhập thông tin',
   //           style: TextStyle(
-  //             color: Color(0xFF097746),
+  //             color: AppColor.mainText,
   //             fontWeight: FontWeight.bold,
   //           ),
   //         ),
@@ -1328,7 +1405,7 @@ class _SendDataState extends State<SendData> {
   //                 children: [
   //                   Text('Mã Phân phối: $mpx',
   //                     style: TextStyle(
-  //                       color: Color(0xFF097746),
+  //                       color: AppColor.mainText,
   //                     ),
   //                   ),
   //                   TextField(
@@ -1346,7 +1423,7 @@ class _SendDataState extends State<SendData> {
   //                         borderRadius: BorderRadius.circular(12.0),
   //                       ),
   //                       focusedBorder: OutlineInputBorder(
-  //                         borderSide: BorderSide(color: Color(0xFF097746)),
+  //                         borderSide: BorderSide(color: AppColor.mainText),
   //                         borderRadius: BorderRadius.circular(12.0),
   //                       ),
   //                       contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
@@ -1369,7 +1446,7 @@ class _SendDataState extends State<SendData> {
   //                         borderRadius: BorderRadius.circular(12.0),
   //                       ),
   //                       focusedBorder: OutlineInputBorder(
-  //                         borderSide: BorderSide(color: Color(0xFF097746)),
+  //                         borderSide: BorderSide(color: AppColor.mainText),
   //                         borderRadius: BorderRadius.circular(12.0),
   //                       ),
   //                       contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1385,7 +1462,7 @@ class _SendDataState extends State<SendData> {
   //         actions: <Widget>[
   //           TextButton(
   //             style: ButtonStyle(
-  //               backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //               backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                 RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(10.0),
@@ -1400,7 +1477,7 @@ class _SendDataState extends State<SendData> {
   //           ),
   //           TextButton(
   //             style: ButtonStyle(
-  //               backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //               backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                 RoundedRectangleBorder(
   //                   borderRadius: BorderRadius.circular(10.0),
@@ -1446,7 +1523,7 @@ class _SendDataState extends State<SendData> {
   //              title: Text(
   //                'Nhập thông tin cho $mpx',
   //                style: TextStyle(
-  //                  color: Color(0xFF097746),
+  //                  color: AppColor.mainText,
   //                  fontWeight: FontWeight.bold,
   //                ),
   //              ),
@@ -1466,14 +1543,14 @@ class _SendDataState extends State<SendData> {
   //                              selectedCheckbox = value ?? false;
   //                            });
   //                          },
-  //                          activeColor: Color(0xFF097746), // Màu sắc của checkbox khi được chọn
+  //                          activeColor: AppColor.mainText, // Màu sắc của checkbox khi được chọn
   //                          checkColor: Colors.white,
-  //                          side: BorderSide(color: Color(0xFF097746), width: 2),
+  //                          side: BorderSide(color: AppColor.mainText, width: 2),
   //                        ),
   //                        Text(
   //                          '$mpx',
   //                          style: TextStyle(
-  //                            color: Color(0xFF097746),
+  //                            color: AppColor.mainText,
   //                          ),
   //                        ),
   //
@@ -1497,7 +1574,7 @@ class _SendDataState extends State<SendData> {
   //                            borderRadius: BorderRadius.circular(12.0),
   //                          ),
   //                          focusedBorder: OutlineInputBorder(
-  //                            borderSide: BorderSide(color: Color(0xFF097746)),
+  //                            borderSide: BorderSide(color: AppColor.mainText),
   //                            borderRadius: BorderRadius.circular(12.0),
   //                          ),
   //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
@@ -1521,7 +1598,7 @@ class _SendDataState extends State<SendData> {
   //                            borderRadius: BorderRadius.circular(12.0),
   //                          ),
   //                          focusedBorder: OutlineInputBorder(
-  //                            borderSide: BorderSide(color: Color(0xFF097746)),
+  //                            borderSide: BorderSide(color: AppColor.mainText),
   //                            borderRadius: BorderRadius.circular(12.0),
   //                          ),
   //                          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1536,7 +1613,7 @@ class _SendDataState extends State<SendData> {
   //              actions: <Widget>[
   //                TextButton(
   //                  style: ButtonStyle(
-  //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //                    backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                      RoundedRectangleBorder(
   //                        borderRadius: BorderRadius.circular(10.0),
@@ -1551,7 +1628,7 @@ class _SendDataState extends State<SendData> {
   //                ),
   //                TextButton(
   //                  style: ButtonStyle(
-  //                    backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+  //                    backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
   //                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
   //                      RoundedRectangleBorder(
   //                        borderRadius: BorderRadius.circular(10.0),
@@ -1577,7 +1654,8 @@ class _SendDataState extends State<SendData> {
   //      },
   //    );
   //  }
-  Future<Map<String, String>?> _showNoteInputDialog(BuildContext context, List<String> selectedMPXs) async {
+  Future<Map<String, String>?> _showNoteInputDialog(
+      BuildContext context, List<String> selectedMPXs) async {
     // Controllers để lưu các giá trị nhập vào cho từng mã MPX
     Map<String, TextEditingController> noteControllers = {};
     Map<String, TextEditingController> quantityControllers = {};
@@ -1602,11 +1680,12 @@ class _SendDataState extends State<SendData> {
               title: const Text(
                 'Nhập thông tin cho các mã MPX',
                 style: TextStyle(
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              contentPadding: const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
+              contentPadding:
+                  const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
               content: SingleChildScrollView(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -1623,13 +1702,14 @@ class _SendDataState extends State<SendData> {
                                 selectedCheckboxes[mpx] = value ?? false;
                               });
                             },
-                            activeColor: const Color(0xFF097746),
+                            activeColor: AppColor.mainText,
                             checkColor: Colors.white,
-                            side: const BorderSide(color: Color(0xFF097746), width: 2),
+                            side: const BorderSide(
+                                color: AppColor.mainText, width: 2),
                           ),
                           Text(
                             mpx,
-                            style: const TextStyle(color: Color(0xFF097746)),
+                            style: const TextStyle(color: AppColor.mainText),
                           ),
                         ],
                       ),
@@ -1643,14 +1723,17 @@ class _SendDataState extends State<SendData> {
                             labelStyle: const TextStyle(color: Colors.grey),
                             filled: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF65a281)),
+                              borderSide:
+                                  const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF097746)),
+                              borderSide:
+                                  const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 6.0),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -1663,14 +1746,17 @@ class _SendDataState extends State<SendData> {
                             labelStyle: const TextStyle(color: Colors.grey),
                             filled: true,
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF65a281)),
+                              borderSide:
+                                  const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF097746)),
+                              borderSide:
+                                  const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 12.0),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -1679,40 +1765,52 @@ class _SendDataState extends State<SendData> {
                   ],
                 ),
               ),
-              actionsPadding: const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
+              actionsPadding:
+                  const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
               actions: <Widget>[
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(AppColor.mainText),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0)),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(
+                        const Size(100.0, 30.0)),
                   ),
-                  child: const Text('Hủy', style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text('Hủy', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(context).pop(); // Trả về null khi bấm "Hủy"
                   },
                 ),
                 TextButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(AppColor.mainText),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0)),
                     ),
-                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                    fixedSize: MaterialStateProperty.all<Size>(
+                        const Size(100.0, 30.0)),
                   ),
-                  child: const Text('OK', style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text('OK', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     // Trả về dữ liệu từ dialog
                     Map<String, String> result = {};
                     selectedCheckboxes.forEach((mpx, isSelected) {
                       if (isSelected) {
-                        result[mpx + '_note'] = noteControllers[mpx]?.text ?? '';
-                        result[mpx + '_quantity'] = quantityControllers[mpx]?.text ?? '';
+                        result[mpx + '_note'] =
+                            noteControllers[mpx]?.text ?? '';
+                        result[mpx + '_quantity'] =
+                            quantityControllers[mpx]?.text ?? '';
                       }
                     });
-                    Navigator.of(context).pop(result); // Trả về thông tin nhập từ dialog
+                    Navigator.of(context)
+                        .pop(result); // Trả về thông tin nhập từ dialog
                   },
                 ),
               ],
@@ -1955,7 +2053,8 @@ class _SendDataState extends State<SendData> {
     List<String> failCodes = [];
 
     // Gọi _showNoteInputDialog với danh sách mã MPX
-    Map<String, String>? result = await _showNoteInputDialog(context, selectedMPXs);
+    Map<String, String>? result =
+        await _showNoteInputDialog(context, selectedMPXs);
 
     // Kiểm tra nếu người dùng bấm "Hủy"
     if (result == null) {
@@ -2015,42 +2114,50 @@ class _SendDataState extends State<SendData> {
 
     // Hiển thị kết quả
     if (successCodes.isNotEmpty) {
-      String successMessage = 'Các mã MPX đã hoàn thành: ${successCodes.join(', ')}';
+      String successMessage =
+          'Các mã MPX đã hoàn thành: ${successCodes.join(', ')}';
       _showSyncConfirmationDialog(context, successMessage, true);
     }
 
     if (failCodes.isNotEmpty) {
-      String failMessage = 'Các mã MPX không thành công: ${failCodes.join(', ')}';
+      String failMessage =
+          'Các mã MPX không thành công: ${failCodes.join(', ')}';
       _showSyncConfirmationDialog(context, failMessage, false);
     }
   }
 
-  void _showSyncConfirmationDialog(BuildContext context, String message, bool isSuccess) {
+  void _showSyncConfirmationDialog(
+      BuildContext context, String message, bool isSuccess) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
             isSuccess ? "Thông báo" : "Thông báo",
-            style: TextStyle(color: isSuccess ? const Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: isSuccess ?  AppColor.mainText : Colors.red,
+                fontWeight: FontWeight.bold),
           ),
           content: Text(
             message,
             style: TextStyle(
               fontSize: 18,
-              color: isSuccess ? const Color(0xFF097746) : const Color(0xFF097746),
+              color: isSuccess ? AppColor.mainText :  Colors.red,
             ),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                    borderRadius: BorderRadius.circular(
+                        10.0), // Điều chỉnh độ cong của góc
                   ),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                fixedSize:
+                    MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
               onPressed: () {
@@ -2078,21 +2185,34 @@ class _SendDataState extends State<SendData> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColor.mainText),
                     ),
                   );
                 } else if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Có lỗi xảy ra: ${snapshot.error}',
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height *
+                        0.7,
+                    child: Center(
+                      child: Text(
+                        'Có lỗi xảy ra: ${snapshot.error}',
+                        style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
                     ),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Không có mã phiếu xuất kho nào.',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF097746)),
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height *
+                        0.7, // Giới hạn chiều cao
+                    child: Center(
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Không có mã phiếu xuất kho nào.',
+                          style: TextStyle(
+                              fontSize: 16, color: AppColor.contentText),
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -2116,7 +2236,7 @@ class _SendDataState extends State<SendData> {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF097746),
+                                  color: AppColor.mainText,
                                 ),
                               ),
                             ),
@@ -2125,7 +2245,7 @@ class _SendDataState extends State<SendData> {
                               child: IconButton(
                                 icon: const Icon(
                                   Icons.close,
-                                  color: Color(0xFF097746),
+                                  color: AppColor.mainText,
                                   size: 30.0,
                                 ),
                                 onPressed: () {
@@ -2142,35 +2262,40 @@ class _SendDataState extends State<SendData> {
                             margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                             width: MediaQuery.of(context).size.width * 0.9,
                             child: DropdownSearch<PXKCode>(
-                              selectedItem: _selectedExportCode ?? null, // Chọn item nếu có
-                              items: exportCodes, // Dữ liệu từ API
-                              itemAsString: (PXKCode? u)=> u?.maPXK ?? "",
+                              selectedItem: _selectedExportCode ?? null,
+                              // Chọn item nếu có
+                              items: exportCodes,
+                              // Dữ liệu từ API
+                              itemAsString: (PXKCode? u) => u?.maPXK ?? "",
                               dropdownDecoratorProps: DropDownDecoratorProps(
                                 dropdownSearchDecoration: InputDecoration(
                                   contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16.0, vertical: 6.0),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12.0),
-                                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                                    borderSide: const BorderSide(
+                                        color: AppColor.mainText),
                                   ),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFF097746), width: 2.0),
+                                    borderSide: const BorderSide(
+                                        color: AppColor.mainText, width: 2.0),
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                                    borderSide: const BorderSide(
+                                        color: AppColor.mainText),
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   filled: true,
                                   fillColor: const Color(0xFFEBEDEC),
                                   hintText: 'Chọn Phiếu Xuất Kho',
                                   hintStyle: const TextStyle(
-                                    color: Color(0xFF097746),
+                                    color: AppColor.mainText,
                                     fontSize: 18,
                                   ),
                                 ),
                                 baseStyle: const TextStyle(
-                                  color: Color(0xFF097746),
+                                  color: AppColor.mainText,
                                   fontSize: 18,
                                 ),
                               ),
@@ -2180,29 +2305,33 @@ class _SendDataState extends State<SendData> {
                                   decoration: InputDecoration(
                                     labelText: 'Nhập tìm kiếm',
                                     labelStyle: const TextStyle(
-                                      color: Color(0xFF097746),
+                                      color: AppColor.mainText,
                                     ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12.0),
-                                      borderSide: const BorderSide(color: Color(0xFF097746)),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.mainText),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(color: Color(0xFF097746), width: 2.0),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.mainText, width: 2.0),
                                       borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(color: Color(0xFF097746)),
+                                      borderSide: const BorderSide(
+                                          color: AppColor.mainText),
                                       borderRadius: BorderRadius.circular(12.0),
                                     ),
                                   ),
                                 ),
-                                itemBuilder: (context, PXKCode item, isSelected) {
+                                itemBuilder:
+                                    (context, PXKCode item, isSelected) {
                                   return ListTile(
                                     title: Text(
                                       item.maPXK, // Hiển thị mã PXK
                                       style: const TextStyle(
                                         fontSize: 18,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     ),
                                     selected: isSelected,
@@ -2212,20 +2341,23 @@ class _SendDataState extends State<SendData> {
                                   return const Center(
                                     child: Text(
                                       "Không tìm thấy Phiếu xuất kho",
-                                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                                      style: TextStyle(
+                                          fontSize: 18, color: Colors.grey),
                                     ),
                                   );
                                 },
                               ),
                               onChanged: (PXKCode? newValue) {
                                 setState(() {
-                                  _selectedExportCode = newValue; // Cập nhật mã PXK đã chọn
+                                  _selectedExportCode =
+                                      newValue; // Cập nhật mã PXK đã chọn
                                 });
                                 if (newValue != null) {
                                   // Hiển thị modal xác nhận sau khi chọn
                                   maPXK = newValue.maPXK;
                                   // fetchmaPPData(maPXK); // Gọi hàm fetchmaPPData với maPXK đã chọn
-                                  showConfirmationModal(newValue.maPXK, modalSetState);
+                                  showConfirmationModal(
+                                      newValue.maPXK, modalSetState);
                                 }
                               },
                             ),
@@ -2242,21 +2374,23 @@ class _SendDataState extends State<SendData> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF097746),
+                                    color: AppColor.mainText,
                                   ),
                                 ),
                                 SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.3, // Chiều cao vùng cuộn
+                                  height: MediaQuery.of(context).size.height *
+                                      0.3, // Chiều cao vùng cuộn
                                   child: SingleChildScrollView(
                                     child: Column(
-                                      children: _selectedExportCodes.map((exportCode) {
+                                      children: _selectedExportCodes
+                                          .map((exportCode) {
                                         // Hiển thị gộp maPP và lenhGiaoHang
                                         return ListTile(
                                           title: Text(
                                             ' ${exportCode.lenhGiaoHang}(${exportCode.maPP})',
                                             style: const TextStyle(
                                               fontSize: 16,
-                                              color: Color(0xFF097746),
+                                              color: AppColor.mainText,
                                             ),
                                           ),
                                         );
@@ -2272,12 +2406,14 @@ class _SendDataState extends State<SendData> {
                         Center(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF097746),
-                              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                              backgroundColor:  AppColor.mainText,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10.0, vertical: 6.0),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
-                              minimumSize: const Size(200.0, 40.0), // Kích thước tối thiểu
+                              minimumSize: const Size(
+                                  200.0, 40.0), // Kích thước tối thiểu
                             ),
                             onPressed: () {
                               if (_exportCodesController.text.isEmpty) {
@@ -2289,7 +2425,7 @@ class _SendDataState extends State<SendData> {
                                       title: const Text(
                                         "Không thể đồng bộ",
                                         style: TextStyle(
-                                          color: Color(0xFF097746),
+                                          color: AppColor.mainText,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -2297,28 +2433,35 @@ class _SendDataState extends State<SendData> {
                                         "Vui lòng chọn Mã Phiếu xuất kho.",
                                         style: TextStyle(
                                           fontSize: 18,
-                                          color: Color(0xFF097746),
+                                          color: AppColor.mainText,
                                         ),
                                       ),
                                       actions: <Widget>[
                                         TextButton(
                                           style: ButtonStyle(
-                                            backgroundColor: MaterialStateProperty.all<Color>(
-                                                const Color(0xFF097746)),
-                                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                            backgroundColor:
+                                                MaterialStateProperty.all<
+                                                        Color>(
+                                                    AppColor.mainText),
+                                            shape: MaterialStateProperty.all<
+                                                RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10.0),
+                                                borderRadius:
+                                                    BorderRadius.circular(10.0),
                                               ),
                                             ),
-                                            fixedSize: MaterialStateProperty.all<Size>(
-                                                const Size(100.0, 30.0)),
+                                            fixedSize:
+                                                MaterialStateProperty.all<Size>(
+                                                    const Size(100.0, 30.0)),
                                           ),
                                           child: const Text(
                                             "Đóng",
-                                            style: TextStyle(color: Colors.white),
+                                            style:
+                                                TextStyle(color: Colors.white),
                                           ),
                                           onPressed: () {
-                                            Navigator.of(context).pop(); // Đóng cửa sổ dialog
+                                            Navigator.of(context)
+                                                .pop(); // Đóng cửa sổ dialog
                                           },
                                         )
                                       ],
@@ -2338,7 +2481,8 @@ class _SendDataState extends State<SendData> {
                             },
                             child: const Text(
                               'Bắt đầu đồng bộ',
-                              style: TextStyle(fontSize: 18, color: Colors.white),
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.white),
                             ),
                           ),
                         ),
@@ -2354,6 +2498,7 @@ class _SendDataState extends State<SendData> {
     ).whenComplete(() {
       // Reset dữ liệu khi modal đóng lại
       setState(() {
+
         _exportCodesController.clear(); // Xóa dữ liệu trong TextField
         _selectedExportCodes.clear(); // Xóa danh sách PXK đã chọn
         _selectedExportCode = null; // Reset danh sách PXK đã chọn
@@ -2362,15 +2507,18 @@ class _SendDataState extends State<SendData> {
   }
 
 // Modal to confirm export code selection
-  Future<void> showConfirmationModal(String selectedCode, StateSetter modalSetState) async {
+  Future<void> showConfirmationModal(
+      String selectedCode, StateSetter modalSetState) async {
     // Gọi hàm fetchExportCodesData để lấy danh sách PXK
     // List<PXKCode> exportCodes = await fetchExportCodesData();
     List<PXKCode> exportCodes = await fetchExportCodesMaKhoData();
     // Tìm mã PXK tương ứng với selectedCode, trả về đối tượng mặc định nếu không tìm thấy
     PXKCode matchingPXKCode = exportCodes.firstWhere(
-            (code) => code.maPXK == selectedCode,
-        orElse: () => PXKCode(maPXK: 'Mã không hợp lệ', pTien: 'Không có dữ liệu') // Trả về đối tượng mặc định
-    );
+        (code) => code.maPXK == selectedCode,
+        orElse: () => PXKCode(
+            maPXK: 'Mã không hợp lệ',
+            pTien: 'Không có dữ liệu') // Trả về đối tượng mặc định
+        );
 
     // Lấy giá trị pTien từ mã PXK đã tìm thấy hoặc mặc định
     String? pTien = matchingPXKCode.pTien;
@@ -2381,7 +2529,7 @@ class _SendDataState extends State<SendData> {
         title: const Text(
           'Xác nhận mã Phiếu xuất kho',
           style: TextStyle(
-            color: Color(0xFF097746),
+            color:  AppColor.mainText,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -2389,12 +2537,13 @@ class _SendDataState extends State<SendData> {
           'Bạn đã chọn mã Phiếu xuất kho: $selectedCode. Tiếp tục để chọn Lệnh giao hàng?',
           style: const TextStyle(
             fontSize: 18,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
         actions: <Widget>[
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround, // Căn đều các nút
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            // Căn đều các nút
             children: [
               TextButton(
                 onPressed: () {
@@ -2412,7 +2561,7 @@ class _SendDataState extends State<SendData> {
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF097746),
+                  backgroundColor: AppColor.mainText,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -2421,17 +2570,18 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng dialog
-                  _showExportCodesSelection(context, modalSetState, selectedCode, pTien!);
+                  _showExportCodesSelection(
+                      context, modalSetState, selectedCode, pTien!);
                 },
-                child: const Text(
-                  'Tiếp tục',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
                 style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF097746),
+                  backgroundColor:AppColor.mainText,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
+                ),
+                child: const Text(
+                  'Tiếp tục',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ],
@@ -2441,7 +2591,7 @@ class _SendDataState extends State<SendData> {
     );
   }
 
-  void showSelectDistributionCodesModal(){
+  void showSelectDistributionCodesModal() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2467,7 +2617,7 @@ class _SendDataState extends State<SendData> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF097746),
+                            color: AppColor.mainText,
                           ),
                         ),
                       ),
@@ -2476,7 +2626,7 @@ class _SendDataState extends State<SendData> {
                         child: IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF097746),
+                            color: AppColor.mainText,
                             size: 30.0,
                           ),
                           onPressed: () {
@@ -2486,11 +2636,13 @@ class _SendDataState extends State<SendData> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15,),
+                  const SizedBox(
+                    height: 15,
+                  ),
                   GestureDetector(
                     onTap: () =>
-                    // print('a'),
-                    _showMPXSelection(context),
+                        // print('a'),
+                        _showMPXSelection(context),
                     // _showExportCodesSelection(context),
                     child: AbsorbPointer(
                       child: Container(
@@ -2503,23 +2655,27 @@ class _SendDataState extends State<SendData> {
                             labelText: 'Chọn mã phân phối',
                             labelStyle: const TextStyle(
                               fontSize: 22,
-                              color: Color(0xFF097746),
+                              color: AppColor.mainText,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 6.0),
                             suffixIcon: const Icon(
                               Icons.navigate_next,
-                              color: Color(0xFF097746),
+                              color: AppColor.mainText,
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
-                              borderSide: const BorderSide(color: Color(0xFF097746)),
+                              borderSide:
+                                  const BorderSide(color: AppColor.mainText),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF097746)),
+                              borderSide:
+                                  const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF097746)),
+                              borderSide:
+                                  const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             filled: true,
@@ -2529,7 +2685,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2541,19 +2699,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Đại lý/kho',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2561,7 +2723,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2573,19 +2737,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Sản phẩm',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2593,7 +2761,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2604,19 +2774,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Phiếu xuất kho',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2624,7 +2798,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2635,19 +2811,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Lệnh giao hàng',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2655,7 +2835,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2666,19 +2848,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Số lương cần xuất',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2686,7 +2872,9 @@ class _SendDataState extends State<SendData> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                     width: MediaQuery.of(context).size.width * 0.9,
@@ -2697,19 +2885,23 @@ class _SendDataState extends State<SendData> {
                         labelText: 'Ghi chú',
                         labelStyle: const TextStyle(
                           fontSize: 22,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 6.0),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color(0xFF097746)),
+                          borderSide:
+                              const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2721,12 +2913,14 @@ class _SendDataState extends State<SendData> {
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF097746),
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                        backgroundColor: AppColor.mainText,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0, vertical: 6.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        minimumSize: const Size(200.0, 40.0), // Kích thước tối thiểu
+                        minimumSize:
+                            const Size(200.0, 40.0), // Kích thước tối thiểu
                       ),
                       onPressed: () {
                         if (_selectedAgencyNameController.text.isEmpty) {
@@ -2735,42 +2929,57 @@ class _SendDataState extends State<SendData> {
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: const Text("Không thể đồng bộ",style: TextStyle(
-                                  color: Color(0xFF097746),
-                                  fontWeight: FontWeight.bold,
+                                title: const Text(
+                                  "Không thể đồng bộ",
+                                  style: TextStyle(
+                                    color: AppColor.mainText,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                ),
-                                content: const Text("Vui lòng chọn mã lịch phân phối.",
+                                content: const Text(
+                                    "Vui lòng chọn mã lịch phân phối.",
                                     style: TextStyle(
                                       fontSize: 18,
-                                      color: Color(0xFF097746),
-                                    )
-                                ),
+                                      color: AppColor.mainText,
+                                    )),
                                 actions: <Widget>[
-                                  TextButton( style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                  TextButton(
+                                    style: ButtonStyle(
+                                      backgroundColor:
+                                          MaterialStateProperty.all<Color>(
+                                              AppColor.mainText),
+                                      shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              10.0), // Điều chỉnh độ cong của góc
+                                        ),
                                       ),
+                                      fixedSize:
+                                          MaterialStateProperty.all<Size>(
+                                              const Size(100.0, 30.0)),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
-                                  ),
-                                    child: const Text("Đóng", style: TextStyle(color: Colors.white),),
+                                    child: const Text(
+                                      "Đóng",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                     onPressed: () {
-                                      Navigator.of(context).pop(); // Đóng cửa sổ dialog
+                                      Navigator.of(context)
+                                          .pop(); // Đóng cửa sổ dialog
                                     },
                                   )
                                 ],
                               );
                             },
                           );
-                        } else{
+                        } else {
                           PutDistributionWithAccountCode();
                           // sendDataWithPutRequest();
-                          if(tenLNPP == "LNPP202400007"){ //Loại nhà phân phối là kho nhà máy thì phân phối
+                          if (tenLNPP == "LNPP202400007") {
+                            //Loại nhà phân phối là kho nhà máy thì phân phối
                             sendDataWithPutRequestWithInternalwarehouseCTPP();
-                          } else{ //còn lại sử dụng phân phối kho thuê
+                          } else {
+                            //còn lại sử dụng phân phối kho thuê
                             sendDataWithPutRequestWithAgencyCTPPKT();
                           }
                         } // Hàm gửi dữ liệu
@@ -2788,7 +2997,7 @@ class _SendDataState extends State<SendData> {
         );
       },
     ).then((_) {
-      _closeModal();  // Gọi hàm để đóng modal và cập nhật trạng thái
+      _closeModal(); // Gọi hàm để đóng modal và cập nhật trạng thái
     });
   }
 
@@ -2806,12 +3015,12 @@ class _SendDataState extends State<SendData> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                 ),
                 SizedBox(width: 20),
                 Text(
                   "Đang đồng bộ...",
-                  style: TextStyle(color: Color(0xFF097746)),
+                  style: TextStyle(color: AppColor.mainText),
                 ),
               ],
             ),
@@ -2822,7 +3031,8 @@ class _SendDataState extends State<SendData> {
     // Đọc các tag đã gửi từ FlutterSecureStorage
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
-    List<String> sentTags = sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    List<String> sentTags =
+        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     Set<String> sentTagsSet = sentTags.toSet();
     String? maTK = await _getmaTKfromSecureStorage();
     String baseUrl = '${AppConfig.IP}/api/B176498CF7634D8993453B457AB926CB';
@@ -2843,7 +3053,8 @@ class _SendDataState extends State<SendData> {
     String formattedTimestamp = milliString.padLeft(18, '0');
 
     // Giả sử _selectedExportCodes chứa danh sách các PXK đã chọn
-    List<ExportCode> selectedExportCodes = _selectedExportCodes; // Danh sách mã PXK đã chọn
+    List<ExportCode> selectedExportCodes =
+        _selectedExportCodes; // Danh sách mã PXK đã chọn
     int currentIndex = 0;
 
     // Duyệt qua từng mã PXK đã chọn và phân phối EPC
@@ -2852,11 +3063,12 @@ class _SendDataState extends State<SendData> {
       maPP = exportCode.maPP; // Mã PP cho từng PXK
       String maSP = exportCode.maSanPham;
       if (!syncedMaPPs.contains(maPP)) {
-        syncedMaPPs.add(maPP);  // Chỉ thêm 1 lần cho mỗi maPP
+        syncedMaPPs.add(maPP); // Chỉ thêm 1 lần cho mỗi maPP
       }
       // Nếu là mã phân phối cuối cùng thì đồng bộ tất cả các EPC còn lại
       if (i == selectedExportCodes.length - 1) {
-        int baoXuatThucTe = allRFIDData.length - currentIndex; // Lấy tất cả EPC còn lại
+        int baoXuatThucTe =
+            allRFIDData.length - currentIndex; // Lấy tất cả EPC còn lại
         for (int j = 0; j < baoXuatThucTe; j++) {
           if (networkErrorOccurred) break;
 
@@ -2896,7 +3108,9 @@ class _SendDataState extends State<SendData> {
                 try {
                   final response = await http.put(
                     Uri.parse(apiUrl),
-                    headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                    headers: {
+                      'Content-Type': 'application/json; charset=UTF-8'
+                    },
                     body: jsonEncode(data),
                   );
                   if (response.statusCode == 200) {
@@ -2965,8 +3179,11 @@ class _SendDataState extends State<SendData> {
         }
       } else {
         // Nếu không phải là mã phân phối cuối cùng, đồng bộ theo số bao cần xuất
-        int soBaoCanXuat = exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
-        for (int j = 0; j < soBaoCanXuat && currentIndex < allRFIDData.length; j++) {
+        int soBaoCanXuat =
+            exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
+        for (int j = 0;
+            j < soBaoCanXuat && currentIndex < allRFIDData.length;
+            j++) {
           if (networkErrorOccurred) break;
 
           TagEpc tag = allRFIDData[currentIndex];
@@ -3005,7 +3222,9 @@ class _SendDataState extends State<SendData> {
                 try {
                   final response = await http.put(
                     Uri.parse(apiUrl),
-                    headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                    headers: {
+                      'Content-Type': 'application/json; charset=UTF-8'
+                    },
                     body: jsonEncode(data),
                   );
                   if (response.statusCode == 200) {
@@ -3061,7 +3280,6 @@ class _SendDataState extends State<SendData> {
                         }
                       }
                     }
-
                   } else {
                     failSend++;
                   }
@@ -3096,7 +3314,7 @@ class _SendDataState extends State<SendData> {
             title: const Text(
               "Mất kết nối!",
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3104,19 +3322,21 @@ class _SendDataState extends State<SendData> {
               "Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>( AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   "OK",
@@ -3138,7 +3358,7 @@ class _SendDataState extends State<SendData> {
             title: const Text(
               "Đồng bộ thành công",
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3146,19 +3366,21 @@ class _SendDataState extends State<SendData> {
               "Bạn có muốn xác nhận Hoàn thành Lịch Phân phối này?",
               style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   'Hủy',
@@ -3171,13 +3393,15 @@ class _SendDataState extends State<SendData> {
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
@@ -3212,7 +3436,8 @@ class _SendDataState extends State<SendData> {
   }
 
   Future<bool> shouldSendTagPP(String msp, String epcString) async {
-    final String apiUrl = '${AppConfig.IP}/api/3D1E76F5CB80481982319DAD95A83B03/$msp/$epcString';
+    final String apiUrl =
+        '${AppConfig.IP}/api/3D1E76F5CB80481982319DAD95A83B03/$msp/$epcString';
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -3246,12 +3471,12 @@ class _SendDataState extends State<SendData> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                 ),
                 SizedBox(width: 20),
                 Text(
                   "Đang đồng bộ...",
-                  style: TextStyle(color: Color(0xFF097746)),
+                  style: TextStyle(color: AppColor.mainText),
                 ),
               ],
             ),
@@ -3262,7 +3487,8 @@ class _SendDataState extends State<SendData> {
     // Đọc các tag đã gửi từ FlutterSecureStorage
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
-    List<String> sentTags = sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    List<String> sentTags =
+        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     Set<String> sentTagsSet = sentTags.toSet();
     String? maTK = await _getmaTKfromSecureStorage();
     String baseUrl = '${AppConfig.IP}/api/4479FF93AA8B4721A3664FA7B3B2A2D3';
@@ -3283,7 +3509,8 @@ class _SendDataState extends State<SendData> {
     String formattedTimestamp = milliString.padLeft(18, '0');
 
     // Giả sử _selectedExportCodes chứa danh sách các PXK đã chọn
-    List<ExportCode> selectedExportCodes = _selectedExportCodes; // Danh sách mã PXK đã chọn
+    List<ExportCode> selectedExportCodes =
+        _selectedExportCodes; // Danh sách mã PXK đã chọn
     int currentIndex = 0;
 
     // Duyệt qua từng mã PXK đã chọn và phân phối EPC
@@ -3292,11 +3519,12 @@ class _SendDataState extends State<SendData> {
       maPP = exportCode.maPP; // Mã PP cho từng PXK
       String maSP = exportCode.maSanPham;
       if (!syncedMaPPs.contains(maPP)) {
-        syncedMaPPs.add(maPP);  // Chỉ thêm 1 lần cho mỗi maPP
+        syncedMaPPs.add(maPP); // Chỉ thêm 1 lần cho mỗi maPP
       }
       // Nếu là mã phân phối cuối cùng thì đồng bộ tất cả các EPC còn lại
       if (i == selectedExportCodes.length - 1) {
-        int baoXuatThucTe = allRFIDData.length - currentIndex; // Lấy tất cả EPC còn lại
+        int baoXuatThucTe =
+            allRFIDData.length - currentIndex; // Lấy tất cả EPC còn lại
         for (int j = 0; j < baoXuatThucTe; j++) {
           if (networkErrorOccurred) break;
 
@@ -3336,7 +3564,9 @@ class _SendDataState extends State<SendData> {
                 try {
                   final response = await http.put(
                     Uri.parse(apiUrl),
-                    headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                    headers: {
+                      'Content-Type': 'application/json; charset=UTF-8'
+                    },
                     body: jsonEncode(data),
                   );
                   if (response.statusCode == 200) {
@@ -3405,8 +3635,11 @@ class _SendDataState extends State<SendData> {
         }
       } else {
         // Nếu không phải là mã phân phối cuối cùng, đồng bộ theo số bao cần xuất
-        int soBaoCanXuat = exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
-        for (int j = 0; j < soBaoCanXuat && currentIndex < allRFIDData.length; j++) {
+        int soBaoCanXuat =
+            exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
+        for (int j = 0;
+            j < soBaoCanXuat && currentIndex < allRFIDData.length;
+            j++) {
           if (networkErrorOccurred) break;
 
           TagEpc tag = allRFIDData[currentIndex];
@@ -3445,7 +3678,9 @@ class _SendDataState extends State<SendData> {
                 try {
                   final response = await http.put(
                     Uri.parse(apiUrl),
-                    headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                    headers: {
+                      'Content-Type': 'application/json; charset=UTF-8'
+                    },
                     body: jsonEncode(data),
                   );
                   if (response.statusCode == 200) {
@@ -3501,7 +3736,6 @@ class _SendDataState extends State<SendData> {
                         }
                       }
                     }
-
                   } else {
                     failSend++;
                   }
@@ -3536,7 +3770,7 @@ class _SendDataState extends State<SendData> {
             title: const Text(
               "Mất kết nối!",
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3544,19 +3778,21 @@ class _SendDataState extends State<SendData> {
               "Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>( AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   "OK",
@@ -3578,7 +3814,7 @@ class _SendDataState extends State<SendData> {
             title: const Text(
               "Đồng bộ thành công",
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3586,19 +3822,21 @@ class _SendDataState extends State<SendData> {
               "Bạn có muốn xác nhận Hoàn thành Lịch Phân phối kho thuê này?",
               style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   'Hủy',
@@ -3611,13 +3849,15 @@ class _SendDataState extends State<SendData> {
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
@@ -3666,17 +3906,33 @@ class _SendDataState extends State<SendData> {
   String getSentTagsKey(String eventId) {
     return 'sent_tags_$eventId';
   }
+
   Future<void> saveTagState(TagEpc tag) async {
     final storage = const FlutterSecureStorage();
     String key = 'tag_${tag.epc}';
     String json = jsonEncode(tag.toJson());
     await storage.write(key: key, value: json);
   }
+
   String getKey(String eventId, String id) {
     return '$eventId-$id';
   }
 
-  Future<void> saveCountsPackageInfToStorage(String id, int successfulSends, int failSend, int alreadyDistributed, int notActivated, int wrongDistribution, int makhongtontai, int notPackage, int recallCode, int completSchedule, int orthercase, int SyncCode, int notwarehouseDistributionYet, String syncDateFormat) async {
+  Future<void> saveCountsPackageInfToStorage(
+      String id,
+      int successfulSends,
+      int failSend,
+      int alreadyDistributed,
+      int notActivated,
+      int wrongDistribution,
+      int makhongtontai,
+      int notPackage,
+      int recallCode,
+      int completSchedule,
+      int orthercase,
+      int SyncCode,
+      int notwarehouseDistributionYet,
+      String syncDateFormat) async {
     // Các khóa để lấy dữ liệu
     List<String> keys = [
       "successfulSends",
@@ -3698,7 +3954,8 @@ class _SendDataState extends State<SendData> {
     for (String key in keys) {
       String storageKey = getKey(key, id);
       String? value = await distributionStorage.read(key: storageKey);
-      int currentValue = int.tryParse(value ?? '') ?? 0; // Sử dụng 0 làm giá trị mặc định nếu không phải số
+      int currentValue = int.tryParse(value ?? '') ??
+          0; // Sử dụng 0 làm giá trị mặc định nếu không phải số
 
       // Cộng dồn giá trị mới với giá trị đã lưu
       switch (key) {
@@ -3739,11 +3996,13 @@ class _SendDataState extends State<SendData> {
           currentValue += notwarehouseDistributionYet;
           break;
         case "syncDateFormat":
-          await distributionStorage.write(key: storageKey, value: syncDateFormat);
+          await distributionStorage.write(
+              key: storageKey, value: syncDateFormat);
           continue; // Bỏ qua bước lưu số vì đã lưu chuỗi ngày
       }
       // Lưu giá trị đã cộng dồn trở lại vào bộ nhớ
-      await distributionStorage.write(key: storageKey, value: currentValue.toString());
+      await distributionStorage.write(
+          key: storageKey, value: currentValue.toString());
     }
   }
 
@@ -3753,37 +4012,45 @@ class _SendDataState extends State<SendData> {
     });
   }
 
-  void showModal() async{
+  void showModal() async {
     setState(() {
-      isShowModal =true;
+      isShowModal = true;
     });
-    if(successfullySaved==0 && tagCount==0) {
+    if (successfullySaved == 0 && tagCount == 0) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Không thể đồng bộ",style: TextStyle(
-              color: Color(0xFF097746),
-              fontWeight: FontWeight.bold,
-            ),
+            title: const Text(
+              "Không thể đồng bộ",
+              style: TextStyle(
+                color: AppColor.mainText,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: const Text("Vui lòng kiểm tra lại số lượng quét.",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Color(0xFF097746),
-                )
-            ),
+                  color: AppColor.mainText,
+                )),
             actions: <Widget>[
-              TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+              TextButton(
+                style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                          10.0), // Điều chỉnh độ cong của góc
+                    ),
                   ),
+                  fixedSize:
+                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
-                fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
-              ),
-                child: const Text("Đóng", style: TextStyle(color: Colors.white),),
+                child: const Text(
+                  "Đóng",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: () {
                   Navigator.of(context).pop(); // Đóng cửa sổ dialog
                 },
@@ -3792,64 +4059,75 @@ class _SendDataState extends State<SendData> {
           );
         },
       ).then((_) {
-        _closeModal();  // Gọi hàm để đóng modal và cập nhật trạng thái
+        _closeModal(); // Gọi hàm để đóng modal và cập nhật trạng thái
       });
-    } else{
+    } else {
+      _closeModal();
       showSelectExportCodesModal();
-    };
+
+    }
+    ;
   }
 
   @override
   Widget build(BuildContext context) {
-
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     return WillPopScope(
         onWillPop: () async {
-          if (tagCount > 0 || dadongbo ) {
+          if (tagCount > 0 || dadongbo) {
             // Hành động cụ thể khi tagCount > 0
-            Navigator.pop(context, true); // Quay trở lại màn hình trước và gửi giá trị true
+            Navigator.pop(context,
+                true); // Quay trở lại màn hình trước và gửi giá trị true
             return false; // Trả về false để ngăn việc tự động pop, vì đã xử lý pop
           } else {
             return true; // Cho phép người dùng thoát nếu không có điều kiện nào được thỏa mãn
           }
         },
-        child:
-        Scaffold(
+        child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            toolbarHeight: screenHeight * 0.12, // Chiều cao thanh công cụ
+            toolbarHeight: screenHeight * 0.12,
+            // Chiều cao thanh công cụ
             backgroundColor: const Color(0xFFE9EBF1),
             elevation: 4,
             shadowColor: Colors.blue.withOpacity(0.5),
-            leading: Padding(
-              padding: EdgeInsets.only(left: screenWidth * 0.03), // Khoảng cách từ mép trái
-              child: Container(
-              ),
-            ),
+            // leading: Padding(
+            //   padding: EdgeInsets.only(left: screenWidth * 0.03), // Khoảng cách từ mép trái
+            //   child: Container(
+            //   ),
+            // ),
+            leading: IconButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+                icon: const Icon(Icons.arrow_back)),
             centerTitle: true,
             title: Text(
-              'Lich phân phối ',
+              'Lịch phân phối ',
               style: TextStyle(
                 fontSize: screenWidth * 0.07, // Kích thước chữ
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: [
               Padding(
-                padding: EdgeInsets.only(right: screenWidth * 0.03), // Khoảng cách từ mép phải
+                padding: EdgeInsets.only(right: screenWidth * 0.03),
+                // Khoảng cách từ mép phải
                 child: Row(
                   children: [
-                    SizedBox(width: screenWidth * 0.03), // Khoảng cách giữa hai nút
+                    SizedBox(width: screenWidth * 0.03),
+                    // Khoảng cách giữa hai nút
                     InkWell(
-                      onTap: () async {;
-                      saveDataWithTags(event.id, "${event.lenhPhanPhoi}");
+                      onTap: () async {
+                        ;
+                        saveDataWithTags(event.id, "${event.lenhPhanPhoi}");
                       },
                       child: Image.asset(
                         'assets/image/download.png',
-                        width: screenWidth * 0.08, // Chiều rộng hình ảnh
-                        height: screenHeight * 0.08, // Chiều cao hình ảnh
+                        width: screenWidth * 0.085, // Chiều rộng hình ảnh
+                        height: screenHeight * 0.085, // Chiều cao hình ảnh
                       ),
                     ),
                     SizedBox(width: screenWidth * 0.03),
@@ -3860,56 +4138,65 @@ class _SendDataState extends State<SendData> {
                           barrierDismissible: false,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: const Text('Xác nhận xóa',
-                                style: TextStyle(color: Color(0xFF097746),
-                                    fontWeight: FontWeight.bold
-                                ),
+                              title: const Text(
+                                'Xác nhận xóa',
+                                style: TextStyle(
+                                    color: AppColor.mainText,
+                                    fontWeight: FontWeight.bold),
                               ),
-                              content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
+                              content: const Text(
+                                  "Bạn có chắc chắn muốn xóa lịch này không?",
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Color(0xFF097746),
-                                  )
-                              ),
+                                    color: AppColor.mainText,
+                                  )),
                               actions: <Widget>[
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    backgroundColor:
+                                        MaterialStateProperty.all<Color>(
+                                            AppColor.mainText),
+                                    shape: MaterialStateProperty.all<
+                                        RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                        borderRadius: BorderRadius.circular(
+                                            10.0), // Điều chỉnh độ cong của góc
                                       ),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                    fixedSize: MaterialStateProperty.all<Size>(
+                                        const Size(100.0, 30.0)),
                                   ),
                                   child: const Text('Hủy',
-                                      style:TextStyle(
+                                      style: TextStyle(
                                         color: Colors.white,
-                                      )
-                                  ),
+                                      )),
                                   onPressed: () async {
                                     Navigator.of(context).pop();
-                                    setState(() {
-                                    });
+                                    setState(() {});
                                   },
                                 ),
-                                const SizedBox(width: 8,),
+                                const SizedBox(
+                                  width: 8,
+                                ),
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    backgroundColor:
+                                        MaterialStateProperty.all<Color>(
+                                            AppColor.mainText),
+                                    shape: MaterialStateProperty.all<
+                                        RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
+                                        borderRadius: BorderRadius.circular(
+                                            10.0), // Điều chỉnh độ cong của góc
                                       ),
                                     ),
-                                    fixedSize: MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                                    fixedSize: MaterialStateProperty.all<Size>(
+                                        const Size(100.0, 30.0)),
                                   ),
                                   child: const Text('Xác Nhận',
-                                      style:TextStyle(
+                                      style: TextStyle(
                                         color: Colors.white,
-
-                                      )
-                                  ),
+                                      )),
                                   onPressed: () async {
                                     deleteEventFromCalendar();
                                     Navigator.pop(context, true);
@@ -3922,8 +4209,8 @@ class _SendDataState extends State<SendData> {
                       },
                       child: Image.asset(
                         'assets/image/thungrac1.png',
-                        width: screenWidth * 0.08, // Chiều rộng hình ảnh
-                        height: screenHeight * 0.08, // Chiều cao hình ảnh
+                        width: screenWidth * 0.085, // Chiều rộng hình ảnh
+                        height: screenHeight * 0.085, // Chiều cao hình ảnh
                       ),
                     ),
                   ],
@@ -3936,7 +4223,8 @@ class _SendDataState extends State<SendData> {
               children: <Widget>[
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.02, 0, screenHeight * 0.012),
+                  padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                      screenHeight * 0.02, 0, screenHeight * 0.012),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAFAFA),
                     border: Border(
@@ -3950,14 +4238,14 @@ class _SendDataState extends State<SendData> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: screenWidth * 0.065,
-                        color: const Color(0xFF097746),
+                        color: AppColor.contentText,
                       ),
                       children: [
                         const TextSpan(
                           text: 'Sản phẩm\n',
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                              fontWeight: FontWeight.bold,
+                              color: AppColor.mainText),
                         ),
                         TextSpan(
                           text: '${event.tenSanPham}',
@@ -3969,156 +4257,158 @@ class _SendDataState extends State<SendData> {
                 Container(
                     width: double.infinity,
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          color: Colors.grey.withOpacity(0.5),
+                          // Màu sắc của đường viền dưới
                           width: 2, // Độ dày của đường viền dưới
                         ),
                       ),
                     ),
-                    child:
-                    RichText(
+                    child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           // fontSize: 24,
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.contentText,
                         ),
                         children: [
                           TextSpan(
                             text: 'Phiếu xuất kho \n',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              // fontSize: 24,
-                              fontSize: screenWidth * 0.065,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                // fontSize: 24,
+                                fontSize: screenWidth * 0.065,
+                                color: AppColor.mainText),
                           ),
                           TextSpan(
                             text: '${event.phieuXuatKho}',
                           ),
                         ],
                       ),
-                    )
-                ),
+                    )),
                 Container(
                     width: double.infinity,
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          color: Colors.grey.withOpacity(0.5),
+                          // Màu sắc của đường viền dưới
                           width: 2, // Độ dày của đường viền dưới
                         ),
                       ),
                     ),
-                    child:
-                    RichText(
+                    child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.contentText,
                         ),
                         children: [
                           TextSpan(
                             text: 'Tên đại lý/Kho phân phối\n',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: screenWidth * 0.065,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth * 0.065,
+                                color: AppColor.mainText),
                           ),
                           TextSpan(
                             text: '${event.tenDaiLy}',
                           ),
                         ],
                       ),
-                    )
-                ),
+                    )),
                 Container(
                     width: double.infinity,
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          color: Colors.grey.withOpacity(0.5),
+                          // Màu sắc của đường viền dưới
                           width: 2, // Độ dày của đường viền dưới
                         ),
                       ),
                     ),
-                    child:
-                    RichText(
+                    child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.contentText,
                         ),
                         children: [
                           TextSpan(
                             text: 'Lệnh giao hàng\n',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: screenWidth * 0.065,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth * 0.065,
+                                color: AppColor.mainText),
                           ),
                           TextSpan(
                             text: '${event.lenhPhanPhoi}',
                           ),
                         ],
                       ),
-                    )
-                ),
+                    )),
                 Container(
                     width: double.infinity,
-                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFAFAFA),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.grey.withOpacity(0.5), // Màu sắc của đường viền dưới
+                          color: Colors.grey.withOpacity(0.5),
+                          // Màu sắc của đường viền dưới
                           width: 2, // Độ dày của đường viền dưới
                         ),
                       ),
                     ),
-                    child:
-                    RichText(
+                    child: RichText(
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.contentText,
                         ),
                         children: [
                           TextSpan(
                             text: 'Số lượng\n',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: screenWidth * 0.065,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth * 0.065,
+                                color: AppColor.mainText),
                           ),
                           TextSpan(
                             text: '${event.soLuong}',
                           ),
                         ],
                       ),
-                    )
-                ),
+                    )),
                 GestureDetector(
                   onTap: () {
                     _showChipInformation(context, event.id);
                   },
                   child: Container(
                     // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
-                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05, screenHeight * 0.012, 0, screenHeight * 0.012),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFAFAFA),
                       border: Border(
-                        bottom: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+                        bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.5), width: 2),
                       ),
                     ),
                     child: Row(
@@ -4127,22 +4417,30 @@ class _SendDataState extends State<SendData> {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
+                              style: TextStyle(
+                                  fontSize: screenWidth * 0.065,
+                                  color: AppColor.contentText),
                               children: [
                                 TextSpan(
                                   text: 'Số lượng quét\n',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.065),
+                                  style: TextStyle(
+                                      color: AppColor.mainText,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: screenWidth * 0.065),
                                 ),
                                 TextSpan(
                                   // Kiểm tra trạng thái quét để quyết định hiển thị giá trị nào
-                                  text: isScanning ? '$successfullySaved' : '$tagCount',
+                                  text: isScanning
+                                      ? '$successfullySaved'
+                                      : '$tagCount',
                                   // text: '$tagCount',
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                        const Icon(Icons.navigate_next,
+                            color: AppColor.mainText, size: 30.0),
                       ],
                     ),
                   ),
@@ -4152,7 +4450,7 @@ class _SendDataState extends State<SendData> {
             ),
           ),
           bottomNavigationBar: BottomAppBar(
-            height: screenHeight*0.12,
+            height: screenHeight * 0.12,
             color: Colors.transparent,
             child: Container(
               color: Colors.transparent,
@@ -4161,8 +4459,10 @@ class _SendDataState extends State<SendData> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: (_isContinuousCall) ? Colors.red : const Color(0xFF097746),
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      backgroundColor:
+                          (_isContinuousCall) ? Colors.red : AppColor.mainText,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
@@ -4172,13 +4472,20 @@ class _SendDataState extends State<SendData> {
                       await checkCurrentDevice();
                     },
                     child: (_isContinuousCall)
-                        ? Text('Dừng quét', style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.06))
-                        : Text('Bắt đầu quét', style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.06)),
+                        ? Text('Dừng quét',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.06))
+                        : Text('Bắt đầu quét',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.06)),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFd5a529),
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
@@ -4197,7 +4504,6 @@ class _SendDataState extends State<SendData> {
             ),
           ),
           // )
-        )
-    );
+        ));
   }
 }

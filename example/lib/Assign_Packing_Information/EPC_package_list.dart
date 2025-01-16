@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../Utils/app_color.dart';
 import 'model_information_package.dart';
 import 'database_package_inf.dart';
 import '../utils/common_functions.dart';
@@ -46,7 +47,7 @@ class _EPCPackgaeListState extends State<EPCPackgaeList> {
         title: const Text(
           "Mã chip đã đồng bộ",
           style: TextStyle(
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -76,7 +77,7 @@ class _EPCPackgaeListState extends State<EPCPackgaeList> {
                         title: Text(
                           '${index + 1}. ${epcString ?? ''}',
                           style: const TextStyle(
-                            color: Color(0xFF097746),
+                            color: AppColor.mainText,
                           ),
                         ),
                       );
@@ -99,7 +100,7 @@ class _EPCPackgaeListState extends State<EPCPackgaeList> {
                       const SizedBox(height: 15),
                       const Text(
                         'Không có dữ liệu',
-                        style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                        style: TextStyle(fontSize: 22, color: AppColor.mainText),
                         textAlign: TextAlign.center,
                       ),
                     ],

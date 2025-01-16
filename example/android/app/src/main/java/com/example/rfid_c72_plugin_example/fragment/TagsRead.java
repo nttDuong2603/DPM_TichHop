@@ -75,15 +75,15 @@ public class TagsRead {
                     Log.i("MINHCHAULOG", "Key Down: " + keycode);
                     if (keycode == 3) {
                         isKeyDownUP = true;
-                        startInventoryScan();
+                      //  startInventoryScan();
                     } else {
                         if (!isKeyDownUP) {
                             if (keycode == 1) {
                                 sendScanStatusToFlutter(isScanning);
                                 if (isScanning) {
-                                    stop();
+                                  //  stop();
                                 } else {
-                                    startInventoryScan();
+                                  //  startInventoryScan();
                                 }
 
                             }
@@ -91,18 +91,18 @@ public class TagsRead {
                     }
                     if (keycode == 2) {
                         if (isScanning) {
-                            stop();
+                       //     stop();
                             SystemClock.sleep(100);
                         }
                         //MR20
-                        inventory();
+                     //   inventory();
                     }
                 }
             }
             @Override
             public void onKeyUp(int keycode) {
                 if (keycode == 4) {
-                    stop();
+                  //  stop();
                 }
             }
         });

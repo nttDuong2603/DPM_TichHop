@@ -13,6 +13,7 @@ import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
 import '../Utils/DeviceActivities/connectionNotificationRSeries.dart';
+import '../Utils/app_color.dart';
 import '../main.dart';
 import 'model_information_package.dart';
 import 'database_package_inf.dart';
@@ -383,7 +384,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
               Expanded(
@@ -411,13 +412,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                             title: Text(
                               '${index + 1}. $epcString',
                               style: const TextStyle(
-                                color: Color(0xFF097746),
+                                color: AppColor.mainText,
                               ),
                             ),
                             subtitle: Text(
                               '- $scanDate',
                               style: const TextStyle(
-                                color: Color(0xFF097746),
+                                color: AppColor.mainText,
                               ),
                             ),
                           );
@@ -428,7 +429,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         child: Text(
                           'Không có dữ liệu',
                           style: TextStyle(
-                            color: Color(0xFF097746),
+                            color: AppColor.mainText,
                           ),
                         ),
                       );
@@ -477,7 +478,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Lưu mã chip?',
-            style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -495,7 +496,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         title:
                         Text(
                             '${index+1}.$tagepc',
-                          style: const TextStyle(color: Color(0xFF097746)),
+                          style: const TextStyle(color: AppColor.mainText),
                         ) ,
                       );
                     },
@@ -507,7 +508,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -534,7 +535,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             const SizedBox(width: 8,),
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1015,19 +1016,19 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         return AlertDialog(
           title: Text(
             isSuccess ? "Thông báo" : "Thông báo",
-            style: TextStyle(color: isSuccess ? const Color(0xFF097746) : Colors.red, fontWeight: FontWeight.bold),
+            style: TextStyle(color: isSuccess ? AppColor.mainText : Colors.red, fontWeight: FontWeight.bold),
           ),
           content: Text(
             message,
             style: TextStyle(
               fontSize: 18,
-              color: isSuccess ? const Color(0xFF097746) : const Color(0xFF097746),
+              color: isSuccess ? AppColor.mainText : AppColor.mainText,
             ),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1059,12 +1060,12 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                 ),
                 SizedBox(width: 20),
                 Text("Đang đồng bộ...",
                   style: TextStyle(
-                    color: Color(0xFF097746),
+                    color: AppColor.mainText,
                   ),
                 ),
               ],
@@ -1229,20 +1230,20 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
           return AlertDialog(
             title: const Text("Mất kết nối!",
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
             content: const Text("Vui lòng kiểm tra kết nối mạng.",
               style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -1266,19 +1267,19 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text("Đồng bộ thành công",style: TextStyle(
-              color: Color(0xFF097746),
+              color: AppColor.mainText,
               fontWeight: FontWeight.bold,
             ),
             ),
             content: const Text("Bạn có muốn xác nhận hoàn thành Lịch Đóng bao này?",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 )
             ),
             actions: <Widget>[
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1299,7 +1300,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 },
               ),
               TextButton( style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1345,7 +1346,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             title: const Text(
               'Nhập thông tin',
               style: TextStyle(
-                color: Color(0xFF097746),
+                color: AppColor.mainText,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1378,7 +1379,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: AppColor.mainText),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       contentPadding:
@@ -1404,7 +1405,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color(0xFF097746)),
+                        borderSide: const BorderSide(color: AppColor.mainText),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       contentPadding:
@@ -1419,7 +1420,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             actions: <Widget>[
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1434,7 +1435,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
               ),
               TextButton(
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                  backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -1688,19 +1689,19 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
        builder: (BuildContext context) {
          return AlertDialog(
            title: const Text("Không thể đồng bộ",style: TextStyle(
-             color: Color(0xFF097746),
+             color: AppColor.mainText,
              fontWeight: FontWeight.bold,
            ),
            ),
            content: const Text("Vui lòng kiểm tra lại số lượng quét.",
                style: TextStyle(
                  fontSize: 18,
-                 color: Color(0xFF097746),
+                 color: AppColor.mainText,
                )
            ),
            actions: <Widget>[
              TextButton( style: ButtonStyle(
-               backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+               backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                  RoundedRectangleBorder(
                    borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1745,7 +1746,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                            style: TextStyle(
                              fontSize: 20,
                              fontWeight: FontWeight.bold,
-                             color: Color(0xFF097746),
+                             color: AppColor.mainText,
                            ),
                          ),
                        ),
@@ -1754,7 +1755,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                          child: IconButton(
                            icon: const Icon(
                              Icons.close,
-                             color: Color(0xFF097746),
+                             color: AppColor.mainText,
                              size: 30.0,
                            ),
                            onPressed: () {
@@ -1781,20 +1782,20 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                          decoration: InputDecoration(
                            labelText: isMatched ? '${event.maLDB}' : 'Vui lòng chọn mã lịch',
                            labelStyle: const TextStyle(
-                             color: Color(0xFF097746),
+                             color: AppColor.mainText,
                              fontWeight: FontWeight.bold,
                              fontSize: 18,
                            ),
                            enabledBorder: const OutlineInputBorder(
-                             borderSide: BorderSide(color: Color(0xFF097746)),
+                             borderSide: BorderSide(color: AppColor.mainText),
                            ),
                            focusedBorder: const OutlineInputBorder(
-                             borderSide: BorderSide(color: Color(0xFF097746)),
+                             borderSide: BorderSide(color: AppColor.mainText),
                            ),
                            suffixIcon: !isMatched
                                ? const Icon(
                              Icons.navigate_next,
-                             color: Color(0xFF097746),
+                             color: AppColor.mainText,
                              size: 30.0,
                            ) : null,
                          ),
@@ -1806,7 +1807,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                      width: 350,
                      child: ElevatedButton(
                        style: TextButton.styleFrom(
-                         backgroundColor: const Color(0xFF097746),
+                         backgroundColor: AppColor.mainText,
                          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
                          shape: RoundedRectangleBorder(
                            borderRadius: BorderRadius.circular(12.0),
@@ -1821,19 +1822,19 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                              builder: (BuildContext context) {
                                return AlertDialog(
                                  title: const Text("Không thể đồng bộ",style: TextStyle(
-                                   color: Color(0xFF097746),
+                                   color: AppColor.mainText,
                                    fontWeight: FontWeight.bold,
                                  ),
                                  ),
                                  content: const Text("Vui lòng chọn mã lịch cần đồng bộ.",
                                      style: TextStyle(
                                        fontSize: 18,
-                                       color: Color(0xFF097746),
+                                       color: AppColor.mainText,
                                      )
                                  ),
                                  actions: <Widget>[
                                    TextButton( style: ButtonStyle(
-                                     backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                     backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                        RoundedRectangleBorder(
                                          borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1881,11 +1882,10 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
     return WillPopScope(
         onWillPop: () async {
       if (tagCount > 0 || dadongbo) {
-        // Hành động cụ thể khi tagCount > 0
-        Navigator.pop(context, true); // Quay trở lại màn hình trước và gửi giá trị true
-        return false; // Trả về false để ngăn việc tự động pop, vì đã xử lý pop
+        Navigator.pop(context, true);
+        return false;
       } else {
-        return true; // Cho phép người dùng thoát nếu không có điều kiện nào được thỏa mãn
+        return true;
       }
     },
       child:Scaffold(
@@ -1895,16 +1895,18 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
             backgroundColor: const Color(0xFFE9EBF1),
             elevation: 4,
             shadowColor: Colors.blue.withOpacity(0.5),
-            leading:
-              Container(
-            ),
+            leading: IconButton(
+                onPressed: () {
+                    Navigator.pop(context,true); // True => Update Statistic
+                },
+                icon: const Icon(Icons.arrow_back)),
             centerTitle: true,
             title: Text(
               'Lịch đóng bao',
               style: TextStyle(
                 fontSize: screenWidth * 0.07, // Kích thước chữ
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
             actions: [
@@ -1931,18 +1933,18 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           builder: (BuildContext context) {
                             return AlertDialog(
                               title: const Text('Xác nhận xóa',
-                                style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                                style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
                               ),
                               content: const Text("Bạn có chắc chắn muốn xóa lịch này không?",
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Color(0xFF097746),
+                                    color: AppColor.mainText,
                                   )
                               ),
                               actions: <Widget>[
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                    backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1964,7 +1966,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                                 const SizedBox(width: 8,),
                                 TextButton(
                                   style: ButtonStyle(
-                                    backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                    backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -2018,7 +2020,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: screenWidth * 0.065,
-                        color: const Color(0xFF097746),
+                        color: AppColor.mainText,
                       ),
                       children: [
                         const TextSpan(
@@ -2028,7 +2030,8 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           ),
                         ),
                         TextSpan(
-                          text: '${event.maLDB}',
+                          text:  event.maLDB,
+                          style: const TextStyle(color: AppColor.contentText)
                         ),
                       ],
                     ),
@@ -2053,7 +2056,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         style: TextStyle(
                           // fontSize: 24,
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
                         children: [
                           TextSpan(
@@ -2066,6 +2069,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           ),
                           TextSpan(
                             text: '${event.sanPhamLDB}',
+                              style: const TextStyle(color: AppColor.contentText)
                           ),
                         ],
                       ),
@@ -2090,7 +2094,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: TextStyle( fontSize: screenWidth * 0.065, color: const Color(0xFF097746)),
+                              style: TextStyle( fontSize: screenWidth * 0.065, color: AppColor.mainText),
                               children: [
                                 TextSpan(
                                   text: 'Số lượng quét\n ',
@@ -2100,12 +2104,13 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                                   // Kiểm tra trạng thái quét để quyết định hiển thị giá trị nào
                                   // text: '$successfullySaved',
                                   text: '$tagCount',
+                                    style: const TextStyle(color: AppColor.contentText)
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+                        const Icon(Icons.navigate_next, color: AppColor.mainText, size: 30.0),
                       ],
                     ),
                   ),
@@ -2128,7 +2133,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
                         children: [
                           TextSpan(
@@ -2140,6 +2145,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           ),
                           TextSpan(
                             text: '${event.ghiChuLDB}',
+                              style: const TextStyle(color: AppColor.contentText)
                           ),
                         ],
                       ),
@@ -2163,7 +2169,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: screenWidth * 0.065,
-                          color: const Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
                         children: [
                           TextSpan(
@@ -2175,6 +2181,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                           ),
                           TextSpan(
                             text: '${event.ngayTaoLDB}',
+                              style: const TextStyle(color: AppColor.contentText)
                           ),
                         ],
                       ),
@@ -2193,7 +2200,7 @@ class _SendDistributionInfState extends State<SendDistributionInf> {
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: (_isContinuousCall) ? Colors.red : const Color(0xFF097746),
+                      backgroundColor: (_isContinuousCall) ? Colors.red : AppColor.mainText,
                       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),

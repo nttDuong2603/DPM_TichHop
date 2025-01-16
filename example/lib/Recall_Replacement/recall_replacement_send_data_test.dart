@@ -257,7 +257,7 @@
 //                   style: TextStyle(
 //                     fontSize: 26,
 //                     fontWeight: FontWeight.bold,
-//                     color: Color(0xFF097746),
+//                     color: AppColor.mainText,
 //                   ),
 //                 ),
 //                 FutureBuilder<List<TagEpcLBD>>(
@@ -283,7 +283,7 @@
 //                             title: Text(
 //                               '${index + 1}. $epcString',
 //                               style: TextStyle(
-//                                 color: Color(0xFF097746),
+//                                 color: AppColor.mainText,
 //                               ),
 //                             ),
 //                           );
@@ -294,7 +294,7 @@
 //                         child: Text(
 //                           'Không có dữ liệu',
 //                           style: TextStyle(
-//                             color: Color(0xFF097746),
+//                             color: AppColor.mainText,
 //                           ),
 //                         ),
 //                       );
@@ -324,7 +324,7 @@
 //                   style: TextStyle(
 //                     fontSize: 26,
 //                     fontWeight: FontWeight.bold,
-//                     color: Color(0xFF097746),
+//                     color: AppColor.mainText,
 //                   ),
 //                 ),
 //                 FutureBuilder<List<TagEpcLBD>>(
@@ -350,7 +350,7 @@
 //                             title: Text(
 //                               '${index + 1}. $epcString',
 //                               style: TextStyle(
-//                                 color: Color(0xFF097746),
+//                                 color: AppColor.mainText,
 //                               ),
 //                             ),
 //                           );
@@ -361,7 +361,7 @@
 //                         child: Text(
 //                           'Không có dữ liệu',
 //                           style: TextStyle(
-//                             color: Color(0xFF097746),
+//                             color: AppColor.mainText,
 //                           ),
 //                         ),
 //                       );
@@ -436,19 +436,19 @@
 //         builder: (BuildContext context) {
 //           return AlertDialog(
 //             title: Text("Không thể đồng bộ",style: TextStyle(
-//               color: Color(0xFF097746),
+//               color: AppColor.mainText,
 //               fontWeight: FontWeight.bold,
 //             ),
 //             ),
 //             content: Text("Vui lòng kiểm tra lại dữ liệu quét.",
 //                 style: TextStyle(
 //                   fontSize: 18,
-//                   color: Color(0xFF097746),
+//                   color: AppColor.mainText,
 //                 )
 //             ),
 //             actions: <Widget>[
 //               TextButton( style: ButtonStyle(
-//                 backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                 backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                   RoundedRectangleBorder(
 //                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -487,7 +487,7 @@
 //                     child: IconButton(
 //                       icon: Icon(
 //                         Icons.close,
-//                         color: Color(0xFF097746),
+//                         color: AppColor.mainText,
 //                         size: 30.0,
 //                       ),
 //                       onPressed: () {
@@ -505,7 +505,7 @@
 //                     child: Center(
 //                       child: ElevatedButton(
 //                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: Color(0xFF097746),
+//                           backgroundColor: AppColor.mainText,
 //                           padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
 //                           shape: RoundedRectangleBorder(
 //                             borderRadius: BorderRadius.circular(12.0),
@@ -549,7 +549,7 @@
 //                     style: TextStyle(
 //                       fontSize: 20,
 //                       fontWeight: FontWeight.bold,
-//                       color: Color(0xFF097746),
+//                       color: AppColor.mainText,
 //                     ),
 //                     maxLines: 2, // Giới hạn số dòng tối đa
 //                     overflow: TextOverflow.ellipsis, // Hiển thị dấu "..." nếu văn bản quá dài
@@ -593,11 +593,11 @@
 //                               children: [
 //                                 TextSpan(
 //                                   text: 'Mã EPC: ',
-//                                   style: TextStyle(fontSize: 16, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 16, color: AppColor.mainText),
 //                                 ),
 //                                 TextSpan(
 //                                   text: epcInfo.EPC,
-//                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColor.mainText),
 //                                 ),
 //                               ],
 //                             ),
@@ -608,11 +608,11 @@
 //                               children: [
 //                                 TextSpan(
 //                                   text: 'Tên sản phẩm: ',
-//                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, color: AppColor.mainText),
 //                                 ),
 //                                 TextSpan(
 //                                   text: epcInfo.ProductCode,
-//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColor.mainText),
 //                                 ),
 //                               ],
 //                             ),
@@ -623,11 +623,11 @@
 //                               children: [
 //                                 TextSpan(
 //                                   text: 'Tình trạng Đóng bao: ',
-//                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, color: AppColor.mainText),
 //                                 ),
 //                                 TextSpan(
 //                                   text: epcInfo.PackageStatus == 'true' ? 'Đã đóng bao': ' ',
-//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColor.mainText),
 //                                 ),
 //                               ],
 //                             ),
@@ -638,11 +638,11 @@
 //                               children: [
 //                                 TextSpan(
 //                                   text: 'Tình trạng Phân phối: ',
-//                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, color: AppColor.mainText),
 //                                 ),
 //                                 TextSpan(
 //                                   text: epcInfo.DistributionStatus == 'true' ? 'Đã phân phối' : ' ',
-//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColor.mainText),
 //                                 ),
 //                               ],
 //                             ),
@@ -653,11 +653,11 @@
 //                               children: [
 //                                 TextSpan(
 //                                   text: 'Phân phối kho thuê: ',
-//                                   style: TextStyle(fontSize: 14, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, color: AppColor.mainText),
 //                                 ),
 //                                 TextSpan(
 //                                   text: epcInfo.WarehouseRentalDistributionStatus == 'true' ? 'Đã phân phối kho thuê': ' ',
-//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF097746)),
+//                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColor.mainText),
 //                                 ),
 //                               ],
 //                             ),
@@ -966,13 +966,13 @@
 //               mainAxisSize: MainAxisSize.min,
 //               children: [
 //                 CircularProgressIndicator(
-//                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+//                   valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
 //                 ),
 //                 SizedBox(width: 20),
 //                 Text(
 //                   "Đang đồng bộ...",
 //                   style: TextStyle(
-//                     color: Color(0xFF097746),
+//                     color: AppColor.mainText,
 //                   ),
 //                 ),
 //               ],
@@ -1071,12 +1071,12 @@
 //         context: context,
 //         builder: (BuildContext context) {
 //           return AlertDialog(
-//             title: Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
-//             content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
+//             title: Text("Mất kết nối!", style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold)),
+//             content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: AppColor.mainText)),
 //             actions: <Widget>[
 //               TextButton(
 //                 style: ButtonStyle(
-//                   backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                   backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
 //                   ),
@@ -1115,13 +1115,13 @@
 //               mainAxisSize: MainAxisSize.min,
 //               children: [
 //                 CircularProgressIndicator(
-//                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+//                   valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
 //                 ),
 //                 SizedBox(width: 20),
 //                 Text(
 //                   "Đang đồng bộ...",
 //                   style: TextStyle(
-//                     color: Color(0xFF097746),
+//                     color: AppColor.mainText,
 //                   ),
 //                 ),
 //               ],
@@ -1230,12 +1230,12 @@
 //         context: context,
 //         builder: (BuildContext context) {
 //           return AlertDialog(
-//             title: Text("Mất kết nối!", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
-//             content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: Color(0xFF097746))),
+//             title: Text("Mất kết nối!", style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold)),
+//             content: Text("Vui lòng kiểm tra kết nối mạng.", style: TextStyle(fontSize: 18, color: AppColor.mainText)),
 //             actions: <Widget>[
 //               TextButton(
 //                 style: ButtonStyle(
-//                   backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                   backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
 //                   ),
@@ -1255,11 +1255,11 @@
 //         context: context,
 //         builder: (BuildContext context) {
 //           return AlertDialog(
-//             title: Text("Đồng bộ thành công", style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+//             title: Text("Đồng bộ thành công", style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold)),
 //             actions: <Widget>[
 //               TextButton(
 //                 style: ButtonStyle(
-//                   backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                   backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
 //                   ),
@@ -1353,7 +1353,7 @@
 //               title: Text(
 //                 "Vui lòng chọn hình thức quét!",
 //                 style: TextStyle(
-//                   color: Color(0xFF097746),
+//                   color: AppColor.mainText,
 //                   fontWeight: FontWeight.bold,
 //                 ),
 //               ),
@@ -1454,7 +1454,7 @@
 //               title: Text(
 //                 "Vui lòng chọn hình thức quét!",
 //                 style: TextStyle(
-//                   color: Color(0xFF097746),
+//                   color: AppColor.mainText,
 //                   fontWeight: FontWeight.bold,
 //                 ),
 //               ),
@@ -1581,7 +1581,7 @@
 //               style: TextStyle(
 //                 fontSize: screenWidth * 0.07, // Kích thước chữ
 //                 fontWeight: FontWeight.bold,
-//                 color: Color(0xFF097746),
+//                 color: AppColor.mainText,
 //               ),
 //             ),
 //             actions: [
@@ -1608,20 +1608,20 @@
 //                           builder: (BuildContext context) {
 //                             return AlertDialog(
 //                               title: Text('Xác nhận xóa',
-//                                 style: TextStyle(color: Color(0xFF097746),
+//                                 style: TextStyle(color: AppColor.mainText,
 //                                     fontWeight: FontWeight.bold
 //                                 ),
 //                               ),
 //                               content: Text("Bạn có chắc chắn muốn xóa lịch này không?",
 //                                   style: TextStyle(
 //                                     fontSize: 18,
-//                                     color: Color(0xFF097746),
+//                                     color: AppColor.mainText,
 //                                   )
 //                               ),
 //                               actions: <Widget>[
 //                                 TextButton(
 //                                   style: ButtonStyle(
-//                                     backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                                     backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                                       RoundedRectangleBorder(
 //                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1643,7 +1643,7 @@
 //                                 SizedBox(width: 8,),
 //                                 TextButton(
 //                                   style: ButtonStyle(
-//                                     backgroundColor: MaterialStateProperty.all<Color>(Color(0xFF097746)),
+//                                     backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
 //                                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
 //                                       RoundedRectangleBorder(
 //                                         borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -1697,7 +1697,7 @@
 //                       style: TextStyle(
 //                         // fontSize: 24,
 //                         fontSize: screenWidth * 0.065,
-//                         color: Color(0xFF097746),
+//                         color: AppColor.mainText,
 //                       ),
 //                       children: [
 //                         TextSpan(
@@ -1743,7 +1743,7 @@
 //                       Expanded(
 //                         child: RichText(
 //                           text: TextSpan(
-//                             style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
+//                             style: TextStyle( fontSize: screenWidth * 0.065, color: AppColor.mainText),
 //                             children: [
 //                               TextSpan(
 //                                 text: 'Mã thu hồi\n ',
@@ -1766,7 +1766,7 @@
 //                         ),
 //                       ),
 //
-//                       // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+//                       // Icon(Icons.navigate_next, color: AppColor.mainText, size: 30.0),
 //                     ],
 //                   ),
 //                 ),
@@ -1799,7 +1799,7 @@
 //                       Expanded(
 //                         child: RichText(
 //                           text: TextSpan(
-//                             style: TextStyle( fontSize: screenWidth * 0.065, color: Color(0xFF097746)),
+//                             style: TextStyle( fontSize: screenWidth * 0.065, color: AppColor.mainText),
 //                             children: [
 //                               TextSpan(
 //                                 text: 'Mã thay thế\n ',
@@ -1822,7 +1822,7 @@
 //                         ),
 //                       ),
 //
-//                       // Icon(Icons.navigate_next, color: Color(0xFF097746), size: 30.0),
+//                       // Icon(Icons.navigate_next, color: AppColor.mainText, size: 30.0),
 //                     ],
 //                   ),
 //                 ),
@@ -1844,7 +1844,7 @@
 //                     text: TextSpan(
 //                       style: TextStyle(
 //                         fontSize: screenWidth * 0.065,
-//                         color: Color(0xFF097746),
+//                         color: AppColor.mainText,
 //                       ),
 //                       children: [
 //                         TextSpan(
@@ -1891,7 +1891,7 @@
 //                             ),
 //                           ),
 //                           style: ElevatedButton.styleFrom(
-//                             backgroundColor: _isScanningStarted ? Color(0xFF097746) : Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
+//                             backgroundColor: _isScanningStarted ? AppColor.mainText : AppColor.mainText, // Thay đổi màu nút dựa trên trạng thái
 //                             padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
 //                             shape: RoundedRectangleBorder(
 //                               borderRadius: BorderRadius.circular(12.0),
@@ -1912,7 +1912,7 @@
 //                             ),
 //                           ),
 //                           style: ElevatedButton.styleFrom(
-//                             backgroundColor: _isScanningRecallReplaceStarted ? Color(0xFF097746) : Color(0xFF097746), // Thay đổi màu nút dựa trên trạng thái
+//                             backgroundColor: _isScanningRecallReplaceStarted ? AppColor.mainText : AppColor.mainText, // Thay đổi màu nút dựa trên trạng thái
 //                             padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
 //                             shape: RoundedRectangleBorder(
 //                               borderRadius: BorderRadius.circular(12.0),

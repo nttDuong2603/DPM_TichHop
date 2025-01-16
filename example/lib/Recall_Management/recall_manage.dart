@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'model_recall_manage.dart';
 import 'database_recall.dart';
 import 'send_data-recall.dart';
@@ -14,6 +15,7 @@ import 'calendar_recall_deleted.dart';
 
 class OfflineRecallManage extends StatefulWidget {
   final String taiKhoan;
+
   const OfflineRecallManage({
     Key? key,
     required this.taiKhoan,
@@ -28,24 +30,30 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
   Future<List<CalendarRecall>>? _eventListFuture;
   int selectIndex = 0;
 
-
   void _navigateToCreateCalendarRecall(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CreateCalendarRecall(taiKhoan: widget.taiKhoan!)),
+      MaterialPageRoute(
+          builder: (context) =>
+              CreateCalendarRecall(taiKhoan: widget.taiKhoan,isRecallCancel: true,)),
     );
   }
 
   void _navigateToHistoryCalendarRecall(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => HistoryRecallManage(taiKhoan: widget.taiKhoan!)),
+      MaterialPageRoute(
+          builder: (context) =>
+              HistoryRecallManage(taiKhoan: widget.taiKhoan,isRecallCancel: true)),
     );
   }
+
   void _navigateToOfflineRecallManageDeleted(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => OfflineRecallManageDeleted(taiKhoan: widget.taiKhoan!)),
+      MaterialPageRoute(
+          builder: (context) =>
+              OfflineRecallManageDeleted(taiKhoan: widget.taiKhoan,isRecallCancel: true ,)),
     );
   }
 
@@ -53,11 +61,9 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
     // Kiểm tra chỉ số (index) và điều hướng đến trang tương ứng
     if (index == 0) {
       _navigateToCreateCalendarRecall(context);
-    }
-    else  if (index == 1) {
+    } else if (index == 1) {
       // Điều hướng đến trang "Lịch sử phân phối"
       _navigateToHistoryCalendarRecall(context);
-
     } else if (index == 2) {
       // Điều hướng đến trang "Lịch đã xóa"
       _navigateToOfflineRecallManageDeleted(context);
@@ -69,23 +75,22 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
     });
   }
 
-
-  Widget _build() {
-    switch (selectIndex) {
-      case 0:
-      // Trang "Tạo lịch phân phối mới"
-        return CreateCalendarRecall(taiKhoan: widget.taiKhoan);
-      case 1:
-      // Trang "Lịch sử phân phối"
-        return HistoryRecallManage(taiKhoan: widget.taiKhoan);
-      case 2:
-      // Trang "Lịch đã xóa"
-        return OfflineRecallManageDeleted(taiKhoan: widget.taiKhoan);
-      default:
-      // Mặc định quay lại trang chính
-        return HomePage(taiKhoan: widget.taiKhoan);
-    }
-  }
+  // Widget _build() {
+  //   switch (selectIndex) {
+  //     case 0:
+  //       // Trang "Tạo lịch phân phối mới"
+  //       return CreateCalendarRecall(taiKhoan: widget.taiKhoan);
+  //     case 1:
+  //       // Trang "Lịch sử phân phối"
+  //       return HistoryRecallManage(taiKhoan: widget.taiKhoan);
+  //     case 2:
+  //       // Trang "Lịch đã xóa"
+  //       return OfflineRecallManageDeleted(taiKhoan: widget.taiKhoan);
+  //     default:
+  //       // Mặc định quay lại trang chính
+  //       return HomePage(taiKhoan: widget.taiKhoan);
+  //   }
+  // }
 
   @override
   void initState() {
@@ -94,17 +99,18 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
   }
 
   Future<void> _initializeEventList() async {
-    var events = await CalendarRecallDatabaseHelper().getEvents(widget.taiKhoan!);
+    var events =
+        await CalendarRecallDatabaseHelper().getEvents(widget.taiKhoan!);
     for (var event in events) {
       var tags = await loadData(event.idLTH); // Sử dụng phương thức loadData
-      event.soluongquet = tags.length;  // Cập nhật số lượng quét
+      event.soluongquet = tags.length; // Cập nhật số lượng quét
     }
     setState(() {
       _eventListFuture = Future.value(events);
     });
   }
 
-  void updateEvent( CalendarRecall updatedEvent) {
+  void updateEvent(CalendarRecall updatedEvent) {
     if (_eventListFuture != null && mounted) {
       setState(() {
         _eventListFuture = _eventListFuture!.then((eventList) {
@@ -150,110 +156,135 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
   Widget build(BuildContext context) {
     final screenWith = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    return  WillPopScope(
+    return WillPopScope(
         onWillPop: () async {
-      // Thay vì chỉ pop trang hiện tại, hãy sử dụng pushAndRemoveUntil để quay trực tiếp về HomePage
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(taiKhoan: widget.taiKhoan)), // Giả sử bạn truyền taiKhoan vào HomePage
-            (Route<dynamic> route) => false, // Xóa tất cả các routes khác khỏi stack
-        );
-      return false; // Ngăn không cho hành động pop mặc định
-      },
-      child:Scaffold(
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+                builder: (context) => HomePage(taiKhoan: widget.taiKhoan)),
+            (Route<dynamic> route) => false,
+          );
+          return false;
+        },
+        child: Scaffold(
           appBar: AppBar(
             backgroundColor: const Color(0xFFE9EBF1),
             shadowColor: Colors.blue.withOpacity(0.5),
-            leading: Container(
+            leading: IconButton(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => HomePage(taiKhoan: widget.taiKhoan)),
+                      (Route<dynamic> route) => false,
+                );
+              },
+              icon: const Icon(Icons.arrow_back),
             ),
             centerTitle: true,
             title: Text(
-              'Lịch thu hồi',
+              'Lịch thu hồi xuất dư',
               style: TextStyle(
                 fontSize: screenWith * 0.065,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
           ),
-              body: Padding (
-                padding: const EdgeInsets.only(top: 8.0),
-                child: _eventListFuture == null ? const Padding(
-                  padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
-                  child: Center(
-                    child: SizedBox(
-                      width: 30, // Giới hạn kích thước của CircularProgressIndicator
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+          body: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: _eventListFuture == null
+                ? const Padding(
+                    padding: EdgeInsets.all(20.0),
+                    // Thêm padding xung quanh CircularProgressIndicator
+                    child: Center(
+                      child: SizedBox(
+                        width: 30,
+                        // Giới hạn kích thước của CircularProgressIndicator
+                        height: 30,
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColor.mainText),
+                        ),
                       ),
                     ),
-                  ),
-                ) : FutureBuilder<List<CalendarRecall>>(
-                  future: _eventListFuture!,
-                  builder: (context, snapshot){
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Padding(
-                        padding: EdgeInsets.all(20.0), // Thêm padding xung quanh CircularProgressIndicator
-                        child: Center(
-                          child: SizedBox(
-                            width: 30, // Giới hạn kích thước của CircularProgressIndicator
-                            height: 30,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
-                            ),
-                          ),
-                        ),
-                      );
-                    } else if (snapshot.hasError && snapshot.error != null) {
-                      return Center(
-                        child: Text('Đã xảy ra lỗi: ${snapshot.error}'),
-                      );
-                    } else {
-                      final eventList = snapshot.data!;
-                      if (eventList.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
-                          constraints: const BoxConstraints.expand(),
-                          color: const Color(0xFFFAFAFA),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: <Widget>[
-                                Image.asset(
-                                  'assets/image/canhbao1.png',
-                                  width: 50,
-                                  height: 50,
-                                ),
-                                const SizedBox(height: 15),
-                                const Text(
-                                  'Chưa có lịch thu hồi',
-                                  style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                  )
+                : FutureBuilder<List<CalendarRecall>>(
+                    future: _eventListFuture!,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(20.0),
+                          // Thêm padding xung quanh CircularProgressIndicator
+                          child: Center(
+                            child: SizedBox(
+                              width: 30,
+                              // Giới hạn kích thước của CircularProgressIndicator
+                              height: 30,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColor.mainText),
+                              ),
                             ),
                           ),
                         );
+                      } else if (snapshot.hasError && snapshot.error != null) {
+                        return Center(
+                          child: Text('Đã xảy ra lỗi: ${snapshot.error}'),
+                        );
                       } else {
-                        eventList.sort((a, b) => DateTime.parse(b.ngayTaoLTH).compareTo(DateTime.parse(a.ngayTaoLTH)));
-                        return ListView.builder(
-                          itemCount: eventList.length,
-                          itemBuilder: (context, index) {
-                            final event = eventList[index];
-                            final color = index % 2 == 0 ? const Color(0xFFFAFAFA) : const Color(0xFFFAFAFA);
-                            return
-                              Dismissible(
+                        final eventList = snapshot.data!;
+                        if (eventList.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.fromLTRB(30, 220, 30, 0),
+                            constraints: const BoxConstraints.expand(),
+                            color: const Color(0xFFFAFAFA),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: <Widget>[
+                                  Image.asset(
+                                    'assets/image/canhbao1.png',
+                                    width: 50,
+                                    height: 50,
+                                  ),
+                                  const SizedBox(height: 15),
+                                  const Text(
+                                    'Chưa có lịch thu hồi',
+                                    style: TextStyle(
+                                        fontSize: 22, color: AppColor.mainText),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        } else {
+                          eventList.sort((a, b) => DateTime.parse(b.ngayTaoLTH)
+                              .compareTo(DateTime.parse(a.ngayTaoLTH)));
+                          return ListView.builder(
+                            itemCount: eventList.length,
+                            itemBuilder: (context, index) {
+                              final event = eventList[index];
+                              final color = index % 2 == 0
+                                  ? const Color(0xFFFAFAFA)
+                                  : const Color(0xFFFAFAFA);
+                              return Dismissible(
                                   key: Key(event.idLTH),
-                                  direction: event.soluongquet <= 0 ? DismissDirection.endToStart : DismissDirection.none,
+                                  direction: event.soluongquet <= 0
+                                      ? DismissDirection.endToStart
+                                      : DismissDirection.none,
                                   confirmDismiss: (direction) async {
-                                    if (direction == DismissDirection.endToStart) {
+                                    if (direction ==
+                                        DismissDirection.endToStart) {
                                       if (event.soluongquet <= 0) {
                                         // Thực hiện chuyển hướng tới trang EditPackageCalendarPage
                                         await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                            EditRecallCalendarPage(event: event, onUpdateEvent: updateEvent),
+                                                EditRecallCalendarPage(
+                                                    event: event,
+                                                    onUpdateEvent: updateEvent),
                                           ),
                                         );
                                         // Không dismiss sau khi chuyển hướng
@@ -265,124 +296,138 @@ class OfflineRecallManageState extends State<OfflineRecallManage> {
                                     }
                                     return false; // Không cho phép trượt trong các trường hợp khác
                                   },
-                                background: Container(
-                                  color: const Color(0xFFB3D1C0), // Màu nền khi trượt
-                                  alignment: Alignment.centerLeft,
-                                  child: const Padding(
-                                    padding: EdgeInsets.only(left: 20.0),
-                                    child: Icon(Icons.edit, color: Color(0xFF097746)),
-                                  ),
-                                ),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SendDataRecall (
-                                          event: event,
-                                          onDeleteEvent: updateEventList,
-                                        ),
-                                      ),
-                                    );
-                                    if (result != null) {
-                                      _initializeEventList();
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.grey.withOpacity(0.5),
-                                          width: 2,
-                                        ),
-                                      ),
+                                  background: Container(
+                                    color: const Color(0xFFB3D1C0),
+                                    // Màu nền khi trượt
+                                    alignment: Alignment.centerLeft,
+                                    child: const Padding(
+                                      padding: EdgeInsets.only(left: 20.0),
+                                      child: Icon(Icons.edit,
+                                          color: AppColor.mainText),
                                     ),
-                                    padding: const EdgeInsets.fromLTRB(8.0, 1.0, 8.0, 1.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Sắp xếp theo chiều ngang
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start, // Sắp xếp văn bản theo chiều dọc
-                                            children: [
-                                              Text('${event.ghiChuLTH}',
-                                                style: TextStyle(
-                                                    color: const Color(0xFF097746),
-                                                    fontSize: screenWith*0.055,
-                                                    fontWeight: FontWeight.bold
-                                                ),
-                                              ),
-                                              Text(
-                                                'Số lượng quét: ${event.soluongquet}',
-                                                style: TextStyle(
-                                                  color: const Color(0xFF097746),
-                                                  fontSize: screenWith*0.05,
-                                                ),
-                                              ),
-                                              Text(
-                                                'Ngày tạo: ${event.ngayTaoLTH}',
-                                                style: TextStyle(
-                                                    color: const Color(0xFF097746),
-                                                  fontSize: screenWith*0.05,
-                                                ),
-                                              ),
-                                            ],
+                                  ),
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SendDataRecall(
+                                            event: event,
+                                            onDeleteEvent: updateEventList, isSurplusGoodRecall: true,
                                           ),
                                         ),
-                                        // Biểu tượng điều hướng
-                                        const Icon(
-                                          Icons.navigate_next,
-                                          size: 30.0,
-                                          color: Color(0xFF097746),
+                                      );
+                                      if (result != null) {
+                                        _initializeEventList();
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: color,
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.grey.withOpacity(0.5),
+                                            width: 2,
+                                          ),
                                         ),
-                                      ],
+                                      ),
+                                      padding: const EdgeInsets.fromLTRB(
+                                          8.0, 1.0, 8.0, 1.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        // Sắp xếp theo chiều ngang
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              // Sắp xếp văn bản theo chiều dọc
+                                              children: [
+                                                Text(
+                                                  '${event.ghiChuLTH}',
+                                                  style: TextStyle(
+                                                      color: const Color(
+                                                          0xFF097746),
+                                                      fontSize:
+                                                          screenWith * 0.055,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                Text(
+                                                  'Số lượng quét: ${event.soluongquet}',
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppColor.contentText,
+                                                    fontSize: screenWith * 0.05,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Ngày tạo: ${event.ngayTaoLTH}',
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppColor.contentText,
+                                                    fontSize: screenWith * 0.05,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Biểu tượng điều hướng
+                                          const Icon(
+                                            Icons.navigate_next,
+                                            size: 30.0,
+                                            color: AppColor.mainText,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                              )
-                            );
-                          },
-                        );
+                                  ));
+                            },
+                          );
+                        }
                       }
-                    }
-                  },
+                    },
+                  ),
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.add_circle_outline_outlined,
+                  color: AppColor.mainText,
+                  size: 35,
                 ),
+                label: 'Tạo lịch',
               ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.add_circle_outline_outlined,
-                color: Color(0xFF097746),
-                size: 35,
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.history,
+                  color: AppColor.mainText,
+                  size: 35,
+                ),
+                label: 'Lịch sử thu hồi',
               ),
-              label: 'Tạo lịch',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.history,
-                color: Color(0xFF097746),
-                size: 35,
+              BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.auto_delete_outlined,
+                  color: AppColor.mainText,
+                  size: 35,
+                ),
+                label: 'Lịch đã xóa',
               ),
-              label: 'Lịch sử thu hồi',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.auto_delete_outlined,
-                color: Color(0xFF097746),
-                size: 35,
-              ),
-              label: 'Lịch đã xóa',
-            ),
-          ],
-          currentIndex: selectIndex, // Chỉ số hiện tại
-          onTap: _onItemTap, // Gọi hàm _onItemTap khi chọn một mục
-          // showSelectedLabels: false, // Ẩn nhãn mục được chọn
-          // showUnselectedLabels: false, // Ẩn nhãn mục chưa được chọn
-          selectedItemColor: const Color(0xFF097746), // Màu của mục đang chọn
-          unselectedItemColor: const Color(0xFF097746), // Màu của mục chưa chọn
-        ),
-      )
-      );
+            ],
+            currentIndex: selectIndex,
+            // Chỉ số hiện tại
+            onTap: _onItemTap,
+            // Gọi hàm _onItemTap khi chọn một mục
+            // showSelectedLabels: false, // Ẩn nhãn mục được chọn
+            // showUnselectedLabels: false, // Ẩn nhãn mục chưa được chọn
+            selectedItemColor: AppColor.mainText,
+            // Màu của mục đang chọn
+            unselectedItemColor:
+                AppColor.mainText, // Màu của mục chưa chọn
+          ),
+        ));
   }
 }

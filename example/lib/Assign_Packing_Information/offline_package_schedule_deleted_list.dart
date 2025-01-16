@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'database_package_inf.dart';
 import 'model_information_package.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -167,15 +168,18 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
               backgroundColor: const Color(0xFFE9EBF1),
               elevation: 4,
               shadowColor: Colors.blue.withOpacity(0.5),
-              leading: Container(
-              ),
+              leading: IconButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  icon: const Icon(Icons.arrow_back)),
               centerTitle: true,
               title: Text(
                 'Lịch đóng bao đã xóa',
                 style: TextStyle(
                   fontSize: screenWith * 0.065,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
             ),
@@ -188,7 +192,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                     width: 30, // Giới hạn kích thước của CircularProgressIndicator
                     height: 30,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                     ),
                   ),
                 ),
@@ -204,7 +208,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                             width: 30, // Giới hạn kích thước của CircularProgressIndicator
                             height: 30,
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                             ),
                           ),
                         ),
@@ -231,7 +235,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                               const SizedBox(height: 15),
                               const Text(
                                 'Chưa có lịch đóng bao được xóa',
-                                style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                                style: TextStyle(fontSize: 22, color: AppColor.mainText),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -258,16 +262,16 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                         return AlertDialog(
                                           title: const Text(
                                             'Xác nhận khôi phục lịch',
-                                            style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                                            style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
                                           ),
                                           content: const Text(
                                             "Bạn có chắc chắn muốn khôi phục lịch này không?",
-                                            style: TextStyle(fontSize: 18, color: Color(0xFF097746)),
+                                            style: TextStyle(fontSize: 18, color: AppColor.mainText),
                                           ),
                                           actions: <Widget>[
                                             TextButton(
                                               style: ButtonStyle(
-                                                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                   RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(10.0),
@@ -286,7 +290,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                             const SizedBox(width: 8),
                                             TextButton(
                                               style: ButtonStyle(
-                                                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                   RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(10.0),
@@ -316,7 +320,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                   alignment: Alignment.centerLeft,
                                   child: const Padding(
                                     padding: EdgeInsets.only(left: 20.0),
-                                    child: Icon(Icons.restore_from_trash_outlined, color: Color(0xFF097746)),
+                                    child: Icon(Icons.restore_from_trash_outlined, color: AppColor.mainText),
                                   ),
                                 ),
                                 child: GestureDetector(
@@ -329,17 +333,17 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                         return AlertDialog(
                                           title: const Text('Xác nhận xóa lịch vĩnh viễn',
                                               style: TextStyle(
-                                                  color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+                                                  color: AppColor.mainText, fontWeight: FontWeight.bold)),
                                           content: const Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
                                               style: TextStyle(
                                                 fontSize: 18,
-                                                color: Color(0xFF097746),
+                                                color: AppColor.mainText,
                                               )),
                                           actions: <Widget>[
                                             TextButton(
                                               style: ButtonStyle(
                                                 backgroundColor:
-                                                MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                                MaterialStateProperty.all<Color>(AppColor.mainText),
                                                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                   RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(10.0),
@@ -359,7 +363,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                             TextButton(
                                               style: ButtonStyle(
                                                 backgroundColor:
-                                                MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                                MaterialStateProperty.all<Color>(AppColor.mainText),
                                                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                   RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(10.0),
@@ -406,7 +410,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                               Text(
                                                 event.maLDB,
                                                 style: TextStyle(
-                                                    color: const Color(0xFF097746),
+                                                    color: AppColor.mainText,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: screenWith*0.05
                                                 ),
@@ -414,28 +418,28 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                               Text(
                                                 'Sản phẩm: ${event.sanPhamLDB}',
                                                 style: TextStyle(
-                                                    color: const Color(0xFF097746),
+                                                    color: AppColor.contentText,
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Số lượng quét: ${event.soLuongQuet}',
                                                 style: TextStyle(
-                                                    color: const Color(0xFF097746),
+                                                    color: AppColor.contentText,
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Ghi chú: ${event.ghiChuLDB}',
                                                 style: TextStyle(
-                                                    color: const Color(0xFF097746),
+                                                    color: AppColor.contentText,
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
                                               Text(
                                                 'Ngày Tạo: ${event.ngayTaoLDB}',
                                                 style: TextStyle(
-                                                    color: const Color(0xFF097746),
+                                                    color: AppColor.contentText,
                                                     fontSize: screenWith*0.05
                                                 ),
                                               ),
@@ -445,7 +449,7 @@ class _OfflinePackageScheduleDeletedListState extends State<OfflinePackageSchedu
                                         const Icon(
                                           Icons.delete_outline,
                                           size: 30.0,
-                                          color: Color(0xFF097746),
+                                          color: AppColor.deleteAction,
                                         ),
                                       ],
                                     ),

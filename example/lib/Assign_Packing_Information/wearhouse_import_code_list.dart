@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../Utils/app_color.dart';
 import 'model_information_package.dart';
 
 class SelectMLNKPage extends StatefulWidget {
@@ -50,15 +51,15 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
         return AlertDialog(
           title: const Text(
             'Xác nhận Loại Nhâp kho?',
-            style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
           ),
           content: Text('Bạn có chắc chắn muốn chọn loại nhập kho: ${selectedMLNK.tenLNK}?',
-            style: const TextStyle(color: Color(0xFF097746)),
+            style: const TextStyle(color: AppColor.mainText),
           ),
           actions: <Widget>[
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -77,7 +78,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
             const SizedBox(width: 8), // Khoảng cách giữa các nút
             TextButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0), // Điều chỉnh độ cong của góc
@@ -117,7 +118,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
       ),
@@ -142,14 +143,14 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                   fillColor: const Color(0xFFEBEDEC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -157,7 +158,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                       _searchController.clear();
                       _onSearchTextChanged();
                     },
-                    icon: const Icon(Icons.clear, color: Color(0xFF097746)),
+                    icon: const Icon(Icons.clear, color: AppColor.mainText),
                   ),
                 ),
               ),
@@ -182,7 +183,7 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                           "Vui lòng kiểm tra kết nối",
                           style: TextStyle(
                             fontSize: 18,  // Đặt kích thước chữ
-                            color: Color(0xFF097746),  // Màu chữ
+                            color: AppColor.mainText,  // Màu chữ
                           ),
                         ),
                       ],
@@ -203,14 +204,14 @@ class _SelectMLNKPageState extends State<SelectMLNKPage> {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
                       ),
                       subtitle: Text(
                         'Mã Loại nhập kho: ${mlNK.maLNK}',
                         style: const TextStyle(
                           fontSize: 18,
-                          color: Color(0xFF097746),
+                          color: AppColor.mainText,
                         ),
                       ),
                       onTap: () {

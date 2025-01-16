@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import '../Utils/app_color.dart';
 import 'model.dart';
 import 'database.dart';
 import '../utils/common_functions.dart';
@@ -62,7 +63,7 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
         title: const Text(
           "Chi tiết mã chip quét",
           style: TextStyle(
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -94,13 +95,13 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
                         title: Text(
                           '${index + 1}. $epcString',
                           style: const TextStyle(
-                            color: Color(0xFF097746),
+                            color: AppColor.mainText,
                           ),
                         ),
                         subtitle: Text(
                           '- $scanDate',
                           style: const TextStyle(
-                            color: Color(0xFF097746),
+                            color: AppColor.contentText,
                           ),
                         ),
                       );
@@ -123,7 +124,7 @@ class _ChipInformationPageState extends State<ChipInformationPage> {
                       const SizedBox(height: 15),
                       const Text(
                         'Không có dữ liệu',
-                        style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                        style: TextStyle(fontSize: 22, color: AppColor.mainText),
                         textAlign: TextAlign.center,
                       ),
                     ],

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
 import 'package:rfid_c72_plugin_example/Recall_Replacement/recall_replacement_offline_list.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'recall_replacement_model.dart';
 import 'recall_replacement_database.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -126,15 +127,18 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
           appBar: AppBar(
             backgroundColor: const Color(0xFFE9EBF1),
             shadowColor: Colors.blue.withOpacity(0.5),
-            leading: Container(
-            ),
+            leading: IconButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+                icon: const Icon(Icons.arrow_back)),
             centerTitle: true,
             title: Text(
-              'Lịch thu hồi đã xóa',
+              'Lịch thu hồi thay thế đã xoá',
               style: TextStyle(
-                fontSize: screenWith * 0.065,
+                fontSize: screenWith * 0.06,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF097746),
+                color: AppColor.mainText,
               ),
             ),
           ),
@@ -147,7 +151,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                   width: 30, // Giới hạn kích thước của CircularProgressIndicator
                   height: 30,
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                   ),
                 ),
               ),
@@ -162,7 +166,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                         width: 30, // Giới hạn kích thước của CircularProgressIndicator
                         height: 30,
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                         ),
                       ),
                     ),
@@ -189,7 +193,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                             const SizedBox(height: 15),
                             const Text(
                               'Chưa có lịch thu hồi được xóa',
-                              style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                              style: TextStyle(fontSize: 22, color: AppColor.mainText),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -216,16 +220,16 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       return AlertDialog(
                                         title: const Text(
                                           'Xác nhận khôi phục lịch',
-                                          style: TextStyle(color: Color(0xFF097746), fontWeight: FontWeight.bold),
+                                          style: TextStyle(color: AppColor.mainText, fontWeight: FontWeight.bold),
                                         ),
                                         content: const Text(
                                           "Bạn có chắc chắn muốn khôi phục lịch này không?",
-                                          style: TextStyle(fontSize: 18, color: Color(0xFF097746)),
+                                          style: TextStyle(fontSize: 18, color: AppColor.mainText),
                                         ),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -244,7 +248,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                           const SizedBox(width: 8),
                                           TextButton(
                                             style: ButtonStyle(
-                                              backgroundColor: MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              backgroundColor: MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -274,7 +278,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                 alignment: Alignment.centerLeft,
                                 child: const Padding(
                                   padding: EdgeInsets.only(left: 20.0),
-                                  child: Icon(Icons.restore_from_trash_outlined, color: Color(0xFF097746)),
+                                  child: Icon(Icons.restore_from_trash_outlined, color: AppColor.mainText),
                                 ),
                               ),
                               child: GestureDetector(
@@ -287,17 +291,17 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       return AlertDialog(
                                         title: const Text('Xác nhận xóa lịch vĩnh viễn',
                                             style: TextStyle(
-                                                color: Color(0xFF097746), fontWeight: FontWeight.bold)),
+                                                color: AppColor.mainText, fontWeight: FontWeight.bold)),
                                         content: const Text("Bạn có chắc chắn muốn xóa lịch này vĩnh viễn không?",
                                             style: TextStyle(
                                               fontSize: 18,
-                                              color: Color(0xFF097746),
+                                              color: AppColor.mainText,
                                             )),
                                         actions: <Widget>[
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -317,7 +321,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                           TextButton(
                                             style: ButtonStyle(
                                               backgroundColor:
-                                              MaterialStateProperty.all<Color>(const Color(0xFF097746)),
+                                              MaterialStateProperty.all<Color>(AppColor.mainText),
                                               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                                 RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(10.0),
@@ -384,7 +388,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                           children: [
                                             Text('${event.ghiChuLTHTT}',
                                               style: TextStyle(
-                                                  color: const Color(0xFF097746),
+                                                  color: AppColor.mainText,
                                                   fontSize: screenWith*0.055,
                                                   fontWeight: FontWeight.bold
                                               ),
@@ -392,14 +396,14 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                             Text(
                                               'Số lượng quét: ${event.soluongquetTT}',
                                               style: TextStyle(
-                                                color: const Color(0xFF097746),
+                                                color: AppColor.contentText,
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
                                             Text(
                                               'Ngày tạo: ${event.ngayTaoLTHTT}',
                                               style: TextStyle(
-                                                color: const Color(0xFF097746),
+                                                color: AppColor.contentText ,
                                                 fontSize: screenWith*0.05,
                                               ),
                                             ),
@@ -409,7 +413,7 @@ class OfflineRecallReplacemantListDeletedState extends State<OfflineRecallReplac
                                       const Icon(
                                         Icons.delete_outline,
                                         size: 30.0,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.deleteAction,
                                       ),
                                     ],
                                   ),

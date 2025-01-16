@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/services.dart';
 
+import '../Utils/app_color.dart';
 import 'model.dart';
 import 'database.dart';
 import 'offline_distribution.dart';
@@ -105,20 +106,25 @@ class _CreateCalendarState extends State<CreateCalendar> {
         backgroundColor: const Color(0xFFE9EBF1),
         elevation: 4,
         shadowColor: Colors.blue.withOpacity(0.5),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12.0),
-          child:
-          Container(
-              width: 100,
-            height: 100,
-          ),
-        ),
+        // leading: Padding(
+        //   padding: const EdgeInsets.only(left: 12.0),
+        //   child:
+        //   Container(
+        //       width: 100,
+        //     height: 100,
+        //   ),
+        // ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            icon: const Icon(Icons.arrow_back)),
         title: const Text(
-          'Tạo lịch',
+          'Tạo lịch phân phối',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF097746),
+            color: AppColor.mainText,
           ),
         ),
         actions: [],
@@ -134,7 +140,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
                 'Nhập thông tin lịch',
                 style: TextStyle(
                   fontSize: 26,
-                  color: Color(0xFF097746),
+                  color: AppColor.mainText,
                 ),
               ),
               const SizedBox(height: 13),
@@ -399,7 +405,7 @@ class _CreateCalendarState extends State<CreateCalendar> {
               }
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF097746),
+              backgroundColor: AppColor.mainText,
               padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 6.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0),

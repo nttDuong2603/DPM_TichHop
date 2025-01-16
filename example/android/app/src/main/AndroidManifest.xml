@@ -23,6 +23,8 @@
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
        android:label="JVF RFID"
        android:name="${applicationName}"
        android:icon="@mipmap/logo_jvf">

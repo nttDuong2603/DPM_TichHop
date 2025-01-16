@@ -1,14 +1,18 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rfid_c72_plugin_example/Assign_Packing_Information/model_information_package.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'model_recall_manage.dart';
 import 'database_recall.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class HistoryRecallManage extends StatefulWidget {
   final String taiKhoan;
-  const HistoryRecallManage({Key? key, required this.taiKhoan}) : super(key: key);
+  final bool isRecallCancel;
+  const HistoryRecallManage({Key? key, required this.taiKhoan, required this.isRecallCancel}) : super(key: key);
 
   @override
   State<HistoryRecallManage> createState() => HistoryRecallManageState();
@@ -114,26 +118,17 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
           backgroundColor: const Color(0xFFE9EBF1),
           elevation: 4,
           shadowColor: Colors.blue.withOpacity(0.5),
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 12.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(
-                onTap: () {},
-                child: Image.asset(
-                  'assets/image/logoJVF_RFID.png',
-                  width: screenWith * 0.15,
-                  height: screenHeight * 0.15,
-                ),
-              ),
-            ),
-          ),
+          leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              icon: const Icon(Icons.arrow_back)),
           title: Text(
-            'Lịch sử thu hồi',
+           widget.isRecallCancel ? 'Lịch sử thu hồi huỷ bỏ' : 'Lịch sử thu hồi xuất dư' ,
             style: TextStyle(
               fontSize: screenWith * 0.07,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF097746),
+              color: AppColor.mainText,
             ),
           ),
         ),
@@ -158,14 +153,14 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                   fillColor: const Color(0xFFEBEDEC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -191,7 +186,7 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                       width: 30, // Giới hạn kích thước của CircularProgressIndicator
                       height: 30,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                       ),
                     ),
                   ),
@@ -206,7 +201,7 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                               width: 30, // Giới hạn kích thước của CircularProgressIndicator
                               height: 30,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                               ),
                             ),
                           )
@@ -233,7 +228,7 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                                 const SizedBox(height: 15),
                                 const Text(
                                   'Chưa có lịch sử thu hồi',
-                                  style: TextStyle(fontSize: 22, color: Color(0xFF097746)),
+                                  style: TextStyle(fontSize: 22, color: AppColor.mainText),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -263,7 +258,7 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                                   title: Text(
                                     '${event.ghiChuLTH}',
                                     style: const TextStyle(
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 22
                                     ),
@@ -274,14 +269,14 @@ class HistoryRecallManageState extends State<HistoryRecallManage> {
                                       Text(
                                         'Số lượng thu hồi: ${event.thuHoiThanhCong}',
                                         style: const TextStyle(
-                                            color: Color(0xFF097746),
+                                            color: AppColor.contentText,
                                             fontSize: 22
                                         ),
                                       ),
                                       Text(
                                         'Ngày thu hồi: ${event.ngayThuHoi}',
                                         style: const TextStyle(
-                                            color: Color(0xFF097746),
+                                            color: AppColor.contentText,
                                             fontSize: 22
                                         ),
                                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../Utils/app_color.dart';
 import 'model.dart';
 
 class SelectSchedulePage extends StatefulWidget {
@@ -58,7 +59,7 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF097746),
+              color: AppColor.mainText,
             ),
           ),
         ),
@@ -87,14 +88,14 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
                   border:
                   OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF097746)),
+                    borderSide: const BorderSide(color: AppColor.mainText),
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   suffixIcon: IconButton(
@@ -122,7 +123,7 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
                               width: 30, // Giới hạn kích thước của CircularProgressIndicator
                               height: 30,
                               child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF097746)),
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColor.mainText),
                               ),
                             ),
                           )
@@ -143,7 +144,7 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
                               "Vui lòng kiểm tra kết nối",
                               style: TextStyle(
                                 fontSize: 18,  // Đặt kích thước chữ
-                                color: Color(0xFF097746),  // Màu chữ
+                                color: AppColor.mainText,  // Màu chữ
                               ),
                             ),
                           ],
@@ -173,7 +174,7 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF097746),
+                                  color: AppColor.mainText,
                                 ),
                               ),
                               subtitle:Column(
@@ -183,31 +184,31 @@ class _SelectSchedulePageState extends State<SelectSchedulePage> {
                                       'Lệnh giao hàng: ${dealer.LXH}',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     ),
                                     Text('Tên đại lý/kho: ${dealer.TSP}',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     ),
                                     Text('Phiếu xuất kho: ${dealer.PXK ?? ''}  ',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     ),
                                     Text('Số bao cần xuất: ${dealer.SBCX}',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     ),
                                     Text('Ghi chú: ${dealer.ghiChu ?? ''}',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        color: Color(0xFF097746),
+                                        color: AppColor.mainText,
                                       ),
                                     )
                                   ]
