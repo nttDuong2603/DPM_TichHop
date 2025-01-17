@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Utils/app_color.dart';
 import '../utils/app_config.dart';
-import 'model.dart';
+import '../Models/model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 

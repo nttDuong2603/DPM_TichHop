@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../Utils/app_color.dart';
-import 'model.dart';
-import 'database.dart';
+import '../Models/model.dart';
+
+import '../Helpers/calendar_database_helper.dart';
 import 'edit_celendar.dart';
 import 'EPC_sync_list.dart';
 

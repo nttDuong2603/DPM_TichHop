@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rfid_c72_plugin/rfid_c72_plugin.dart';
-import 'Distribution_Module/model.dart';
+import 'Models/model.dart';
 class RfidScanner extends StatefulWidget {
   const RfidScanner({Key? key}) : super(key: key);
 

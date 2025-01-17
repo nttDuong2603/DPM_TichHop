@@ -4,14 +4,19 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:async';
 import 'package:intl/intl.dart'; // Import thư viện intl
-import 'model.dart';
+import '../Models/model.dart';
 
 class CalendarDatabaseHelper {
+ // Sling.db
+  String databaseName;
   static Database? _database;
 
-  DatabaseHelper() {
-    initDatabase();
-  }
+  // DatabaseHelper() {
+  //   initDatabase();
+  // }
+
+  // Table  BDLLPP24042024 Also used for managing accounts
+  CalendarDatabaseHelper({this.databaseName = "BDLLPP24042024.db"});
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -20,13 +25,14 @@ class CalendarDatabaseHelper {
   }
 
   Future<Database> initDatabase() async {
-    String path = join(await getDatabasesPath(), 'BDLLPP24042024.db');
+    String path = join(await getDatabasesPath(), databaseName);
      if (kDebugMode) {
        print('Database path: $path');
      }
     return openDatabase(
       path,
       onCreate: (db, version) async {
+
         await db.execute('''
             CREATE TABLE calendar(
             id TEXT PRIMARY KEY,
@@ -34,6 +40,25 @@ class CalendarDatabaseHelper {
             tenSanPham TEXT,
             soLuong INTEGER,
             soLuongQuet INTEGER,
+            lenhPhanPhoi TEXT,
+            phieuXuatKho TEXT,
+            ghiChu TEXT,
+            taiKhoanID INTEGER, 
+            time TEXT,
+            isRemove INTEGER DEFAULT 0,
+            isSync INTEGER DEFAULT 0,
+            FOREIGN KEY (taiKhoanID) REFERENCES account(ID) 
+          );
+      ''');
+
+        await db.execute('''
+            CREATE TABLE Sling(
+            id TEXT PRIMARY KEY,
+            tenDaiLy TEXT,
+            tenSanPham TEXT,
+            soLuong INTEGER,
+            soLuongQuetSling
+            soLuongQuet INTEGER, 
             lenhPhanPhoi TEXT,
             phieuXuatKho TEXT,
             ghiChu TEXT,
@@ -112,7 +137,7 @@ class CalendarDatabaseHelper {
   }
 
   Future<List<Calendar>> getEventsByDateAndAccount(DateTime selectedDate, String accountName, int isRemove, int isSync) async {
-    // Nhận đối tượng cơ sở dữ liệu
+
     final Database db = await database;
     // Lấy ngày dưới dạng chuỗi
     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
@@ -175,12 +200,12 @@ class CalendarDatabaseHelper {
     }
   }
 
-  Future<void> insertEvent(Calendar event, String taiKhoan) async {
+  Future<void> insertEvent(Calendar event, String taiKhoan, {String tableName = "calendar"}) async {
     final db = await database;
     var eventMap = event.toMap();
     eventMap['taiKhoanID'] = taiKhoan;
     await db.insert(
-      'calendar',
+      tableName,
       eventMap,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -210,12 +235,12 @@ class CalendarDatabaseHelper {
     }
   }
 
-  Future<List<Calendar>> getEvents(String accountName) async {
+  Future<List<Calendar>> getEvents(String accountName,{String tableName ="calendar"}) async {
     // Nhận đối tượng cơ sở dữ liệu
     final Database db = await database;
     // Truy vấn cơ sở dữ liệu để lấy danh sách các bản ghi lịch cho tài khoản cụ thể
     final List<Map<String, dynamic>> maps = await db.query(
-      'calendar',
+      tableName,
       where: 'taiKhoanID = ? AND isRemove = ? AND isSync = ?',
       whereArgs: [accountName, 0, 0],
     );

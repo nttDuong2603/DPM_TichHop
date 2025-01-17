@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 import 'dart:async';
 import 'package:intl/intl.dart'; // Import thư viện intl
 import 'model_recall_manage.dart';
-import '../Distribution_Module/model.dart';
+import '../Models/model.dart';
 
 class CalendarRecallDatabaseHelper {
   static Database? _database;

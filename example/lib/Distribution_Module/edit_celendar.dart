@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../Utils/app_color.dart';
-import 'model.dart';
-import 'database.dart';
+import '../Models/model.dart';
+import '../Helpers/calendar_database_helper.dart';
+
 
 class EditCalendarPage extends StatefulWidget {
   final Calendar event;

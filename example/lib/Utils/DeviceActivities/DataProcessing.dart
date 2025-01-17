@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'dart:ui';
 
 import '../../Assign_Packing_Information/model_information_package.dart';
-import '../../Distribution_Module/model.dart';
+import '../../Models/model.dart';
 
 class DataProcessing {
   static void ProcessData(List<TagEpc> inputData, List<TagEpc> outputData,VoidCallback playSound) {

@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../Helpers/calendar_database_helper.dart';
 import '../Distribution_Module/calendar_deleted.dart';
 import '../Distribution_Module/celendar.dart';
-import '../Distribution_Module/database.dart';
 import '../Distribution_Module/edit_celendar.dart';
 import '../Distribution_Module/history_distribution.dart';
-import '../Distribution_Module/model.dart';
+import '../Models/model.dart';
 import '../Distribution_Module/send_data.dart';
 import '../Utils/app_color.dart';
 import '../Home/homepage.dart';
@@ -96,7 +96,7 @@ class _SlingExportState extends State<SlingExport> {
   }
 
   Future<void> _initializeEventList() async {
-    var events = await CalendarDatabaseHelper().getEvents(widget.taiKhoan);
+    var events = await CalendarDatabaseHelper().getEvents(widget.taiKhoan,tableName: "Sling");
     for (var event in events) {
       var tags = await loadData(event.id); // Sử dụng phương thức loadData
       event.soLuongQuett = tags.length; // Cập nhật số lượng quét
@@ -120,7 +120,7 @@ class _SlingExportState extends State<SlingExport> {
     if (isCalendarUpdated == true) {
       setState(() {
         // Cập nhật lại danh sách sự kiện với dữ liệu mới
-        _eventListFuture = CalendarDatabaseHelper().getEvents(widget.taiKhoan);
+        _eventListFuture = CalendarDatabaseHelper().getEvents(widget.taiKhoan,tableName: "Sling");
       });
     }
   }

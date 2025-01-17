@@ -6,8 +6,9 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter/services.dart';
 
 import '../Utils/app_color.dart';
-import 'model.dart';
-import 'database.dart';
+import '../Models/model.dart';
+
+import '../Helpers/calendar_database_helper.dart';
 import 'offline_distribution.dart';
 
 class CreateCalendar extends StatefulWidget {

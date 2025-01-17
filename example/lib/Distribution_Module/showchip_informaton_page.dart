@@ -5,9 +5,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import '../Utils/app_color.dart';
-import 'model.dart';
-import 'database.dart';
+import '../Models/model.dart';
 import '../utils/common_functions.dart';
+import '../Helpers/calendar_database_helper.dart';
 
 class ChipInformationPage extends StatefulWidget {
   final String eventId;

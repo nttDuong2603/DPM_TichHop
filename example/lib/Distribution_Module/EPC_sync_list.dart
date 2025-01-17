@@ -4,9 +4,9 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import '../Utils/app_color.dart';
-import 'model.dart';
-import 'database.dart';
+import '../Models/model.dart';
 import '../utils/common_functions.dart';
+import '../Helpers/calendar_database_helper.dart';
 
 class EPCSyncList extends StatefulWidget {
   final String eventId;

@@ -12,7 +12,7 @@ import 'package:rfid_c72_plugin_example/Check_Goods_Infor_Module/webview_product
 import 'package:rfid_c72_plugin_example/Utils/app_color.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import '../Barcode_Scanner_By_Camera/barcode_scanner_by_camera.dart';
-import '../Distribution_Module/model.dart';
+import '../Models/model.dart';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
