@@ -453,7 +453,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                       ],
-                      if (licenseCode.contains('CNQLTHH')) ...[
+                      if (licenseCode.contains('CNQLTH')) ...[
                         // if (licenseCode == 'MQ0008' || licenseCode == 'MQ0012') ...[ // Chỉ hiển thị cho Admin
                         TextButton(
                           onPressed: () {
@@ -490,7 +490,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                       ],
-                      if (licenseCode.contains('CNQLTHN')) ...[
+                      if (licenseCode.contains('CNQLTH')) ...[
                         // if (licenseCode == 'MQ0008' || licenseCode == 'MQ0012') ...[ // Chỉ hiển thị cho Admin
                         TextButton(
                           onPressed: () {
@@ -654,11 +654,14 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.grey,
                         ),
                       ),
-                      Text(
-                        'IP: ${AppConfig.IP}',
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.035,
-                          color: Colors.grey,
+                      Flexible(
+                        child: Text(
+                          ' | Server: ${AppConfig.IP}',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.035,
+                            color: Colors.grey,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],

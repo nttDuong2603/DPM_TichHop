@@ -43,6 +43,7 @@ class Calendar {
   final String tenSanPham;
   final int soLuong;
   final int soLuongQuet;
+  final int soLuongQuetSling;
   final String lenhPhanPhoi;
   final String phieuXuatKho;
   final String ghiChu;
@@ -52,7 +53,8 @@ class Calendar {
   final int isRemove;
   int isSync;
   List<TagEpc> epcData;
-  int soLuongQuett;
+  int soLuongQuett; //RFID
+  int soLuongQuetSlingt;
   int phanPhoiThanhCong;
   int phanPhoiThatBai;
   int spDaPhanPhoi;
@@ -74,6 +76,7 @@ class Calendar {
     required this.tenSanPham,
     required this.soLuong,
     required this.soLuongQuet,
+    required this.soLuongQuetSling,
     required this.lenhPhanPhoi,
     required this.phieuXuatKho,
     required this.ghiChu,
@@ -84,6 +87,8 @@ class Calendar {
     this.isSync = 0,
     this.epcData = const [],
     this.soLuongQuett = 0,
+    this.soLuongQuetSlingt = 0,
+
     this.spDaPhanPhoi = 0,
     this.maKhongTonTai = 0,
     this.phanPhoiThanhCong = 0,
@@ -104,6 +109,7 @@ class Calendar {
     required String tenSanPham,
     required int soLuong,
     required int soLuongQuet,
+    required int soLuongQuetSling,
     required String lenhPhanPhoi,
     required String phieuXuatKho,
     required String ghiChu,
@@ -118,6 +124,7 @@ class Calendar {
       tenSanPham: tenSanPham,
       soLuong: soLuong,
       soLuongQuet: soLuongQuet,
+      soLuongQuetSling: soLuongQuetSling,
       lenhPhanPhoi: lenhPhanPhoi,
       phieuXuatKho: phieuXuatKho,
       ghiChu: ghiChu,
@@ -133,6 +140,7 @@ class Calendar {
       tenSanPham: map['tenSanPham'],
       soLuong: map['soLuong'],
       soLuongQuet: map['soLuongQuet'] ?? 0, // Giả sử rằng soLuongQuet có thể không tồn tại trong map
+      soLuongQuetSling: map['soLuongQuetSling'] ?? 0,
       lenhPhanPhoi: map['lenhPhanPhoi'],
       phieuXuatKho: map['phieuXuatKho'],
       ghiChu: map['ghiChu'],
@@ -140,6 +148,7 @@ class Calendar {
       time: map['time'],
       epcData: (map['epcData'] as List<dynamic>?)?.map((e) => TagEpc.fromMap(e)).toList() ?? [],
       soLuongQuett: map['soLuongQuett'] ?? 0,
+      soLuongQuetSlingt: map['soLuongQuetSlingt'] ?? 0,
     );
   }
   // Phương thức chuyển đổi đối tượng Calendar thành một bản đồ (map) dữ liệu
@@ -150,6 +159,7 @@ class Calendar {
       'tenSanPham': tenSanPham,
       'soLuong': soLuong,
       'soLuongQuet': soLuongQuet,
+      'soLuongQuetSling': soLuongQuetSling,
       'lenhPhanPhoi': lenhPhanPhoi,
       'phieuXuatKho': phieuXuatKho,
       'ghiChu': ghiChu,

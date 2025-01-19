@@ -18,6 +18,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
   late TextEditingController _tenSanPhamController;
   late TextEditingController _soLuongController;
   late TextEditingController _soLuongQuetController;
+  late TextEditingController _soLuongQuetSlingController;
   late TextEditingController _lenhPhanPhoiController;
   late TextEditingController _phieuXuatKhoController;
   late TextEditingController _ghiChuController;
@@ -355,6 +356,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
     final String tenSanPham = _tenSanPhamController.text;
     final int soLuong = int.tryParse(_soLuongController.text) ?? 0;
     final int soLuongQuet = int.tryParse(_soLuongQuetController.text) ?? 0;
+    final int soLuongQuetSling = int.tryParse(_soLuongQuetSlingController.text) ?? 0;
     final String lenhPhanPhoi = _lenhPhanPhoiController.text;
     final String phieuXuatKho = _phieuXuatKhoController.text;
     final String ghiChu = _ghiChuController.text;
@@ -371,6 +373,7 @@ class _EditCalendarPageState extends State<EditCalendarPage> {
       tenSanPham: tenSanPham,
       soLuong: soLuong,
       soLuongQuet: soLuongQuet,
+      soLuongQuetSling: soLuongQuetSling,
       lenhPhanPhoi: lenhPhanPhoi,
       phieuXuatKho: phieuXuatKho,
       ghiChu: ghiChu,

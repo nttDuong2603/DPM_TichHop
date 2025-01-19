@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rfid_c72_plugin_example/Sling/sling_send_data.dart';
 import '../Helpers/calendar_database_helper.dart';
 import '../Distribution_Module/calendar_deleted.dart';
 import '../Distribution_Module/celendar.dart';
@@ -96,17 +97,23 @@ class _SlingExportState extends State<SlingExport> {
   }
 
   Future<void> _initializeEventList() async {
-    var events = await CalendarDatabaseHelper().getEvents(widget.taiKhoan,tableName: "Sling");
-    for (var event in events) {
-      var tags = await loadData(event.id); // Sử dụng phương thức loadData
-      event.soLuongQuett = tags.length; // Cập nhật số lượng quét
+    try{
+      var events = await CalendarDatabaseHelper().getEvents(widget.taiKhoan,tableName: "Sling");
+      for (var event in events) {
+        var tags = await loadData(event.id); // Sử dụng phương thức loadData
+        event.soLuongQuett = tags.length; // Cập nhật số lượng quét
+      }
+      if (mounted) {
+        setState(() {
+          _eventListFuture = Future.value(events);
+        });
+      }
+    }catch(e){
+      if(kDebugMode){
+        print("Error: can not get sling schedule ! $e");
+      }
     }
-    // Cập nhật trạng thái cuối cùng
-    if (mounted) {
-      setState(() {
-        _eventListFuture = Future.value(events);
-      });
-    }
+
   }
 
   void navigateToUpdate(BuildContext context) async {
@@ -351,7 +358,7 @@ class _SlingExportState extends State<SlingExport> {
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SendData(
+                                  builder: (context) => SlingSendData(
                                     event: event,
                                     onDeleteEvent: updateEventList,
                                   ),
@@ -405,22 +412,6 @@ class _SlingExportState extends State<SlingExport> {
                                           ),
                                         ),
                                         Text(
-                                          'Số lượng: ${event.soLuong}',
-                                          style: TextStyle(
-                                              color:
-                                              AppColor.contentText,
-                                              fontSize:
-                                              screenWith * 0.05),
-                                        ),
-                                        Text(
-                                          "Số lượng quét: ${event.soLuongQuett}",
-                                          style: TextStyle(
-                                              color:
-                                              AppColor.contentText,
-                                              fontSize:
-                                              screenWith * 0.05),
-                                        ),
-                                        Text(
                                           'Lệnh giao hàng: ${event.lenhPhanPhoi}',
                                           style: TextStyle(
                                               color:
@@ -437,6 +428,16 @@ class _SlingExportState extends State<SlingExport> {
                                               screenWith * 0.05),
                                         ),
                                         Text(
+                                          'Số lượng cần xuất: ${event.soLuong}',
+                                          style: TextStyle(
+                                              color:
+                                              AppColor.contentText,
+                                              fontSize:
+                                              screenWith * 0.05),
+                                        ),
+
+
+                                        Text(
                                           'Ghi chú: ${event.ghiChu}',
                                           style: TextStyle(
                                               color:
@@ -444,6 +445,24 @@ class _SlingExportState extends State<SlingExport> {
                                               fontSize:
                                               screenWith * 0.05),
                                         ),
+                                        Text(
+                                          "Số lượng quét SLING: ${event.soLuongQuetSlingt}",
+                                          style: TextStyle(
+                                              color:
+                                              AppColor.contentText,
+                                              fontSize:
+                                              screenWith * 0.05),
+                                        ),
+
+                                        Text(
+                                          "Số lượng quét RFID: ${event.soLuongQuett}",
+                                          style: TextStyle(
+                                              color:
+                                              AppColor.contentText,
+                                              fontSize:
+                                              screenWith * 0.05),
+                                        ),
+
                                         Text(
                                           'Ngày Tạo: ${event.time}',
                                           style: TextStyle(

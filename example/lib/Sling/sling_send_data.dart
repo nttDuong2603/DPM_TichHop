@@ -4,10 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:collection';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:rfid_c72_plugin_example/Sling/sling_show_info.dart';
+import 'package:rfid_c72_plugin_example/Sling/sling_tag_show.dart';
 import 'package:rfid_c72_plugin_example/utils/common_functions.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
+import '../Distribution_Module/edit_celendar.dart';
+import '../Distribution_Module/inventory_export_codes.dart';
+import '../Distribution_Module/select_schedule_page.dart';
+import '../Distribution_Module/showchip_informaton_page.dart';
 import '../UserDatatypes/user_datatype.dart';
 import '../Utils/DeviceActivities/DataProcessing.dart';
 import '../Utils/DeviceActivities/DataReadOptions.dart';
@@ -17,34 +23,32 @@ import '../main.dart';
 import '../utils/app_config.dart';
 import '../Models/model.dart';
 import '../Helpers/calendar_database_helper.dart';
-import 'edit_celendar.dart';
+
 import 'dart:convert';
-import 'showchip_informaton_page.dart';
+
 import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:external_path/external_path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/key_event_channel.dart';
 import '../utils/scan_count_modal.dart';
-import 'select_schedule_page.dart';
-import 'inventory_export_codes.dart';
 
 /*Distribution*/
-class SendData extends StatefulWidget {
+class SlingSendData extends StatefulWidget {
   final Calendar event;
   final Function(Calendar) onDeleteEvent;
 
-  const SendData({Key? key, required this.event, required this.onDeleteEvent})
+  const SlingSendData({Key? key, required this.event, required this.onDeleteEvent})
       : super(key: key);
 
   @override
-  State<SendData> createState() => _SendDataState();
+  State<SlingSendData> createState() => _SlingSendDataState();
 }
 
-class _SendDataState extends State<SendData> {
+class _SlingSendDataState extends State<SlingSendData> {
   //Khai báo biến
   final StreamController<int> _updateStreamController =
-      StreamController<int>.broadcast();
+  StreamController<int>.broadcast();
   late Calendar event;
   final CalendarDatabaseHelper databaseHelper = CalendarDatabaseHelper();
   String _platformVersion = 'Unknown';
@@ -90,7 +94,7 @@ class _SendDataState extends State<SendData> {
   List<TagEpc> temporarySavedTags = [];
   Queue<TagEpc> tagsToProcess = Queue<TagEpc>();
   int processedTagsCount =
-      0; // Biến trung gian để theo dõi số lượng tag đã xử lý
+  0; // Biến trung gian để theo dõi số lượng tag đã xử lý
   bool _isDialogShown = false; // biến báo để close popup
   final _storageTemporary = const FlutterSecureStorage();
   bool isSaving = false;
@@ -205,7 +209,7 @@ class _SendDataState extends State<SendData> {
       r5_resultTags = DataProcessing.ConvertToTagEpcList(tagList);
       List<TagEpc> uniqueData = r5_resultTags
           .where((newTag) =>
-              !_data.any((existingTag) => existingTag.epc == newTag.epc))
+      !_data.any((existingTag) => existingTag.epc == newTag.epc))
           .toList();
       print("danh sach cac the doc lap: ${uniqueData.length}");
 
@@ -312,7 +316,7 @@ class _SendDataState extends State<SendData> {
       List<TagEpc> newData = TagEpc.parseTags(result);
       List<TagEpc> uniqueData = newData
           .where((newTag) =>
-              !_data.any((existingTag) => existingTag.epc == newTag.epc))
+      !_data.any((existingTag) => existingTag.epc == newTag.epc))
           .toList();
       if (uniqueData.isNotEmpty) {
         _playScanSound();
@@ -443,7 +447,7 @@ class _SendDataState extends State<SendData> {
     newData.forEach((newTag) {
       // Kiểm tra xem tag này đã có trong existingData chưa
       TagEpc? existingTag = existingData.firstWhere(
-        (tag) => tag.epc == newTag.epc,
+            (tag) => tag.epc == newTag.epc,
         orElse: () => TagEpc(epc: newTag.epc), // Tạo tag mới nếu không tìm thấy
       );
 
@@ -511,11 +515,19 @@ class _SendDataState extends State<SendData> {
     _isConnected = isConnected;
   }
 
+  void _showSlingInformation(BuildContext context, String eventId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => SlingInformationPage(eventId: eventId)),
+    );
+  }
+
   void _showChipInformation(BuildContext context, String eventId) {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ChipInformationPage(eventId: eventId)),
+          builder: (context) => SlingTagsInformationPage(eventId: eventId)),
     );
   }
 
@@ -550,7 +562,7 @@ class _SendDataState extends State<SendData> {
   void deleteEventFromCalendar() async {
     try {
       final dbHelper = CalendarDatabaseHelper();
-      await dbHelper.deleteEvent(event);
+      await dbHelper.deleteEvent(event,tableName: "Sling");
       widget.onDeleteEvent(event);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -617,23 +629,23 @@ class _SendDataState extends State<SendData> {
             builder: (BuildContext context) {
               return (_isShowModal)
                   ? Center(
-                      child: Dialog(
-                        elevation: 0,
-                        backgroundColor: const Color.fromARGB(255, 43, 78, 128),
-                        child: SizedBox(
-                          height: 300,
-                          child: SavedTagsModal(
-                            updateStream: _updateStreamController.stream,
-                          ),
-                        ),
-                      ),
-                    )
+                child: Dialog(
+                  elevation: 0,
+                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                  child: SizedBox(
+                    height: 300,
+                    child: SavedTagsModal(
+                      updateStream: _updateStreamController.stream,
+                    ),
+                  ),
+                ),
+              )
                   : const SizedBox
-                      .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
+                  .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
             },
             context: context,
           ).then((_) => _isDialogShown =
-              false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
+          false); // Cập nhật trạng thái khi dialog đóng =flase để tránh stop scan sẽ đóng luôn cửa sổ chính
         } else {
           _isShowModal = false;
         }
@@ -703,19 +715,19 @@ class _SendDataState extends State<SendData> {
             builder: (BuildContext context) {
               return (_isShowModal)
                   ? Center(
-                      child: Dialog(
-                        elevation: 0,
-                        backgroundColor: const Color.fromARGB(255, 43, 78, 128),
-                        child: SizedBox(
-                          height: 300,
-                          child: SavedTagsModal(
-                            updateStream: _updateStreamController.stream,
-                          ),
-                        ),
-                      ),
-                    )
+                child: Dialog(
+                  elevation: 0,
+                  backgroundColor: const Color.fromARGB(255, 43, 78, 128),
+                  child: SizedBox(
+                    height: 300,
+                    child: SavedTagsModal(
+                      updateStream: _updateStreamController.stream,
+                    ),
+                  ),
+                ),
+              )
                   : const SizedBox
-                      .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
+                  .shrink(); //một widget rỗng được hiển thị nếu _isShowModal = false
             },
             context: context,
           ).then((_) {
@@ -748,7 +760,7 @@ class _SendDataState extends State<SendData> {
   void _showExportCodesSelection(BuildContext context,
       StateSetter modalSetState, String selectedPXK, String pTien) async {
     final selectedExportCodes =
-        await Navigator.of(context).push<List<ExportCode>>(
+    await Navigator.of(context).push<List<ExportCode>>(
       MaterialPageRoute(
         builder: (context) => SelectExportCodesPage(
           selectedPXK: selectedPXK,
@@ -776,7 +788,7 @@ class _SendDataState extends State<SendData> {
         // Gộp mã PP và lệnh giao hàng thành một chuỗi duy nhất
         String combinedMaPPandLXH = selectedExportCodes
             .map((code) =>
-                'Mã PP: ${code.maPP}, Lệnh Giao Hàng: ${code.lenhGiaoHang}')
+        'Mã PP: ${code.maPP}, Lệnh Giao Hàng: ${code.lenhGiaoHang}')
             .join('\n');
 
         // Xử lý dữ liệu hoặc in ra thông tin gộp
@@ -810,10 +822,10 @@ class _SendDataState extends State<SendData> {
   void updateMNPPAndTNPP(String? mnpp, String? tnpp) {
     if (mnpp == null) {
       _MnppTnppController.text =
-          "$tnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+      "$tnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
     } else if (tnpp == null) {
       _MnppTnppController.text =
-          "$mnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+      "$mnpp"; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
     } else {
       _MnppTnppController.text = "$tnpp\n$mnpp";
       _mspController.text = "$mnpp";
@@ -823,7 +835,7 @@ class _SendDataState extends State<SendData> {
   void updatePXK(int? PXK) {
     if (PXK == null) {
       _PXKController.text =
-          ""; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
+      ""; // Hoặc bạn có thể đặt giá trị mặc định, ví dụ: "Không có thông tin"
     } else {
       _PXKController.text = "$PXK";
     }
@@ -1099,7 +1111,7 @@ class _SendDataState extends State<SendData> {
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
     List<String> sentTags =
-        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     String baseUrl = '${AppConfig.IP}/api/CD28896A7B0446A0BF17403745E45C84/';
     List<TagEpc> allRFIDData = await loadData(event.id);
     String selectedMPX = _selectedAgencyNameController.text;
@@ -1169,8 +1181,8 @@ class _SendDataState extends State<SendData> {
   Future<void> saveFileToDownloads(String data, String fileName) async {
     try {
       final downloadDirectory =
-          await ExternalPath.getExternalStoragePublicDirectory(
-              ExternalPath.DIRECTORY_DOWNLOADS);
+      await ExternalPath.getExternalStoragePublicDirectory(
+          ExternalPath.DIRECTORY_DOWNLOADS);
       final filePath = '$downloadDirectory/$fileName';
       final file = File(filePath);
       await file.writeAsString(data); // Viết dữ liệu vào tệp
@@ -1211,7 +1223,7 @@ class _SendDataState extends State<SendData> {
     var permissionStatus = await Permission.storage.request();
     if (permissionStatus.isGranted) {
       String formattedData =
-          await formatDataForFileWithTags(event.id); // Lấy chuỗi định dạng
+      await formatDataForFileWithTags(event.id); // Lấy chuỗi định dạng
       String timeStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       String fileName =
           '$baseFileName\_$timeStamp.txt'; // Tạo tên file với dấu thời gian
@@ -1685,7 +1697,7 @@ class _SendDataState extends State<SendData> {
                 ),
               ),
               contentPadding:
-                  const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
+              const EdgeInsets.only(top: 5, right: 20, left: 20, bottom: 5),
               content: SingleChildScrollView(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -1724,12 +1736,12 @@ class _SendDataState extends State<SendData> {
                             filled: true,
                             enabledBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: Color(0xFF65a281)),
+                              const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: AppColor.mainText),
+                              const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -1747,12 +1759,12 @@ class _SendDataState extends State<SendData> {
                             filled: true,
                             enabledBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: Color(0xFF65a281)),
+                              const BorderSide(color: Color(0xFF65a281)),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: AppColor.mainText),
+                              const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -1766,12 +1778,12 @@ class _SendDataState extends State<SendData> {
                 ),
               ),
               actionsPadding:
-                  const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
+              const EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 7),
               actions: <Widget>[
                 TextButton(
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(AppColor.mainText),
+                    MaterialStateProperty.all<Color>(AppColor.mainText),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0)),
@@ -1780,7 +1792,7 @@ class _SendDataState extends State<SendData> {
                         const Size(100.0, 30.0)),
                   ),
                   child:
-                      const Text('Hủy', style: TextStyle(color: Colors.white)),
+                  const Text('Hủy', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     Navigator.of(context).pop(); // Trả về null khi bấm "Hủy"
                   },
@@ -1788,7 +1800,7 @@ class _SendDataState extends State<SendData> {
                 TextButton(
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(AppColor.mainText),
+                    MaterialStateProperty.all<Color>(AppColor.mainText),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0)),
@@ -1797,7 +1809,7 @@ class _SendDataState extends State<SendData> {
                         const Size(100.0, 30.0)),
                   ),
                   child:
-                      const Text('OK', style: TextStyle(color: Colors.white)),
+                  const Text('OK', style: TextStyle(color: Colors.white)),
                   onPressed: () {
                     // Trả về dữ liệu từ dialog
                     Map<String, String> result = {};
@@ -2054,7 +2066,7 @@ class _SendDataState extends State<SendData> {
 
     // Gọi _showNoteInputDialog với danh sách mã MPX
     Map<String, String>? result =
-        await _showNoteInputDialog(context, selectedMPXs);
+    await _showNoteInputDialog(context, selectedMPXs);
 
     // Kiểm tra nếu người dùng bấm "Hủy"
     if (result == null) {
@@ -2149,7 +2161,7 @@ class _SendDataState extends State<SendData> {
             TextButton(
               style: ButtonStyle(
                 backgroundColor:
-                    MaterialStateProperty.all<Color>(AppColor.mainText),
+                MaterialStateProperty.all<Color>(AppColor.mainText),
                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
@@ -2157,7 +2169,7 @@ class _SendDataState extends State<SendData> {
                   ),
                 ),
                 fixedSize:
-                    MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
               ),
               child: const Text("OK", style: TextStyle(color: Colors.white)),
               onPressed: () {
@@ -2171,6 +2183,7 @@ class _SendDataState extends State<SendData> {
     );
   }
 
+  // Hiênr thị mã xuất
   void showSelectExportCodesModal() {
     showModalBottomSheet(
       context: context,
@@ -2186,7 +2199,7 @@ class _SendDataState extends State<SendData> {
                   return const Center(
                     child: CircularProgressIndicator(
                       valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColor.mainText),
+                      AlwaysStoppedAnimation<Color>(AppColor.mainText),
                     ),
                   );
                 } else if (snapshot.hasError) {
@@ -2416,6 +2429,7 @@ class _SendDataState extends State<SendData> {
                                   200.0, 40.0), // Kích thước tối thiểu
                             ),
                             onPressed: () {
+                              _showPopup(context);
                               if (_exportCodesController.text.isEmpty) {
                                 // Hiển thị SnackBar nếu TextField rỗng
                                 showDialog(
@@ -2440,24 +2454,24 @@ class _SendDataState extends State<SendData> {
                                         TextButton(
                                           style: ButtonStyle(
                                             backgroundColor:
-                                                MaterialStateProperty.all<
-                                                        Color>(
-                                                    AppColor.mainText),
+                                            MaterialStateProperty.all<
+                                                Color>(
+                                                AppColor.mainText),
                                             shape: MaterialStateProperty.all<
                                                 RoundedRectangleBorder>(
                                               RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(10.0),
+                                                BorderRadius.circular(10.0),
                                               ),
                                             ),
                                             fixedSize:
-                                                MaterialStateProperty.all<Size>(
-                                                    const Size(100.0, 30.0)),
+                                            MaterialStateProperty.all<Size>(
+                                                const Size(100.0, 30.0)),
                                           ),
                                           child: const Text(
                                             "Đóng",
                                             style:
-                                                TextStyle(color: Colors.white),
+                                            TextStyle(color: Colors.white),
                                           ),
                                           onPressed: () {
                                             Navigator.of(context)
@@ -2482,7 +2496,7 @@ class _SendDataState extends State<SendData> {
                             child: const Text(
                               'Bắt đầu đồng bộ',
                               style:
-                                  TextStyle(fontSize: 18, color: Colors.white),
+                              TextStyle(fontSize: 18, color: Colors.white),
                             ),
                           ),
                         ),
@@ -2505,6 +2519,82 @@ class _SendDataState extends State<SendData> {
       });
     });
   }
+  void _showPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int? selectedOption; // Biến lưu tùy chọn đã chọn
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16), // Bo góc 16px
+              ),
+              title: Text("Chọn tùy chọn xuất Sling:"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<int>(
+                    title: Text("Xuất xuất"),
+                    value: 1,
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value;
+                      });
+                    },
+                  ),
+                  RadioListTile<int>(
+                    title: Text("Xuất giữ"),
+                    value: 2,
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value;
+                      });
+                    },
+                  ),
+                  RadioListTile<int>(
+                    title: Text("Xuất đủ"),
+                    value: 3,
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng popup
+                  },
+                  child: Text("Hủy"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng popup
+                    if (selectedOption != null) {
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Bạn đã chọn: Tùy chọn $selectedOption"),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
 // Modal to confirm export code selection
   Future<void> showConfirmationModal(
@@ -2514,11 +2604,11 @@ class _SendDataState extends State<SendData> {
     List<PXKCode> exportCodes = await fetchExportCodesMaKhoData();
     // Tìm mã PXK tương ứng với selectedCode, trả về đối tượng mặc định nếu không tìm thấy
     PXKCode matchingPXKCode = exportCodes.firstWhere(
-        (code) => code.maPXK == selectedCode,
+            (code) => code.maPXK == selectedCode,
         orElse: () => PXKCode(
             maPXK: 'Mã không hợp lệ',
             pTien: 'Không có dữ liệu') // Trả về đối tượng mặc định
-        );
+    );
 
     // Lấy giá trị pTien từ mã PXK đã tìm thấy hoặc mặc định
     String? pTien = matchingPXKCode.pTien;
@@ -2591,6 +2681,7 @@ class _SendDataState extends State<SendData> {
     );
   }
 
+  // hiển thị mã phân phối
   void showSelectDistributionCodesModal() {
     showModalBottomSheet(
       context: context,
@@ -2641,8 +2732,8 @@ class _SendDataState extends State<SendData> {
                   ),
                   GestureDetector(
                     onTap: () =>
-                        // print('a'),
-                        _showMPXSelection(context),
+                    // print('a'),
+                    _showMPXSelection(context),
                     // _showExportCodesSelection(context),
                     child: AbsorbPointer(
                       child: Container(
@@ -2666,16 +2757,16 @@ class _SendDataState extends State<SendData> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
                               borderSide:
-                                  const BorderSide(color: AppColor.mainText),
+                              const BorderSide(color: AppColor.mainText),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: AppColor.mainText),
+                              const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide:
-                                  const BorderSide(color: AppColor.mainText),
+                              const BorderSide(color: AppColor.mainText),
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             filled: true,
@@ -2706,16 +2797,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2744,16 +2835,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2781,16 +2872,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2818,16 +2909,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2855,16 +2946,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2892,16 +2983,16 @@ class _SendDataState extends State<SendData> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderSide:
-                              const BorderSide(color: AppColor.mainText),
+                          const BorderSide(color: AppColor.mainText),
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         filled: true,
@@ -2910,6 +3001,10 @@ class _SendDataState extends State<SendData> {
                     ),
                   ),
                   const Spacer(),
+
+
+
+                  // Button Sync
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -2920,70 +3015,20 @@ class _SendDataState extends State<SendData> {
                           borderRadius: BorderRadius.circular(12.0),
                         ),
                         minimumSize:
-                            const Size(200.0, 40.0), // Kích thước tối thiểu
+                        const Size(200.0, 40.0), // Kích thước tối thiểu
                       ),
                       onPressed: () {
-                        if (_selectedAgencyNameController.text.isEmpty) {
-                          // Hiển thị SnackBar nếu TextField rỗng
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text(
-                                  "Không thể đồng bộ",
-                                  style: TextStyle(
-                                    color: AppColor.mainText,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                content: const Text(
-                                    "Vui lòng chọn mã lịch phân phối.",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: AppColor.mainText,
-                                    )),
-                                actions: <Widget>[
-                                  TextButton(
-                                    style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateProperty.all<Color>(
-                                              AppColor.mainText),
-                                      shape: MaterialStateProperty.all<
-                                          RoundedRectangleBorder>(
-                                        RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              10.0), // Điều chỉnh độ cong của góc
-                                        ),
-                                      ),
-                                      fixedSize:
-                                          MaterialStateProperty.all<Size>(
-                                              const Size(100.0, 30.0)),
-                                    ),
-                                    child: const Text(
-                                      "Đóng",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Đóng cửa sổ dialog
-                                    },
-                                  )
-                                ],
-                              );
-                            },
-                          );
+                        _showPopup(context);
+                        PutDistributionWithAccountCode();
+                        // sendDataWithPutRequest();
+                        if (tenLNPP == "LNPP202400007") {
+                          //Loại nhà phân phối là kho nhà máy thì phân phối
+                          sendDataWithPutRequestWithInternalwarehouseCTPP();
                         } else {
+                          //còn lại sử dụng phân phối kho thuê
+                          sendDataWithPutRequestWithAgencyCTPPKT();
+                        }
 
-                          PutDistributionWithAccountCode();
-                          // sendDataWithPutRequest();
-                          if (tenLNPP == "LNPP202400007") {
-                            //Loại nhà phân phối là kho nhà máy thì phân phối
-                            sendDataWithPutRequestWithInternalwarehouseCTPP();
-                          } else {
-                            //còn lại sử dụng phân phối kho thuê
-                            sendDataWithPutRequestWithAgencyCTPPKT();
-                          }
-                        } // Hàm gửi dữ liệu
                       },
                       child: const Text(
                         'Bắt đầu đồng bộ',
@@ -3001,6 +3046,8 @@ class _SendDataState extends State<SendData> {
       _closeModal(); // Gọi hàm để đóng modal và cập nhật trạng thái
     });
   }
+
+
 
   Future<void> sendDataWithPutRequestWithInternalwarehouseCTPP() async {
     List<String> syncedMaPPs = [];
@@ -3033,7 +3080,7 @@ class _SendDataState extends State<SendData> {
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
     List<String> sentTags =
-        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     Set<String> sentTagsSet = sentTags.toSet();
     String? maTK = await _getmaTKfromSecureStorage();
     String baseUrl = '${AppConfig.IP}/api/B176498CF7634D8993453B457AB926CB';
@@ -3183,8 +3230,8 @@ class _SendDataState extends State<SendData> {
         int soBaoCanXuat =
             exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
         for (int j = 0;
-            j < soBaoCanXuat && currentIndex < allRFIDData.length;
-            j++) {
+        j < soBaoCanXuat && currentIndex < allRFIDData.length;
+        j++) {
           if (networkErrorOccurred) break;
 
           TagEpc tag = allRFIDData[currentIndex];
@@ -3301,8 +3348,8 @@ class _SendDataState extends State<SendData> {
     dadongbo = true;
 
     if (!networkErrorOccurred) {
-      await dbHelper.syncEvent(event); // Cập nhật cơ sở dữ liệu
-      await dbHelper.updateTimeById(event.id, ngayPost);
+      await dbHelper.syncEvent(event,tableName: "Sling"); // Cập nhật cơ sở dữ liệu
+      await dbHelper.updateTimeById(event.id, ngayPost,tableName: "Sling");
       resetInputFields(); // Hàm này sẽ đặt lại các trường nhập liệu
       Navigator.pop(context); // Đóng dialog đồng bộ thành công
     }
@@ -3330,14 +3377,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>( AppColor.mainText),
+                  MaterialStateProperty.all<Color>( AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   "OK",
@@ -3374,14 +3421,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   'Hủy',
@@ -3395,14 +3442,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
@@ -3489,7 +3536,7 @@ class _SendDataState extends State<SendData> {
     String key = getSentTagsKey(event.id); // Tạo khóa duy nhất dựa trên ID lịch
     String? sentTagsJson = await secureStorage.read(key: key);
     List<String> sentTags =
-        sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
+    sentTagsJson != null ? List<String>.from(jsonDecode(sentTagsJson)) : [];
     Set<String> sentTagsSet = sentTags.toSet();
     String? maTK = await _getmaTKfromSecureStorage();
     String baseUrl = '${AppConfig.IP}/api/4479FF93AA8B4721A3664FA7B3B2A2D3';
@@ -3639,8 +3686,8 @@ class _SendDataState extends State<SendData> {
         int soBaoCanXuat =
             exportCode.soBaoCanXuat; // Số bao cần xuất cho từng PXK
         for (int j = 0;
-            j < soBaoCanXuat && currentIndex < allRFIDData.length;
-            j++) {
+        j < soBaoCanXuat && currentIndex < allRFIDData.length;
+        j++) {
           if (networkErrorOccurred) break;
 
           TagEpc tag = allRFIDData[currentIndex];
@@ -3757,8 +3804,8 @@ class _SendDataState extends State<SendData> {
     dadongbo = true;
 
     if (!networkErrorOccurred) {
-      await dbHelper.syncEvent(event); // Cập nhật cơ sở dữ liệu
-      await dbHelper.updateTimeById(event.id, ngayPost);
+      await dbHelper.syncEvent(event,tableName: "Sling"); // Cập nhật cơ sở dữ liệu
+      await dbHelper.updateTimeById(event.id, ngayPost,tableName: "Sling");
       resetInputFields(); // Hàm này sẽ đặt lại các trường nhập liệu
       Navigator.pop(context); // Đóng dialog đồng bộ thành công
     }
@@ -3786,14 +3833,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>( AppColor.mainText),
+                  MaterialStateProperty.all<Color>( AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   "OK",
@@ -3830,14 +3877,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   'Hủy',
@@ -3851,14 +3898,14 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text("OK", style: TextStyle(color: Colors.white)),
                 onPressed: () {
@@ -4013,7 +4060,7 @@ class _SendDataState extends State<SendData> {
     });
   }
 
-  void showModal() async {
+  void showSyncModal() async {
     setState(() {
       isShowModal = true;
     });
@@ -4038,7 +4085,7 @@ class _SendDataState extends State<SendData> {
               TextButton(
                 style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(AppColor.mainText),
+                  MaterialStateProperty.all<Color>(AppColor.mainText),
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
@@ -4046,7 +4093,7 @@ class _SendDataState extends State<SendData> {
                     ),
                   ),
                   fixedSize:
-                      MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
+                  MaterialStateProperty.all<Size>(const Size(100.0, 30.0)),
                 ),
                 child: const Text(
                   "Đóng",
@@ -4069,6 +4116,7 @@ class _SendDataState extends State<SendData> {
     }
     ;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -4105,7 +4153,7 @@ class _SendDataState extends State<SendData> {
                 icon: const Icon(Icons.arrow_back)),
             centerTitle: true,
             title: Text(
-              'Lịch phân phối ',
+              'Lịch xuất Sling',
               style: TextStyle(
                 fontSize: screenWidth * 0.07, // Kích thước chữ
                 fontWeight: FontWeight.bold,
@@ -4155,8 +4203,8 @@ class _SendDataState extends State<SendData> {
                                 TextButton(
                                   style: ButtonStyle(
                                     backgroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                            AppColor.mainText),
+                                    MaterialStateProperty.all<Color>(
+                                        AppColor.mainText),
                                     shape: MaterialStateProperty.all<
                                         RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
@@ -4182,8 +4230,8 @@ class _SendDataState extends State<SendData> {
                                 TextButton(
                                   style: ButtonStyle(
                                     backgroundColor:
-                                        MaterialStateProperty.all<Color>(
-                                            AppColor.mainText),
+                                    MaterialStateProperty.all<Color>(
+                                        AppColor.mainText),
                                     shape: MaterialStateProperty.all<
                                         RoundedRectangleBorder>(
                                       RoundedRectangleBorder(
@@ -4399,6 +4447,55 @@ class _SendDataState extends State<SendData> {
                     )),
                 GestureDetector(
                   onTap: () {
+                    _showSlingInformation(context, event.id);
+                  },
+                  child: Container(
+                    // padding: EdgeInsets.fromLTRB(20, 15, 0, 12),
+                    padding: EdgeInsets.fromLTRB(screenWidth * 0.05,
+                        screenHeight * 0.012, 0, screenHeight * 0.012),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      border: Border(
+                        bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.5), width: 2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                  fontSize: screenWidth * 0.065,
+                                  color: AppColor.contentText),
+                              children: [
+                                TextSpan(
+                                  text: 'Số lượng quét Sling\n',
+                                  style: TextStyle(
+                                      color: AppColor.mainText,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: screenWidth * 0.065),
+                                ),
+                                TextSpan(
+                                  // Kiểm tra trạng thái quét để quyết định hiển thị giá trị nào
+                                  text: isScanning
+                                      ? '$successfullySaved'
+                                      : '$tagCount',
+                                  // text: '$tagCount',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.navigate_next,
+                            color: AppColor.mainText, size: 30.0),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
                     _showChipInformation(context, event.id);
                   },
                   child: Container(
@@ -4423,7 +4520,7 @@ class _SendDataState extends State<SendData> {
                                   color: AppColor.contentText),
                               children: [
                                 TextSpan(
-                                  text: 'Số lượng quét\n',
+                                  text: 'Số lượng quét RFID\n',
                                   style: TextStyle(
                                       color: AppColor.mainText,
                                       fontWeight: FontWeight.bold,
@@ -4461,7 +4558,7 @@ class _SendDataState extends State<SendData> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          (_isContinuousCall) ? Colors.red : AppColor.mainText,
+                      (_isContinuousCall) ? Colors.red : AppColor.mainText,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12.0, vertical: 8.0),
                       shape: RoundedRectangleBorder(
@@ -4474,13 +4571,13 @@ class _SendDataState extends State<SendData> {
                     },
                     child: (_isContinuousCall)
                         ? Text('Dừng quét',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.06))
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.06))
                         : Text('Bắt đầu quét',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.06)),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.06)),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -4493,7 +4590,7 @@ class _SendDataState extends State<SendData> {
                       fixedSize: const Size(150.0, 50.0),
                     ),
                     onPressed: () {
-                      showModal();
+                      showSyncModal();
                     },
                     child: const Text(
                       'Đồng bộ',

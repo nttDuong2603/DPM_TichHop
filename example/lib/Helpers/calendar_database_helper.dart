@@ -40,6 +40,7 @@ class CalendarDatabaseHelper {
             tenSanPham TEXT,
             soLuong INTEGER,
             soLuongQuet INTEGER,
+            soLuongQuetSling INTEGER, 
             lenhPhanPhoi TEXT,
             phieuXuatKho TEXT,
             ghiChu TEXT,
@@ -57,8 +58,8 @@ class CalendarDatabaseHelper {
             tenDaiLy TEXT,
             tenSanPham TEXT,
             soLuong INTEGER,
-            soLuongQuetSling
             soLuongQuet INTEGER, 
+            soLuongQuetSling INTEGER, 
             lenhPhanPhoi TEXT,
             phieuXuatKho TEXT,
             ghiChu TEXT,
@@ -155,6 +156,7 @@ class CalendarDatabaseHelper {
         tenSanPham: maps[i]['tenSanPham'],
         soLuong: maps[i]['soLuong'],
         soLuongQuet: maps[i]['soLuongQuet'],
+        soLuongQuetSling: maps[i]['soLuongQuetSling'],
         lenhPhanPhoi: maps[i]['lenhPhanPhoi'],
         phieuXuatKho: maps[i]['phieuXuatKho'],
         ghiChu: maps[i]['ghiChu'],
@@ -252,6 +254,7 @@ class CalendarDatabaseHelper {
         tenSanPham: maps[i]['tenSanPham'],
         soLuong: maps[i]['soLuong'],
         soLuongQuet: maps[i]['soLuongQuet'],
+        soLuongQuetSling: maps[i]['soLuongQuetSling'],
         lenhPhanPhoi: maps[i]['lenhPhanPhoi'],
         phieuXuatKho: maps[i]['phieuXuatKho'],
         ghiChu: maps[i]['ghiChu'],
@@ -279,6 +282,7 @@ class CalendarDatabaseHelper {
         tenSanPham: maps[i]['tenSanPham'],
         soLuong: maps[i]['soLuong'],
         soLuongQuet: maps[i]['soLuongQuet'],
+        soLuongQuetSling: maps[i]['soLuongQuetSling'],
         lenhPhanPhoi: maps[i]['lenhPhanPhoi'],
         phieuXuatKho: maps[i]['phieuXuatKho'],
         ghiChu: maps[i]['ghiChu'],
@@ -306,6 +310,7 @@ class CalendarDatabaseHelper {
         tenSanPham: maps[i]['tenSanPham'],
         soLuong: maps[i]['soLuong'],
         soLuongQuet: maps[i]['soLuongQuet'],
+        soLuongQuetSling: maps[i]['soLuongQuetSling'],
         lenhPhanPhoi: maps[i]['lenhPhanPhoi'],
         phieuXuatKho: maps[i]['phieuXuatKho'],
         ghiChu: maps[i]['ghiChu'],
@@ -406,10 +411,10 @@ class CalendarDatabaseHelper {
     return remainingTagsCount ?? 0; // Trả về 0 nếu remainingTagsCount là null
   }
 
-  Future<void> deleteEvent(Calendar event) async {
+  Future<void> deleteEvent(Calendar event,{String tableName = "calendar"}) async {
     final db = await database; // Giả sử bạn đã có đối tượng database
     await db.update(
-      'calendar', // Tên bảng chứa sự kiện
+      tableName, // Tên bảng chứa sự kiện
       {'isRemove': 1}, // Đánh dấu là đã xóa
       where: 'id = ?', // Điều kiện để tìm sự kiện cần xóa
       whereArgs: [event.id], // Tham số cho điều kiện
@@ -437,20 +442,20 @@ class CalendarDatabaseHelper {
   }
 
 
-  Future<void> syncEvent(Calendar event) async {
+  Future<void> syncEvent(Calendar event,{String tableName="calendar"}) async {
     final db = await database; // Giả sử bạn đã có đối tượng database
     await db.update(
-      'calendar', // Tên bảng chứa sự kiện
+      tableName, // Tên bảng chứa sự kiện
       {'isSync': 1}, // Đánh dấu là đã xóa
       where: 'id = ?', // Điều kiện để tìm sự kiện cần xóa
       whereArgs: [event.id], // Tham số cho điều kiện
     );
   }
 
-  Future<void> updateTimeById(String id, String newTime) async {
+  Future<void> updateTimeById(String id, String newTime,{String tableName="calendar"}) async {
     final db = await database; // Lấy đối tượng cơ sở dữ liệu
     await db.update(
-      'calendar', // Tên bảng
+      tableName, // Tên bảng
       {'time': newTime}, // Dữ liệu cần cập nhật
       where: 'id = ?', // Điều kiện để chọn bản ghi cần cập nhật
       whereArgs: [id], // Giá trị ID của sự kiện cần cập nhật

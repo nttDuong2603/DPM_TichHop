@@ -30,7 +30,8 @@ class _CreateSlingExportScheduleState extends State<CreateSlingExportSchedule> {
   final TextEditingController _tenDaiLyController = TextEditingController();
   final TextEditingController _tenSanPhamController = TextEditingController();
   final TextEditingController _soLuongController = TextEditingController();
-  final TextEditingController _soLuongQuetController = TextEditingController();
+  final TextEditingController _soLuongQuetController = TextEditingController(); // RFID
+  final TextEditingController _soLuongQuetSlingController = TextEditingController(); // Sling
   final TextEditingController _lenhPhanPhoiController = TextEditingController();
   final TextEditingController _phieuXuatKhoController = TextEditingController();
   final TextEditingController _ghiChuController = TextEditingController();
@@ -82,7 +83,8 @@ class _CreateSlingExportScheduleState extends State<CreateSlingExportSchedule> {
       tenDaiLy: _tenDaiLyController.text,
       tenSanPham: _tenSanPhamController.text,
       soLuong: int.tryParse(_soLuongController.text) ?? 0,
-      soLuongQuet: int.tryParse(_soLuongQuetController.text) ?? 0,
+      soLuongQuet: int.tryParse(_soLuongQuetController.text) ?? 0, //RFID
+      soLuongQuetSling: int.tryParse(_soLuongQuetSlingController.text) ?? 0, //RFID
       lenhPhanPhoi: _lenhPhanPhoiController.text,
       phieuXuatKho: _phieuXuatKhoController.text,
       ghiChu: _ghiChuController.text,

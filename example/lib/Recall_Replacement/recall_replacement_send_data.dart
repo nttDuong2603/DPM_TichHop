@@ -905,7 +905,6 @@ class _SendDataRecallReplacementState extends State<SendDataRecallReplacement> {
     } else {
       _showInfoEPCRecallDialog();
     }
-    ;
   }
 
   void _showInfoEPCRecallDialog() {

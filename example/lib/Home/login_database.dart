@@ -339,13 +339,14 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    SizedBox(height: 30,),
+                   const SizedBox(height: 30,),
                     Image.asset(
                       'assets/image/logoJVF_RFID.png',
-                      width: screenWidth * 0.75,
-                      height: screenHeight * 0.15,
+                      fit: BoxFit.contain, // Đảm bảo ảnh hiển thị toàn bộ
+                       width: screenWidth * 0.6,
+                       height: screenHeight * 0.15,
                     ),
-                   // SizedBox(height: screenHeight * 0.03),
+                   SizedBox(height: screenHeight * 0.01),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.start, // Căn giữa theo trục dọc
                       crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa theo trục ngang
@@ -353,7 +354,7 @@ class _LoginPageState extends State<LoginPage> {
                         Text(
                           'PVFCCo RFID',
                           style: TextStyle(
-                            fontSize: screenWidth * 0.07,
+                            fontSize: screenWidth * 0.05,
                             fontWeight: FontWeight.bold,
                             color: AppColor.logoText,
 
@@ -488,17 +489,20 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                 Text(
-                  'v1.0.0.5',
+                  'v1.0.0.5 | ',
                   style: TextStyle(
                     fontSize: screenWidth * 0.04,
                     color: Colors.grey,
                   ),
                 ),
-                Text(
-                  'IP: ${AppConfig.IP}',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.035,
-                    color: Colors.grey,
+                Flexible(
+                  child: Text(
+                    'Server: ${AppConfig.IP}',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.035,
+                      color: Colors.grey,
+                      overflow: TextOverflow.ellipsis, // Cắt bớt nếu văn bản quá dài
+                    ),
                   ),
                 ),
               ],

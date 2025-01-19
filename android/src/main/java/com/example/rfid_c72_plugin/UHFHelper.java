@@ -39,7 +39,7 @@ public class UHFHelper {
 
     String TAG="MainActivity_2D";
 
-    public BarcodeDecoder barcodeDecoder;
+    public BarcodeDecoder barcodeDecoder = BarcodeFactory.getInstance().getBarcodeDecoder();
     Handler handler;
     private UHFListener uhfListener;
     private BarcodeListener barcodeListener;
@@ -59,6 +59,9 @@ public class UHFHelper {
     public static UHFHelper getInstance() {
         if (instance == null)
             instance = new UHFHelper();
+        else{
+            //Log.i(TAG, "UHFHelper instance already exists");
+        }
         return instance;
     }
     // Thiết lập BarcodeListener cho mã vạch
@@ -236,7 +239,7 @@ public class UHFHelper {
                             }
                         } else {
                             scannedBarcode = "quét barcode FAIL";
-                            Log.e(TAG, "Barcode scan failed");
+                            Log.e(TAG, "Barcode scan failed_2");
                         }
                     }
                 });
@@ -284,8 +287,11 @@ public class UHFHelper {
                                 // Gọi hàm stopScan sau khi quét xong
 //                                barcodeDecoder.stopScan();
                             } else {
-                                scannedBarcode = "quét barcode FAIL";
-                                Log.e(TAG, "Barcode scan failed");
+                                scannedBarcode = "";
+                                if (barcodeListener != null) {
+                                    barcodeListener.onBarcodeScanned(scannedBarcode);
+                                }
+                                Log.e(TAG, "Barcode scan failed_1");
                             }
                         }
                     });

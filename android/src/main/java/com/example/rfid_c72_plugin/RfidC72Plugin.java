@@ -260,7 +260,8 @@ public class RfidC72Plugin implements FlutterPlugin, MethodCallHandler {
         result.success(UHFHelper.getInstance().readBarcode());
         break;
       case CHANNEL_SCAN_BARCODE:
-        UHFHelper.getInstance().scanBarcode();
+        result.success(UHFHelper.getInstance().scanBarcode());
+
         break;
       default:
         result.notImplemented();
